@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -22,8 +22,10 @@ import {
   Users,
   Activity,
   Zap,
-  Loader
+  Loader,
+  Clock
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useMarketingAgentsSocket } from '@/hooks/useMarketingAgentsSocket'
 import { marketingHistoryService } from '@/services/marketing/marketingHistoryService'
 import LiveAgentCard from '@/views/marketing/ai-operation/LiveAgentCard'
@@ -32,7 +34,7 @@ import MarketingHistoryTimeline from '@/views/marketing/ai-operation/MarketingHi
 import type { MarketingAgent, AgentConnection, MarketingActionEvent } from '@/types/marketing/aiMarketing'
 
 // ---------------------------------------------------------------------------
-// Connection status chip — now uses connectionStatus from hook
+// Connection status chip — uses connectionStatus from hook
 // ---------------------------------------------------------------------------
 
 const ConnectionChip: React.FC<{ connectionStatus: 'connected' | 'disconnected' | 'reconnecting' }> = ({ connectionStatus }) => {
@@ -111,12 +113,11 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color }) => (
 
 const MarketingLiveDashboardPage: React.FC = () => {
   // -----------------------------------------------------------------------
-  // Resolve tenantId and companyId from auth context / session
-  // TODO: Replace with actual auth context lookup (useSession, useAuth, etc.)
-  // For now using default tenant 1 — this should come from the authenticated user
+  // CLOUD-251: Resolve tenantId and companyId from NextAuth session
   // -----------------------------------------------------------------------
-  const tenantId = 1
-  const companyId: number | undefined = undefined
+  const { data: session } = useSession()
+  const tenantId = session?.user?.tenantId || session?.user?.customerId || 1
+  const companyId = session?.user?.activeCompanyId || session?.user?.company_id
 
   const {
     agents,
@@ -130,6 +131,11 @@ const MarketingLiveDashboardPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // -----------------------------------------------------------------------
+  // CLOUD-252: State for REST history events (for merging with socket events)
+  // -----------------------------------------------------------------------
+  const [historyEvents, setHistoryEvents] = useState<MarketingActionEvent[]>([])
 
   // -----------------------------------------------------------------------
   // Initial data load via REST with AbortController cleanup
@@ -149,8 +155,6 @@ const MarketingLiveDashboardPage: React.FC = () => {
         setError(null)
 
         // Fetch initial action history via REST with AbortSignal
-        // The socket hook will receive real-time updates via WebSocket,
-        // but the REST data serves as the initial fallback.
         const history = await marketingHistoryService.getActionHistory(
           tenantId,
           50,
@@ -158,13 +162,12 @@ const MarketingLiveDashboardPage: React.FC = () => {
           companyId,
           controller.signal
         )
-        if (history) {
-          // REST data loaded successfully — socket events will take over
-          // for real-time updates from this point forward.
+        if (history?.events) {
+          // CLOUD-252: Store REST history events for merging with socket events
+          setHistoryEvents(history.events)
         }
       } catch (err) {
         // Do NOT set error state if the request was intentionally cancelled
-        // by the AbortController (component unmounted during in-flight request).
         if ((err as Error).name !== 'AbortError') {
           console.error('[MarketingLiveDashboard] Initial load error:', err)
           setError('Error al cargar los datos iniciales. Usando modo offline.')
@@ -186,8 +189,6 @@ const MarketingLiveDashboardPage: React.FC = () => {
 
   const handleReconnect = () => {
     reconnect()
-    // Trigger a fresh REST load by toggling a state key or calling the effect again.
-    // Since the useEffect has an empty dependency array, we use a refreshKey approach.
     setRefreshKey(prev => prev + 1)
   }
 
@@ -212,8 +213,8 @@ const MarketingLiveDashboardPage: React.FC = () => {
           companyId,
           controller.signal
         )
-        if (history) {
-          // REST re-fetch successful after manual reconnect
+        if (history?.events) {
+          setHistoryEvents(history.events)
         }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
@@ -231,6 +232,18 @@ const MarketingLiveDashboardPage: React.FC = () => {
   }, [refreshKey, tenantId, companyId])
 
   // -----------------------------------------------------------------------
+  // CLOUD-252: Merge socket events + REST history, deduplicated by ID
+  // Socket events take priority over REST events with the same ID.
+  // Total merged events capped at 50.
+  // -----------------------------------------------------------------------
+
+  const allEvents = useMemo(() => {
+    const socketIds = new Set(events.map(e => e.id))
+    const filteredHistory = historyEvents.filter(e => !socketIds.has(e.id))
+    return [...events, ...filteredHistory].slice(0, 50)
+  }, [events, historyEvents])
+
+  // -----------------------------------------------------------------------
   // Derived stats
   // -----------------------------------------------------------------------
 
@@ -243,7 +256,7 @@ const MarketingLiveDashboardPage: React.FC = () => {
   // Render
   // -----------------------------------------------------------------------
 
-  if (loading) {
+  if (loading && agents.length === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress size={60} thickness={4} />
@@ -308,9 +321,9 @@ const MarketingLiveDashboardPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Stats row */}
+      {/* Stats row — CLOUD-253: 5 stat cards including Total Eventos */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             icon={<Users size={24} />}
             label='Agentes Activos'
@@ -318,7 +331,7 @@ const MarketingLiveDashboardPage: React.FC = () => {
             color='#3b82f6'
           />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             icon={<Zap size={24} />}
             label='Trabajando'
@@ -326,7 +339,7 @@ const MarketingLiveDashboardPage: React.FC = () => {
             color='#10b981'
           />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             icon={<Activity size={24} />}
             label='En Espera'
@@ -334,12 +347,20 @@ const MarketingLiveDashboardPage: React.FC = () => {
             color='#f59e0b'
           />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             icon={<Activity size={24} />}
             label='Errores'
             value={errorCount}
             color='#ef4444'
+          />
+        </Grid>
+        <Grid item xs={12} sm={2.4}>
+          <StatCard
+            icon={<Clock size={24} />}
+            label='Total Eventos'
+            value={allEvents.length}
+            color='#8b5cf6'
           />
         </Grid>
       </Grid>
@@ -392,23 +413,24 @@ const MarketingLiveDashboardPage: React.FC = () => {
                   No hay agentes disponibles. Esperando conexión...
                 </Typography>
               ) : (
-                <Stack direction='row' spacing={2} sx={{ overflowX: 'auto', pb: 1 }}>
+                /* CLOUD-254: Responsive Grid instead of horizontal Stack */
+                <Grid container spacing={2}>
                   {agents.map(agent => (
-                    <Zoom in key={agent.id} timeout={500}>
-                      <Box>
+                    <Grid item xs={12} sm={6} md={4} key={agent.id}>
+                      <Zoom in timeout={500}>
                         <LiveAgentCard agent={agent} />
-                      </Box>
-                    </Zoom>
+                      </Zoom>
+                    </Grid>
                   ))}
-                </Stack>
+                </Grid>
               )}
             </Box>
           </Paper>
         </Grid>
 
-        {/* History Timeline */}
+        {/* History Timeline — CLOUD-252: receives merged events */}
         <Grid item xs={12} lg={5}>
-          <MarketingHistoryTimeline events={events} />
+          <MarketingHistoryTimeline events={allEvents} />
         </Grid>
       </Grid>
     </Box>
