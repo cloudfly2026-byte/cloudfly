@@ -39,6 +39,25 @@ class ScrumConnector:
             print(f"[🔌 Redis]: Conectado a Redis en {self.host}:{self.port} con éxito.")
             return True
         except Exception as e:
+            # If the configured host failed and is a Docker-only hostname, retry with localhost
+            if self.host != "localhost" and self.host != "127.0.0.1":
+                print(f"[🔌 Redis] WARN: No se pudo conectar a '{self.host}:{self.port}' ({e}). Reintentando con localhost...")
+                try:
+                    self.host = "localhost"
+                    self.redis_client = redis.Redis(
+                        host=self.host,
+                        port=self.port,
+                        password=self.password,
+                        decode_responses=True,
+                        socket_timeout=5
+                    )
+                    self.redis_client.ping()
+                    print(f"[🔌 Redis]: Conectado a Redis en localhost:{self.port} con éxito (fallback).")
+                    return True
+                except Exception as e2:
+                    print(f"[🔌 Redis] ERROR: Tampoco se pudo conectar a localhost:{self.port}: {e2}")
+                    self.redis_client = None
+                    return False
             print(f"[🔌 Redis] ERROR: No se pudo conectar a Redis en {self.host}:{self.port}: {e}")
             self.redis_client = None
             return False

@@ -184,6 +184,12 @@ services:
     depends_on:
       - kafka
 
+  # ============================================================
+  # CLOUD-248 FIX: frontend-react needs access to chat_socket
+  # which resides on developmentai_app-net (created by a
+  # different compose project). We add the external network
+  # reference so the frontend can resolve chat_socket hostname.
+  # ============================================================
   frontend-react:
     build:
       context: ./frontend_new
@@ -212,6 +218,7 @@ services:
       - "traefik.docker.network=cloudfly_app-net"
     networks:
       - app-net
+      - developmentai_app-net
 
 #  frontend-dev:
 #    image: node:18-alpine
@@ -597,3 +604,11 @@ networks:
     driver: bridge
   default:
     driver: bridge
+  # ============================================================
+  # CLOUD-248 FIX: External network for chat_socket connectivity
+  # The chat_socket container was created under a different compose
+  # project (developmentai) and lives on this network.
+  # frontend-react must be on this network to resolve chat_socket.
+  # ============================================================
+  developmentai_app-net:
+    external: true

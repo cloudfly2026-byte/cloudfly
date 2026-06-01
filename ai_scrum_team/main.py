@@ -902,7 +902,7 @@ def run_sprint():
         return _get_result("qa", "Sprint completado.")
 
     # ── Sequential Crew Execution (Legacy / Fallback) ────────────────────
-    def execute_crew_locally(sprint_goal, codebase_ctx, JIRA_ctx):
+    def execute_crew_locally(sprint_goal, codebase_ctx, JIRA_ctx, is_worker: bool = False):
         """
         Original sequential execution. Used as fallback or when parallel mode is disabled.
         """
@@ -918,12 +918,23 @@ def run_sprint():
             print("\n🚫 [Scrum Master]: Se detectó que DevOps no trabaja en esta historia. Excluyendo al DevOps Engineer del equipo de este Sprint...")
             exclude_devops = True
 
-        agents_list = [product_owner, system_architect, software_developer, frontend_developer, technical_writer, qa_engineer]
-        tasks_list = [sprint_planning, research_task, development_task, frontend_development_task, documentation_task, quality_assurance]
-
-        if not exclude_devops:
-            agents_list.insert(4, devops_engineer)
-            tasks_list.insert(4, deployment_prep)
+        if is_worker:
+            print("\n👷 [Worker Crew]: Iniciando ejecución directa de desarrollo, documentación y pruebas (excluyendo Product Owner / Sprint Planning)...")
+            agents_list = [system_architect, software_developer, frontend_developer]
+            tasks_list = [research_task, development_task, frontend_development_task]
+            if not exclude_devops:
+                agents_list.append(devops_engineer)
+                tasks_list.append(deployment_prep)
+            agents_list.extend([technical_writer, qa_engineer])
+            tasks_list.extend([documentation_task, quality_assurance])
+        else:
+            agents_list = [product_owner, system_architect, software_developer, frontend_developer]
+            tasks_list = [sprint_planning, research_task, development_task, frontend_development_task]
+            if not exclude_devops:
+                agents_list.append(devops_engineer)
+                tasks_list.append(deployment_prep)
+            agents_list.extend([technical_writer, qa_engineer])
+            tasks_list.extend([documentation_task, quality_assurance])
             
         scrum_crew = Crew(
             agents=agents_list,
@@ -1018,6 +1029,64 @@ def run_sprint():
             
         return result
 
+    # ── Worker Distribution Helper ─────────────────────────────────────────
+
+    def _get_available_workers() -> list:
+        """Returns a list of active worker IDs with valid heartbeats."""
+        if not use_distributed or not connector.is_master or not connector.redis_client:
+            return []
+        try:
+            workers = list(connector.redis_client.smembers("scrum:workers"))
+            active = [w for w in workers if connector.redis_client.get(f"scrum:heartbeat:{w}")]
+            return active
+        except Exception:
+            return []
+
+    def _is_task_already_assigned(task_id: str) -> bool:
+        """Check if a task is already locked/assigned in Redis."""
+        if not connector.redis_client:
+            return False
+        try:
+            return connector.redis_client.get(f"scrum:task:{task_id}") is not None
+        except Exception:
+            return False
+
+    def _distribute_issues_to_workers(issue_keys: list) -> list:
+        """
+        Distribute a list of Jira issue keys to available Workers via Redis queues.
+        Uses round-robin across active workers.
+        Returns the list of issue keys that could NOT be distributed (no workers available
+        or all workers busy), so the Master can execute them locally as fallback.
+        """
+        workers = _get_available_workers()
+        if not workers:
+            print("📋 [👑 Master]: No hay Workers activos. Ejecutando tareas localmente...")
+            return issue_keys  # All must be executed locally
+
+        undistributed = []
+        worker_idx = 0
+
+        for key in issue_keys:
+            # Skip if already assigned to a worker
+            if _is_task_already_assigned(key):
+                print(f"   ⏭️ [👑 Master]: Tarea {key} ya está asignada a un Worker. Saltando...")
+                continue
+
+            target_worker = workers[worker_idx % len(workers)]
+            success = connector.send_task(target_worker, key)
+            if success:
+                print(f"   📤 [👑 Master]: Tarea {key} delegada a Worker {target_worker}")
+                connector.update_task_status(key, "Asignada", f"Asignada al Worker {target_worker} por el Master.")
+            else:
+                undistributed.append(key)
+
+            worker_idx += 1
+
+        if undistributed:
+            print(f"   ⚠️ [👑 Master]: {len(undistributed)} tarea(s) no pudieron ser delegadas. El Master las ejecutará localmente.")
+
+        return undistributed
+
     # ── New Cascade Decision Functions ────────────────────────────────────
 
     def _build_resume_jira_context(resume_ctx: dict, key: str) -> str:
@@ -1037,20 +1106,17 @@ def run_sprint():
     def resume_active_story(issues: list, resume_context: dict):
         """
         Resume in-progress stories.
-        Only the agents implied by the current status re-engage.
-        Reads Jira comments to know where they left off.
+        If Workers are available, delegates tasks to them via Redis.
+        Otherwise, executes locally.
         """
         print("\n🔄 [Scrum Master]: Reanudando historia(s) en curso...")
 
+        # First pass: filter out closed issues and collect valid keys
+        valid_issues = []
         for issue in issues:
             key = issue.get("key", "Unknown")
             summary = issue.get("summary", "No summary")
             ctx = resume_context.get(key, {})
-
-            print(f"\n{'='*50}")
-            print(f"🔄 [Reanudando {key}]: {summary}")
-            print(f"   Status actual: {ctx.get('status', 'Unknown')}")
-            print(f"{'='*50}")
 
             # Verify latest status in Jira Cloud
             from tools import jira_wrapper
@@ -1064,7 +1130,7 @@ def run_sprint():
                 jira_status = ctx.get('status', 'Unknown').lower()
 
             if jira_status in CLOSED_STATUSES:
-                print(f"⚠️ [Scrum Master]: La historia {key} ya está cerrada en Jira con estado '{jira_status}'. Omitiendo y limpiando estado interno.")
+                print(f"⚠️ [Scrum Master]: La historia {key} ya está cerrada en Jira con estado '{jira_status}'. Omitiendo.")
                 if connector.redis_client:
                     try:
                         connector.redis_client.delete(f"scrum:task:{key}")
@@ -1072,6 +1138,33 @@ def run_sprint():
                     except Exception:
                         pass
                 continue
+
+            valid_issues.append(issue)
+
+        if not valid_issues:
+            print("📋 [Scrum Master]: No hay historias válidas para reanudar.")
+            return
+
+        # Try to distribute to Workers first
+        valid_keys = [i.get("key", "Unknown") for i in valid_issues]
+        undistributed_keys = _distribute_issues_to_workers(valid_keys)
+
+        if not undistributed_keys:
+            print(f"✅ [👑 Master]: Todas las {len(valid_keys)} historia(s) fueron delegadas a Workers exitosamente.")
+            return
+
+        # Fallback: execute locally only the undistributed ones
+        for issue in valid_issues:
+            key = issue.get("key", "Unknown")
+            if key not in undistributed_keys:
+                continue
+
+            summary = issue.get("summary", "No summary")
+            ctx = resume_context.get(key, {})
+
+            print(f"\n{'='*50}")
+            print(f"🔄 [Master ejecutando localmente {key}]: {summary}")
+            print(f"{'='*50}")
 
             jira_resume_str = _build_resume_jira_context(ctx, key)
             sprint_goal = (
@@ -1095,18 +1188,17 @@ def run_sprint():
     def complete_existing_tasks(issues: list):
         """
         Complete stories that already have tasks defined.
-        Runs the full pipeline but skips PO sprint planning (tasks already exist).
+        If Workers are available, delegates tasks to them via Redis.
+        Otherwise, executes locally.
         """
         print("\n📋 [Scrum Master]: Completando historias con tareas existentes...")
 
+        # First pass: filter out closed issues
+        valid_issues = []
         for issue in issues:
             key = issue.get("key", "Unknown")
             summary = issue.get("summary", "No summary")
             status = issue.get("status", "Unknown")
-
-            print(f"\n{'='*50}")
-            print(f"📋 [Completando {key}]: {summary} (status: {status})")
-            print(f"{'='*50}")
 
             # Verify latest status in Jira Cloud
             from tools import jira_wrapper
@@ -1119,7 +1211,7 @@ def run_sprint():
                 print(f"[!] Error al verificar estado de {key} en Jira: {e}")
 
             if jira_status in CLOSED_STATUSES:
-                print(f"⚠️ [Scrum Master]: El ticket {key} ya está cerrado en Jira con estado '{jira_status}'. Omitiendo y limpiando estado interno.")
+                print(f"⚠️ [Scrum Master]: El ticket {key} ya está cerrado en Jira con estado '{jira_status}'. Omitiendo.")
                 if connector.redis_client:
                     try:
                         connector.redis_client.delete(f"scrum:task:{key}")
@@ -1127,6 +1219,33 @@ def run_sprint():
                     except Exception:
                         pass
                 continue
+
+            valid_issues.append(issue)
+
+        if not valid_issues:
+            print("📋 [Scrum Master]: No hay tareas válidas para completar.")
+            return
+
+        # Try to distribute to Workers first
+        valid_keys = [i.get("key", "Unknown") for i in valid_issues]
+        undistributed_keys = _distribute_issues_to_workers(valid_keys)
+
+        if not undistributed_keys:
+            print(f"✅ [👑 Master]: Todas las {len(valid_keys)} tarea(s) fueron delegadas a Workers exitosamente.")
+            return
+
+        # Fallback: execute locally only the undistributed ones
+        for issue in valid_issues:
+            key = issue.get("key", "Unknown")
+            if key not in undistributed_keys:
+                continue
+
+            summary = issue.get("summary", "No summary")
+            status = issue.get("status", "Unknown")
+
+            print(f"\n{'='*50}")
+            print(f"📋 [Master ejecutando localmente {key}]: {summary} (status: {status})")
+            print(f"{'='*50}")
 
             jira_ctx = f"--- TICKET JIRA: {key} ---\nSummary: {summary}\nStatus: {status}\n---"
             sprint_goal = f"Completar y cerrar el ticket {key}: '{summary}'. Las subtareas ya están definidas en Jira."
@@ -1294,7 +1413,7 @@ Historial de Comentarios:
                 codebase_context = generate_codebase_context(sprint_goal)
                 
                 try:
-                    res = execute_crew_locally(sprint_goal, codebase_context, jira_ctx)
+                    res = execute_crew_locally(sprint_goal, codebase_context, jira_ctx, is_worker=True)
                     print(f"\n✅ [Worker {connector.instance_id}]: Tarea {task_id} completada con éxito.")
                     connector.update_task_status(task_id, "Finalizada", f"La tarea {task_id} fue resuelta y validada.")
                 except Exception as e:

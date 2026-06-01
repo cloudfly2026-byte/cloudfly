@@ -22,8 +22,7 @@
 
 import React from 'react'
 import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
-import { act } from 'react-dom/test-utils'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import { marketingHistoryService } from '@/services/marketing/marketingHistoryService'
 import type { MarketingActionEvent, MarketingAgent, AgentConnection } from '@/types/marketing/aiMarketing'
 
@@ -152,17 +151,6 @@ jest.mock('@/views/marketing/ai-operation/MarketingHistoryTimeline', () => ({
 // ---------------------------------------------------------------------------
 import MarketingLiveDashboardPage from '@/app/(dashboard)/marketing/ai-operation/page'
 
-// ---------------------------------------------------------------------------
-// Helper
-// ---------------------------------------------------------------------------
-function renderWithAct(ui: React.ReactElement) {
-  let result: ReturnType<typeof render>
-  act(() => {
-    result = render(ui)
-  })
-  return result!
-}
-
 // ===========================================================================
 // CLOUD-251: useSession Integration Tests
 // ===========================================================================
@@ -184,7 +172,7 @@ describe('CLOUD-251: useSession Integration — tenantId/companyId extraction', 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
@@ -197,7 +185,7 @@ describe('CLOUD-251: useSession Integration — tenantId/companyId extraction', 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
@@ -219,7 +207,7 @@ describe('CLOUD-251: useSession Integration — tenantId/companyId extraction', 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
@@ -241,7 +229,7 @@ describe('CLOUD-251: useSession Integration — tenantId/companyId extraction', 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
@@ -263,7 +251,7 @@ describe('CLOUD-251: useSession Integration — tenantId/companyId extraction', 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
@@ -291,7 +279,7 @@ describe('CLOUD-252: Event Merging — socket + REST deduplication', () => {
       events: restEvents, total: 2, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(marketingHistoryService.getActionHistory).toHaveBeenCalledTimes(1)
@@ -309,7 +297,7 @@ describe('CLOUD-252: Event Merging — socket + REST deduplication', () => {
       events: restEvents, total: 1, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Marketing Live Dashboard')).toBeInTheDocument()
@@ -331,7 +319,7 @@ describe('CLOUD-252: Event Merging — socket + REST deduplication', () => {
       events: manyRestEvents, total: 30, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Marketing Live Dashboard')).toBeInTheDocument()
@@ -347,7 +335,7 @@ describe('CLOUD-252: Event Merging — socket + REST deduplication', () => {
       events: restEvents, total: 1, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText(/Timeline/)).toBeInTheDocument()
@@ -369,7 +357,7 @@ describe('CLOUD-253: Stats Bar — Total Eventos + Last Update', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Agentes Activos')).toBeInTheDocument()
@@ -391,7 +379,7 @@ describe('CLOUD-253: Stats Bar — Total Eventos + Last Update', () => {
       events: restEvents, total: 3, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Total Eventos')).toBeInTheDocument()
@@ -405,7 +393,7 @@ describe('CLOUD-253: Stats Bar — Total Eventos + Last Update', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText(/Última actualización:/)).toBeInTheDocument()
@@ -424,7 +412,6 @@ describe('CLOUD-254: Responsive Layout — mobile/tablet/desktop', () => {
   })
 
   it('AC1: Agent cards section renders with agents from socket hook', async () => {
-    // Set agents in the mock BEFORE rendering so they're available immediately
     mockSocketReturn.agents = [
       { id: 'agent-1', name: 'bot1', displayName: 'Bot 1', role: 'Test', status: 'idle', currentTask: null, taskStartedAt: null, lastActivity: '2025-01-01T00:00:00Z', color: '#3b82f6', position: { x: 0, y: 0 } },
       { id: 'agent-2', name: 'bot2', displayName: 'Bot 2', role: 'Test', status: 'working', currentTask: 'Task', taskStartedAt: '2025-01-01T00:00:00Z', lastActivity: '2025-01-01T00:00:00Z', color: '#10b981', position: { x: 100, y: 0 } },
@@ -435,14 +422,12 @@ describe('CLOUD-254: Responsive Layout — mobile/tablet/desktop', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
-      // The "Estado de Agentes" section header should be present
       expect(screen.getByText('Estado de Agentes')).toBeInTheDocument()
     })
 
-    // Agent cards should be rendered (using displayName from mock)
     expect(screen.getByText('Bot 1')).toBeInTheDocument()
     expect(screen.getByText('Bot 2')).toBeInTheDocument()
     expect(screen.getByText('Bot 3')).toBeInTheDocument()
@@ -455,7 +440,7 @@ describe('CLOUD-254: Responsive Layout — mobile/tablet/desktop', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('No hay agentes disponibles. Esperando conexión...')).toBeInTheDocument()
@@ -467,7 +452,7 @@ describe('CLOUD-254: Responsive Layout — mobile/tablet/desktop', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const statLabels = ['Agentes Activos', 'Trabajando', 'En Espera', 'Errores', 'Total Eventos']
@@ -503,7 +488,7 @@ describe('CLOUD-255: Test Mock Verification — socket hook returns events (not 
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(marketingHistoryService.getActionHistory).toHaveBeenCalledWith(
@@ -541,7 +526,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Marketing Live Dashboard')).toBeInTheDocument()
@@ -556,7 +541,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(marketingHistoryService.getActionHistory).toHaveBeenCalledTimes(1)
@@ -572,7 +557,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText(/Timeline/)).toBeInTheDocument()
@@ -586,7 +571,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const chips = screen.getAllByTestId('Chip')
@@ -600,7 +585,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       new Error('Network error')
     )
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(
@@ -614,7 +599,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       events: [], total: 0, hasMore: false
     })
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       expect(screen.getByText('Marketing Live Dashboard')).toBeInTheDocument()
@@ -624,7 +609,6 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
   })
 
   it('AC7: No TypeScript compilation errors (verified by tsc --noEmit)', () => {
-    // If this test compiles and runs, TypeScript compilation succeeded
     expect(true).toBe(true)
   })
 
@@ -634,7 +618,7 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
     })
 
     expect(() => {
-      renderWithAct(React.createElement(MarketingLiveDashboardPage))
+      render(React.createElement(MarketingLiveDashboardPage))
     }).not.toThrow()
   })
 })
@@ -671,7 +655,7 @@ describe('CLOUD-256: Integration — Complete Data Flow', () => {
       { id: 'agent-1', name: 'bot1', displayName: 'Bot 1', role: 'Test', status: 'working', currentTask: 'Task', taskStartedAt: '2025-01-01T00:00:00Z', lastActivity: '2025-01-01T00:00:00Z', color: '#3b82f6', position: { x: 0, y: 0 } },
     ]
 
-    renderWithAct(React.createElement(MarketingLiveDashboardPage))
+    render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       const callArgs = (marketingHistoryService.getActionHistory as jest.Mock).mock.calls[0]
