@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react'
 import { Box, Typography } from '@mui/material'
 import type { MarketingAgent, AgentConnection } from '@/types/marketing/aiMarketing'
 
@@ -8,21 +8,44 @@ import type { MarketingAgent, AgentConnection } from '@/types/marketing/aiMarket
 // Layout constants
 // ---------------------------------------------------------------------------
 
-const CARD_WIDTH = 260
-const CARD_HEIGHT = 120
-const H_GAP = 60
+const CARD_WIDTH = 200
+const CARD_HEIGHT = 100
+const H_GAP = 40
 const V_GAP = 80
 const SVG_PADDING = 40
 
 // ---------------------------------------------------------------------------
-// Data flow color mapping
+// Predefined agent positions (from System Architect spec)
+// ---------------------------------------------------------------------------
+
+const AGENT_POSITIONS: Record<string, { x: number; y: number }> = {
+  researcher:          { x: 80,  y: 120 },
+  icp_agent:           { x: 280, y: 60  },
+  qualification_agent: { x: 480, y: 120 },
+  copywriter_agent:    { x: 680, y: 60  }
+}
+
+// ---------------------------------------------------------------------------
+// Data flow color mapping (aligned with spec: messages = #22c55e)
 // ---------------------------------------------------------------------------
 
 const DATA_FLOW_COLORS: Record<string, string> = {
-  leads: '#3b82f6',
+  leads:    '#3b82f6',
   analysis: '#8b5cf6',
-  messages: '#06b6d4',
-  context: '#f59e0b'
+  messages: '#22c55e',
+  context:  '#f59e0b'
+}
+
+// ---------------------------------------------------------------------------
+// Status color mapping
+// ---------------------------------------------------------------------------
+
+const STATUS_COLORS: Record<string, string> = {
+  working:   '#3b82f6',
+  waiting:   '#f59e0b',
+  error:     '#ef4444',
+  completed: '#10b981',
+  idle:      '#94a3b8'
 }
 
 // ---------------------------------------------------------------------------
@@ -30,17 +53,87 @@ const DATA_FLOW_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 interface AgentFlowGraphProps {
-  agents: MarketingAgent[];
-  connections: AgentConnection[];
+  agents: MarketingAgent[]
+  connections: AgentConnection[]
+  width?: number    // Default: 800
+  height?: number   // Default: 280
+  onAgentClick?: (agent: MarketingAgent) => void
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Helper: quadratic bezier midpoint at t=0.5
 // ---------------------------------------------------------------------------
 
-const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) => {
+const getBezierMidpoint = (
+  x1: number, y1: number,
+  cx: number, cy: number,
+  x2: number, y2: number
+): { x: number; y: number } => {
+  const t = 0.5
+  const mx = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2
+  const my = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2
+  return { x: mx, y: my }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: build curved SVG path (quadratic bezier, curves upward)
+// ---------------------------------------------------------------------------
+
+const buildCurvedPath = (
+  sourcePos: { x: number; y: number },
+  targetPos: { x: number; y: number }
+): { pathD: string; midX: number; midY: number; cx: number; cy: number } => {
+  const startX = sourcePos.x + 50
+  const startY = sourcePos.y + 25
+  const endX = targetPos.x
+  const endY = targetPos.y + 25
+
+  const midX = (sourcePos.x + targetPos.x) / 2
+  const midY = (sourcePos.y + targetPos.y) / 2 - 40 // Curve upward
+
+  const pathD = `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`
+
+  return { pathD, midX, midY, cx: midX, cy: midY }
+}
+
+// ---------------------------------------------------------------------------
+// Component (wrapped in React.memo for performance)
+// ---------------------------------------------------------------------------
+
+const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
+  agents,
+  connections,
+  width: propWidth,
+  height: propHeight,
+  onAgentClick
+}) => {
   // -----------------------------------------------------------------------
-  // Compute node positions — use agent.position if available, otherwise grid
+  // useRef + useEffect for responsive container measurement
+  // -----------------------------------------------------------------------
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dimensions, setDimensions] = useState({ width: propWidth ?? 800, height: propHeight ?? 280 })
+
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current && !propWidth && !propHeight) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setDimensions({
+          width: Math.max(800, rect.width),
+          height: Math.max(280, rect.height)
+        })
+      }
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [propWidth, propHeight])
+
+  const svgWidth = propWidth ?? dimensions.width
+  const svgHeight = propHeight ?? dimensions.height
+
+  // -----------------------------------------------------------------------
+  // Compute node positions — priority: AGENT_POSITIONS → agent.position → grid
   // -----------------------------------------------------------------------
 
   const cols = Math.max(1, Math.ceil(Math.sqrt(agents.length)))
@@ -48,14 +141,17 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
   const nodePositions = useMemo(() => {
     const map: Record<string, { x: number; y: number }> = {}
     agents.forEach((agent, index) => {
-      if (agent.position && typeof agent.position.x === 'number' && typeof agent.position.y === 'number') {
-        // Use position from agent data
+      if (AGENT_POSITIONS[agent.id]) {
+        // Priority 1: Predefined positions from spec
+        map[agent.id] = { ...AGENT_POSITIONS[agent.id] }
+      } else if (agent.position && typeof agent.position.x === 'number' && typeof agent.position.y === 'number') {
+        // Priority 2: Position from agent data
         map[agent.id] = {
           x: SVG_PADDING + agent.position.x,
           y: SVG_PADDING + agent.position.y
         }
       } else {
-        // Fallback to grid layout
+        // Priority 3: Grid fallback
         const col = index % cols
         const row = Math.floor(index / cols)
         map[agent.id] = {
@@ -67,32 +163,27 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
     return map
   }, [agents, cols])
 
-  // Calculate SVG dimensions based on actual positions
-  const positions = Object.values(nodePositions)
-  const maxX = positions.length > 0 ? Math.max(...positions.map(p => p.x)) + CARD_WIDTH / 2 + SVG_PADDING : 800
-  const maxY = positions.length > 0 ? Math.max(...positions.map(p => p.y)) + CARD_HEIGHT / 2 + SVG_PADDING : 600
-  const svgWidth = Math.max(800, maxX)
-  const svgHeight = Math.max(600, maxY)
-
   // -----------------------------------------------------------------------
-  // Helper: build a curved SVG path between two points
+  // Stable callback for agent click
   // -----------------------------------------------------------------------
 
-  const buildPath = (x1: number, y1: number, x2: number, y2: number): string => {
-    const midX = (x1 + x2) / 2
-    const midY = (y1 + y2) / 2
-    // Offset the control point perpendicular to the line for a curve
-    const dx = x2 - x1
-    const dy = y2 - y1
-    const len = Math.sqrt(dx * dx + dy * dy) || 1
-    const curvature = 30
-    const cx = midX + (-dy / len) * curvature
-    const cy = midY + (dx / len) * curvature
-    return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`
-  }
+  const handleAgentClick = useCallback((agent: MarketingAgent) => {
+    onAgentClick?.(agent)
+  }, [onAgentClick])
 
   // -----------------------------------------------------------------------
-  // Render
+  // Keyboard handler for accessibility
+  // -----------------------------------------------------------------------
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, agent: MarketingAgent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onAgentClick?.(agent)
+    }
+  }, [onAgentClick])
+
+  // -----------------------------------------------------------------------
+  // Empty state
   // -----------------------------------------------------------------------
 
   if (agents.length === 0) {
@@ -103,11 +194,21 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
     )
   }
 
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+
   return (
-    <Box sx={{ overflowX: 'auto', pb: 2 }}>
+    <Box
+      ref={containerRef}
+      sx={{ overflowX: 'auto', pb: 2 }}
+      role='img'
+      aria-label='Grafo de flujo de agentes de marketing'
+    >
       <svg
         width={svgWidth}
         height={svgHeight}
+        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         style={{ minWidth: svgWidth }}
       >
         <defs>
@@ -122,23 +223,47 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
           >
             <polygon points='0 0, 10 3.5, 0 7' fill='#94a3b8' />
           </marker>
-          {/* Animated gradient for active connections */}
-          <linearGradient id='flowGradient' x1='0%' y1='0%' x2='100%' y2='0%'>
-            <stop offset='0%' stopColor='#3b82f6' stopOpacity='0.3' />
-            <stop offset='50%' stopColor='#3b82f6' stopOpacity='1' />
-            <stop offset='100%' stopColor='#3b82f6' stopOpacity='0.3' />
-            <animate attributeName='x1' values='0%;100%;0%' dur='3s' repeatCount='indefinite' />
-            <animate attributeName='x2' values='100%;200%;100%' dur='3s' repeatCount='indefinite' />
-          </linearGradient>
+
+          {/* Arrowhead marker for active connections */}
+          <marker
+            id='arrowhead-active'
+            markerWidth='10'
+            markerHeight='7'
+            refX='10'
+            refY='3.5'
+            orient='auto'
+          >
+            <polygon points='0 0, 10 3.5, 0 7' fill='#22c55e' />
+          </marker>
+
+          {/* Glow filter for active connections */}
+          <filter id='glow' x='-50%' y='-50%' width='200%' height='200%'>
+            <feGaussianBlur stdDeviation='3' result='coloredBlur' />
+            <feMerge>
+              <feMergeNode in='coloredBlur' />
+              <feMergeNode in='SourceGraphic' />
+            </feMerge>
+          </filter>
+
+          {/* Glow filter for working agent pulse */}
+          <filter id='glow-soft' x='-50%' y='-50%' width='200%' height='200%'>
+            <feGaussianBlur stdDeviation='4' result='coloredBlur' />
+            <feMerge>
+              <feMergeNode in='coloredBlur' />
+              <feMergeNode in='SourceGraphic' />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Draw connections */}
+        {/* ------------------------------------------------------------- */}
+        {/* Draw connections                                              */}
+        {/* ------------------------------------------------------------- */}
         {connections.map((conn) => {
           const fromPos = nodePositions[conn.sourceAgentId]
           const toPos = nodePositions[conn.targetAgentId]
           if (!fromPos || !toPos) return null
 
-          const pathD = buildPath(fromPos.x, fromPos.y, toPos.x, toPos.y)
+          const { pathD, midX, midY } = buildCurvedPath(fromPos, toPos)
 
           // Check if either agent is working → animate the flow
           const fromAgent = agents.find(a => a.id === conn.sourceAgentId)
@@ -148,53 +273,129 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
           )
 
           // Determine stroke color based on dataFlow
-          const strokeColor = isActive
-            ? 'url(#flowGradient)'
-            : (conn.dataFlow && DATA_FLOW_COLORS[conn.dataFlow])
-              ? DATA_FLOW_COLORS[conn.dataFlow]
-              : '#cbd5e1'
+          const baseColor = (conn.dataFlow && DATA_FLOW_COLORS[conn.dataFlow])
+            ? DATA_FLOW_COLORS[conn.dataFlow]
+            : '#cbd5e1'
+
+          const strokeColor = isActive ? '#22c55e' : baseColor
 
           return (
-            <g key={conn.id || `${conn.sourceAgentId}-${conn.targetAgentId}`}>
-              {/* Connection line */}
+            <g
+              key={conn.id || `${conn.sourceAgentId}-${conn.targetAgentId}`}
+              style={{ transition: 'opacity 0.3s ease' }}
+            >
+              {/* Base connection line */}
               <path
                 d={pathD}
                 fill='none'
                 stroke={strokeColor}
                 strokeWidth={isActive ? 3 : 2}
-                markerEnd='url(#arrowhead)'
+                markerEnd={isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)'}
                 strokeDasharray={isActive ? 'none' : '6 4'}
-              />
-              {/* Label */}
-              {conn.label && (
-                <text
-                  x={(fromPos.x + toPos.x) / 2}
-                  y={(fromPos.y + toPos.y) / 2 - 8}
-                  textAnchor='middle'
-                  fontSize='11'
-                  fill='#64748b'
-                  fontWeight={500}
+                filter={isActive ? 'url(#glow)' : undefined}
+                opacity={0}
+              >
+                {/* Fade-in animation for new connections */}
+                <animate attributeName='opacity' values='0;1' dur='0.3s' fill='freeze' />
+              </path>
+
+              {/* Animated dash flow overlay on active connections */}
+              {isActive && (
+                <path
+                  d={pathD}
+                  fill='none'
+                  stroke='rgba(255,255,255,0.7)'
+                  strokeWidth={3}
+                  strokeDasharray='8 6'
+                  strokeLinecap='round'
+                  opacity={0}
                 >
-                  {conn.label}
-                </text>
+                  <animate attributeName='stroke-dashoffset' values='0;-28' dur='0.8s' repeatCount='indefinite' />
+                  <animate attributeName='opacity' values='0;1' dur='0.3s' fill='freeze' />
+                </path>
+              )}
+
+              {/* Label at bezier curve midpoint */}
+              {conn.label && (
+                <g opacity={0}>
+                  <rect
+                    x={midX - conn.label.length * 3.5 - 6}
+                    y={midY - 18}
+                    width={conn.label.length * 7 + 12}
+                    height={20}
+                    rx={4}
+                    fill='rgba(255,255,255,0.92)'
+                    stroke={strokeColor}
+                    strokeWidth={0.5}
+                  />
+                  <text
+                    x={midX}
+                    y={midY - 5}
+                    textAnchor='middle'
+                    fontSize='11'
+                    fill='#334155'
+                    fontWeight={600}
+                  >
+                    {conn.label}
+                  </text>
+                  <animate attributeName='opacity' values='0;1' dur='0.3s' begin='0.1s' fill='freeze' />
+                </g>
               )}
             </g>
           )
         })}
 
-        {/* Draw agent nodes */}
+        {/* ------------------------------------------------------------- */}
+        {/* Draw agent nodes                                              */}
+        {/* ------------------------------------------------------------- */}
         {agents.map(agent => {
           const pos = nodePositions[agent.id]
           if (!pos) return null
 
-          const statusColor =
-            agent.status === 'working' ? '#3b82f6' :
-            agent.status === 'waiting' ? '#f59e0b' :
-            agent.status === 'error' ? '#ef4444' :
-            agent.status === 'completed' ? '#10b981' : '#94a3b8'
+          const statusColor = STATUS_COLORS[agent.status] || STATUS_COLORS.idle
+          const isWorking = agent.status === 'working'
 
           return (
-            <g key={agent.id}>
+            <g
+              key={agent.id}
+              onClick={() => handleAgentClick(agent)}
+              onKeyDown={(e) => handleKeyDown(e, agent)}
+              style={{ cursor: onAgentClick ? 'pointer' : 'default' }}
+              role={onAgentClick ? 'button' : undefined}
+              tabIndex={onAgentClick ? 0 : undefined}
+              aria-label={`${agent.displayName || agent.name} - ${agent.status}`}
+            >
+              {/* Pulse rings for working agents */}
+              {isWorking && (
+                <>
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={28}
+                    fill='none'
+                    stroke={statusColor}
+                    strokeWidth='2'
+                    opacity='0.4'
+                    filter='url(#glow-soft)'
+                  >
+                    <animate attributeName='r' values='28;40;28' dur='1.5s' repeatCount='indefinite' />
+                    <animate attributeName='opacity' values='0.4;0;0.4' dur='1.5s' repeatCount='indefinite' />
+                  </circle>
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={28}
+                    fill='none'
+                    stroke={statusColor}
+                    strokeWidth='2'
+                    opacity='0.3'
+                  >
+                    <animate attributeName='r' values='28;50;28' dur='1.5s' begin='0.5s' repeatCount='indefinite' />
+                    <animate attributeName='opacity' values='0.3;0;0.3' dur='1.5s' begin='0.5s' repeatCount='indefinite' />
+                  </circle>
+                </>
+              )}
+
               {/* Card background */}
               <rect
                 x={pos.x - CARD_WIDTH / 2}
@@ -204,8 +405,9 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
                 rx={12}
                 fill='#fff'
                 stroke={statusColor}
-                strokeWidth={2}
+                strokeWidth={isWorking ? 2.5 : 2}
               />
+
               {/* Status indicator dot */}
               <circle
                 cx={pos.x + CARD_WIDTH / 2 - 14}
@@ -213,10 +415,11 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
                 r={6}
                 fill={statusColor}
               >
-                {agent.status === 'working' && (
+                {isWorking && (
                   <animate attributeName='r' values='6;9;6' dur='1.5s' repeatCount='indefinite' />
                 )}
               </circle>
+
               {/* Agent name */}
               <text
                 x={pos.x}
@@ -228,6 +431,7 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
               >
                 {agent.displayName || agent.name}
               </text>
+
               {/* Current task (truncated) */}
               <text
                 x={pos.x}
@@ -236,8 +440,8 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
                 fontSize='11'
                 fill='#64748b'
               >
-                {agent.currentTask && agent.currentTask.length > 28
-                  ? agent.currentTask.substring(0, 28) + '…'
+                {agent.currentTask && agent.currentTask.length > 24
+                  ? agent.currentTask.substring(0, 24) + '…'
                   : agent.currentTask || 'Sin tarea'}
               </text>
             </g>
@@ -246,6 +450,8 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = ({ agents, connections }) 
       </svg>
     </Box>
   )
-}
+})
+
+AgentFlowGraph.displayName = 'AgentFlowGraph'
 
 export default AgentFlowGraph
