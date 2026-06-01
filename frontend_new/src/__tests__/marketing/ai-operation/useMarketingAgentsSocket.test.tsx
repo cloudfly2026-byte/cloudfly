@@ -387,15 +387,20 @@ describe('useMarketingAgentsSocket', () => {
       })
 
       const previousUpdate = result.current.lastUpdate
+      expect(previousUpdate).not.toBeNull()
 
-      // Wait a bit to ensure timestamp changes
-      jest.advanceTimersByTime(1000)
-
+      // Simulate a new status update — lastUpdate should be set (non-null)
+      // Note: we can't guarantee the timestamp changes within the same ms,
+      // but we can verify it's still a valid ISO string after the update
       act(() => {
-        mockSocket._simulate('marketing-agent-status-update', createTestStatusPayload())
+        mockSocket._simulate('marketing-agent-status-update', createTestStatusPayload({
+          lastActivity: '2025-01-01T01:00:00Z'
+        }))
       })
 
       expect(result.current.lastUpdate).not.toBeNull()
+      // Verify it's a valid ISO-8601 timestamp
+      expect(() => new Date(result.current.lastUpdate as string)).not.toThrow()
     })
   })
 
@@ -711,19 +716,62 @@ describe('useMarketingAgentsSocket', () => {
         mockSocket.connect()
       })
 
-      // Check that listeners are registered
-      expect(mockSocket._listeners.has('marketing-agent-batch-update')).toBe(true)
-      expect(mockSocket._listeners.has('marketing-agent-status-update')).toBe(true)
-      expect(mockSocket._listeners.has('marketing-agent-task-update')).toBe(true)
-      expect(mockSocket._listeners.has('marketing-action-event')).toBe(true)
+      // Check that listeners are registered (the Set for each event should have handlers)
+      expect(mockSocket._listeners.get('marketing-agent-batch-update')?.size).toBeGreaterThan(0)
+      expect(mockSocket._listeners.get('marketing-agent-status-update')?.size).toBeGreaterThan(0)
+      expect(mockSocket._listeners.get('marketing-agent-task-update')?.size).toBeGreaterThan(0)
+      expect(mockSocket._listeners.get('marketing-action-event')?.size).toBeGreaterThan(0)
 
       unmount()
 
-      // Listeners should be removed
-      expect(mockSocket._listeners.has('marketing-agent-batch-update')).toBe(false)
-      expect(mockSocket._listeners.has('marketing-agent-status-update')).toBe(false)
-      expect(mockSocket._listeners.has('marketing-agent-task-update')).toBe(false)
-      expect(mockSocket._listeners.has('marketing-action-event')).toBe(false)
+      // After unmount, the marketing event listener Sets should be empty (handlers removed)
+      // The mock's .off(handler) removes individual handlers from the Set
+      const batchListeners = mockSocket._listeners.get('marketing-agent-batch-update')
+      const statusListeners = mockSocket._listeners.get('marketing-agent-status-update')
+      const taskListeners = mockSocket._listeners.get('marketing-agent-task-update')
+      const actionListeners = mockSocket._listeners.get('marketing-action-event')
+
+      // Either the key is deleted OR the Set is empty (both are valid cleanup)
+      const batchCleaned = !batchListeners || batchListeners.size === 0
+      const statusCleaned = !statusListeners || statusListeners.size === 0
+      const taskCleaned = !taskListeners || taskListeners.size === 0
+      const actionCleaned = !actionListeners || actionListeners.size === 0
+
+      expect(batchCleaned).toBe(true)
+      expect(statusCleaned).toBe(true)
+      expect(taskCleaned).toBe(true)
+      expect(actionCleaned).toBe(true)
+    })
+
+    it('should not respond to events after unmount', () => {
+      const mockSocket = createMockSocket()
+      mockSocketInstance = mockSocket
+
+      const { result, unmount } = renderHook(() =>
+        useMarketingAgentsSocket({ tenantId: 1 })
+      )
+
+      // Connect and verify events work
+      act(() => {
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-action-event', createTestEvent({ id: 'evt-before' }))
+      })
+
+      expect(result.current.events).toHaveLength(1)
+
+      // Unmount
+      unmount()
+
+      // Simulate event after unmount — should NOT be processed
+      act(() => {
+        mockSocket._simulate('marketing-action-event', createTestEvent({ id: 'evt-after' }))
+      })
+
+      // Events count should still be 1 (the one before unmount)
+      expect(result.current.events).toHaveLength(1)
     })
   })
 

@@ -1,5 +1,5 @@
 /**
- * CLOUD-219: Automated unit tests for AbortController cleanup in ai-operation/page.tsx
+ * CLOUD-229: Integration tests for AbortController cleanup in ai-operation/page.tsx
  *
  * These tests verify that:
  * 1. The component calls marketingHistoryService.getActionHistory on mount
@@ -8,11 +8,11 @@
  * 4. AbortError is handled gracefully (no error state set)
  * 5. The reconnect handler triggers both WS reconnect and REST refetch
  * 6. No memory leaks from unclosed requests
+ * 7. Hook + page integration with mock socket events
  */
 
 import React from 'react'
-import { render, unmountComponentAtNode } from 'react-dom'
-import { act } from 'react-dom/test-utils'
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react'
 
 // ---------------------------------------------------------------------------
 // Mocks (must be defined before imports)
@@ -20,14 +20,30 @@ import { act } from 'react-dom/test-utils'
 
 // Mock the socket hook
 const mockReconnect = jest.fn()
+let mockAgents: any[] = []
+let mockConnections: any[] = []
+let mockEvents: any[] = []
+let mockIsConnected = true
+let mockConnectionStatus: 'connected' | 'disconnected' | 'reconnecting' = 'connected'
+let mockLastUpdate: string | null = null
+
+const resetMockSocket = () => {
+  mockAgents = []
+  mockConnections = []
+  mockEvents = []
+  mockIsConnected = true
+  mockConnectionStatus = 'connected'
+  mockLastUpdate = null
+}
+
 jest.mock('@/hooks/useMarketingAgentsSocket', () => ({
   useMarketingAgentsSocket: () => ({
-    agents: [],
-    connections: [],
-    recentEvents: [],
-    isConnected: true,
-    connectionStatus: 'connected' as const,
-    lastUpdate: null,
+    agents: mockAgents,
+    connections: mockConnections,
+    events: mockEvents,
+    isConnected: mockIsConnected,
+    connectionStatus: mockConnectionStatus,
+    lastUpdate: mockLastUpdate,
     reconnect: mockReconnect
   })
 }))
@@ -40,85 +56,61 @@ jest.mock('@/services/marketing/marketingHistoryService', () => ({
   }
 }))
 
-// Mock MUI components to simplify rendering
-jest.mock('@mui/material', () => {
-  const React = require('react')
-  return {
-    Box: ({ children, ...props }: any) => React.createElement('div', props, children),
-    Typography: ({ children, ...props }: any) => React.createElement('span', props, children),
-    Grid: ({ children, ...props }: any) => React.createElement('div', props, children),
-    Paper: ({ children, ...props }: any) => React.createElement('div', props, children),
-    Chip: ({ children, ...props }: any) => React.createElement('span', props, children),
-    Stack: ({ children, ...props }: any) => React.createElement('div', props, children),
-    Alert: ({ children, ...props }: any) => React.createElement('div', props, children),
-    CircularProgress: (props: any) => React.createElement('div', { 'data-testid': 'loading' }),
-    Button: ({ children, onClick, ...props }: any) =>
-      React.createElement('button', { onClick, ...props }, children),
-    Divider: () => React.createElement('hr'),
-    Fade: ({ children }: any) => React.createElement('div', null, children),
-    Zoom: ({ children }: any) => React.createElement('div', null, children)
-  }
-})
+// Mock next-auth/react
+jest.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: {
+      user: {
+        tenantId: 1,
+        customerId: 1,
+        activeCompanyId: undefined,
+        company_id: undefined
+      }
+    }
+  })
+}))
 
-jest.mock('lucide-react', () => {
-  const React = require('react')
-  return {
-    Wifi: (props: any) => React.createElement('svg', props),
-    WifiOff: (props: any) => React.createElement('svg', props),
-    RefreshCw: (props: any) => React.createElement('svg', props),
-    Users: (props: any) => React.createElement('svg', props),
-    Activity: (props: any) => React.createElement('svg', props),
-    Zap: (props: any) => React.createElement('svg', props),
-    Loader: (props: any) => React.createElement('svg', props)
-  }
-})
+// Mock the UI components
+jest.mock('@/views/marketing/ai-operation/LiveAgentCard', () => ({
+  __esModule: true,
+  default: ({ agent }: any) => <div data-testid={`agent-card-${agent.id}`}>{agent.name}</div>
+}))
+
+jest.mock('@/views/marketing/ai-operation/AgentFlowGraph', () => ({
+  __esModule: true,
+  default: () => <div data-testid='flow-graph'>Flow Graph</div>
+}))
+
+jest.mock('@/views/marketing/ai-operation/MarketingHistoryTimeline', () => ({
+  __esModule: true,
+  default: () => <div data-testid='history-timeline'>History Timeline</div>
+}))
 
 // ---------------------------------------------------------------------------
 // Import the component AFTER mocks
 // ---------------------------------------------------------------------------
 
-// We need to import the component dynamically to ensure mocks are in place
-let MarketingLiveDashboardPage: any
-
-beforeAll(() => {
-  // Dynamic import after mocks are set up
-  try {
-    const mod = require('@/app/(dashboard)/marketing/ai-operation/page')
-    MarketingLiveDashboardPage = mod.default
-  } catch {
-    // If the module can't be loaded (e.g. Next.js specific imports),
-    // we'll test the service-level behavior instead
-    MarketingLiveDashboardPage = null
-  }
-})
+import MarketingLiveDashboardPage from '@/app/(dashboard)/marketing/ai-operation/page'
 
 // ---------------------------------------------------------------------------
 // Test Suite
 // ---------------------------------------------------------------------------
 
-describe('CLOUD-219: AbortController Cleanup Verification', () => {
-  let container: HTMLDivElement | null = null
-
+describe('CLOUD-229: AbortController Cleanup & Page Integration', () => {
   beforeEach(() => {
-    container = document.createElement('div')
-    document.body.appendChild(container)
     mockGetActionHistory.mockReset()
     mockReconnect.mockReset()
+    resetMockSocket()
     // Default: resolve immediately with empty data
     mockGetActionHistory.mockResolvedValue({
-      agents: [],
-      connections: [],
-      recentEvents: [],
-      generatedAt: new Date().toISOString()
+      events: [],
+      total: 0,
+      hasMore: false
     })
   })
 
   afterEach(() => {
-    if (container) {
-      unmountComponentAtNode(container)
-      container.remove()
-      container = null
-    }
+    cleanup()
     jest.clearAllMocks()
   })
 
@@ -126,22 +118,17 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
   // Test 1: Service is called on mount
   // =========================================================================
   test('marketingHistoryService.getActionHistory is called on component mount', async () => {
-    if (!MarketingLiveDashboardPage) {
-      // Fallback: verify the service mock is callable
-      expect(mockGetActionHistory).toBeDefined()
-      return
-    }
+    render(<MarketingLiveDashboardPage />)
 
-    await act(async () => {
-      render(React.createElement(MarketingLiveDashboardPage), container)
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
     })
 
-    expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
     expect(mockGetActionHistory).toHaveBeenCalledWith(
-      1,       // tenantId
-      50,      // limit
-      0,       // page
-      undefined, // companyId
+      1,            // tenantId
+      50,           // limit
+      0,            // page
+      undefined,    // companyId
       expect.any(AbortSignal) // signal
     )
   })
@@ -150,13 +137,10 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
   // Test 2: AbortSignal is passed to the service
   // =========================================================================
   test('AbortSignal is passed as the 5th argument to getActionHistory', async () => {
-    if (!MarketingLiveDashboardPage) {
-      expect(true).toBe(true) // Skip if component can't be loaded
-      return
-    }
+    render(<MarketingLiveDashboardPage />)
 
-    await act(async () => {
-      render(React.createElement(MarketingLiveDashboardPage), container)
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
     })
 
     const callArgs = mockGetActionHistory.mock.calls[0]
@@ -168,17 +152,10 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
   // Test 3: AbortController abort is called on unmount
   // =========================================================================
   test('AbortController.abort is called when component unmounts', async () => {
-    if (!MarketingLiveDashboardPage) {
-      // Verify AbortController behavior directly
-      const controller = new AbortController()
-      expect(controller.signal.aborted).toBe(false)
-      controller.abort()
-      expect(controller.signal.aborted).toBe(true)
-      return
-    }
+    const { unmount } = render(<MarketingLiveDashboardPage />)
 
-    await act(async () => {
-      render(React.createElement(MarketingLiveDashboardPage), container)
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
     })
 
     // Capture the signal that was passed
@@ -186,9 +163,7 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
     expect(signal.aborted).toBe(false)
 
     // Unmount the component
-    await act(async () => {
-      unmountComponentAtNode(container!)
-    })
+    unmount()
 
     // The signal should be aborted after unmount
     expect(signal.aborted).toBe(true)
@@ -198,40 +173,18 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
   // Test 4: AbortError does not set error state
   // =========================================================================
   test('AbortError from service does not set error state', async () => {
-    // Simulate an AbortError
     const abortError = new Error('Aborted')
     abortError.name = 'AbortError'
     mockGetActionHistory.mockRejectedValue(abortError)
 
-    if (!MarketingLiveDashboardPage) {
-      // Verify the isAbortError logic from the service
-      const isAbortError = (error: unknown): boolean => {
-        if (error && typeof error === 'object') {
-          const name = (error as { name?: string }).name
-          if (name === 'AbortError' || name === 'CanceledError') return true
-          const code = (error as { code?: string }).code
-          if (code === 'ERR_CANCELED') return true
-        }
-        return false
-      }
-      expect(isAbortError(abortError)).toBe(true)
-      return
-    }
+    render(<MarketingLiveDashboardPage />)
 
-    await act(async () => {
-      render(React.createElement(MarketingLiveDashboardPage), container)
-    })
-
-    // Wait for the async effect to complete
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 50))
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
     })
 
     // The component should NOT show an error alert for AbortError
-    const errorAlert = container!.querySelector('[data-testid="error-alert"]')
-    // Since we're using mocked MUI, we check that no error text is rendered
-    const errorText = container!.textContent
-    expect(errorText).not.toContain('Error al cargar')
+    expect(screen.queryByText(/Error al cargar/)).not.toBeInTheDocument()
   })
 
   // =========================================================================
@@ -242,39 +195,17 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
     networkError.name = 'NetworkError'
     mockGetActionHistory.mockRejectedValue(networkError)
 
-    if (!MarketingLiveDashboardPage) {
-      // Verify the isAbortError logic returns false for non-abort errors
-      const isAbortError = (error: unknown): boolean => {
-        if (error && typeof error === 'object') {
-          const name = (error as { name?: string }).name
-          if (name === 'AbortError' || name === 'CanceledError') return true
-          const code = (error as { code?: string }).code
-          if (code === 'ERR_CANCELED') return true
-        }
-        return false
-      }
-      expect(isAbortError(networkError)).toBe(false)
-      return
-    }
+    render(<MarketingLiveDashboardPage />)
 
-    await act(async () => {
-      render(React.createElement(MarketingLiveDashboardPage), container)
+    await waitFor(() => {
+      expect(screen.getByText(/Error al cargar/)).toBeInTheDocument()
     })
-
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 50))
-    })
-
-    // The component SHOULD show an error for non-abort errors
-    const errorText = container!.textContent
-    expect(errorText).toContain('Error al cargar')
   })
 
   // =========================================================================
   // Test 6: isAbortError helper detects all abort variants
   // =========================================================================
   test('isAbortError detects AbortError, CanceledError, and ERR_CANCELED', () => {
-    // This mirrors the isAbortError function in marketingHistoryService.ts
     const isAbortError = (error: unknown): boolean => {
       if (error && typeof error === 'object') {
         const name = (error as { name?: string }).name
@@ -298,7 +229,7 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
     // Axios ERR_CANCELED code
     const errCanceled = new Error('Request canceled')
     errCanceled.name = 'Error'
-    ;(errCanceled as any).code = 'ERR_CANCELED'
+      ;(errCanceled as any).code = 'ERR_CANCELED'
     expect(isAbortError(errCanceled)).toBe(true)
 
     // Non-abort error
@@ -315,67 +246,112 @@ describe('CLOUD-219: AbortController Cleanup Verification', () => {
   // Test 7: Service returns correct fallback on abort
   // =========================================================================
   test('marketingHistoryService.getActionHistory returns fallback on abort', async () => {
-    // Simulate the service behavior when aborted
     const abortError = new Error('Aborted')
     abortError.name = 'AbortError'
     mockGetActionHistory.mockRejectedValue(abortError)
 
-    // The service should catch the abort and return a fallback
     const result = await mockGetActionHistory(1, 50, 0, undefined, new AbortController().signal)
       .catch((err: any) => {
         if (err.name === 'AbortError') {
-          return { agents: [], connections: [], recentEvents: [], generatedAt: new Date().toISOString() }
+          return { events: [], total: 0, hasMore: false }
         }
         throw err
       })
 
     expect(result).toEqual(expect.objectContaining({
-      agents: [],
-      connections: [],
-      recentEvents: [],
-      generatedAt: expect.any(String)
+      events: [],
+      total: 0,
+      hasMore: false
     }))
   })
 
   // =========================================================================
-  // Test 8: Multiple rapid mounts/unmounts don't cause memory leaks
+  // Test 8: Multiple rapid mounts/unmounts abort all pending requests
   // =========================================================================
   test('rapid mount/unmount cycles properly abort all pending requests', async () => {
-    const controllers: AbortController[] = []
+    const signals: AbortSignal[] = []
 
-    // Simulate multiple mount/unmount cycles
     for (let i = 0; i < 5; i++) {
-      const controller = new AbortController()
-      controllers.push(controller)
-
-      // Simulate the service being called with this controller's signal
       mockGetActionHistory.mockResolvedValueOnce({
-        agents: [],
-        connections: [],
-        recentEvents: [],
-        generatedAt: new Date().toISOString()
+        events: [],
+        total: 0,
+        hasMore: false
       })
 
-      // Simulate unmount: abort the controller
-      controller.abort()
+      const { unmount } = render(<MarketingLiveDashboardPage />)
+
+      // Capture the signal passed in this render cycle
+      const signal = mockGetActionHistory.mock.calls[mockGetActionHistory.mock.calls.length - 1][4] as AbortSignal
+      signals.push(signal)
+
+      // Before unmount, signal should not be aborted
+      expect(signal.aborted).toBe(false)
+
+      // Unmount
+      unmount()
     }
 
-    // All controllers should be aborted
-    controllers.forEach(controller => {
-      expect(controller.signal.aborted).toBe(true)
+    // All signals should be aborted after their respective unmounts
+    signals.forEach(signal => {
+      expect(signal.aborted).toBe(true)
     })
+  })
+
+  // =========================================================================
+  // Test 9: Page renders connection status chip
+  // =========================================================================
+  test('page renders connection status chip from hook', async () => {
+    render(<MarketingLiveDashboardPage />)
+
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
+    })
+
+    // Should show "Conectado" since mockConnectionStatus defaults to 'connected'
+    expect(screen.getByText('Conectado')).toBeInTheDocument()
+  })
+
+  // =========================================================================
+  // Test 10: Page renders with disconnected status
+  // =========================================================================
+  test('page renders disconnected status chip', async () => {
+    mockConnectionStatus = 'disconnected'
+
+    render(<MarketingLiveDashboardPage />)
+
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
+    })
+
+    expect(screen.getByText('Desconectado')).toBeInTheDocument()
+
+    // Reset
+    mockConnectionStatus = 'connected'
+  })
+
+  // =========================================================================
+  // Test 11: Reconnect button calls hook reconnect
+  // =========================================================================
+  test('reconnect button triggers hook reconnect', async () => {
+    render(<MarketingLiveDashboardPage />)
+
+    await waitFor(() => {
+      expect(mockGetActionHistory).toHaveBeenCalledTimes(1)
+    })
+
+    const reconnectButton = screen.getByText('Reconectar')
+    fireEvent.click(reconnectButton)
+
+    expect(mockReconnect).toHaveBeenCalledTimes(1)
   })
 })
 
 // ---------------------------------------------------------------------------
-// Test Suite: useMarketingAgentsSocket Hook Verification
+// Test Suite: useMarketingAgentsSocket Hook Source Verification
 // ---------------------------------------------------------------------------
 
-describe('CLOUD-219: useMarketingAgentsSocket Hook Verification', () => {
-  // These tests verify the hook's event handling behavior
-
+describe('CLOUD-229: useMarketingAgentsSocket Hook Source Verification', () => {
   test('socket event handlers are properly memoized with useCallback', () => {
-    // Verify that the hook structure is correct by checking the source
     const fs = require('fs')
     const path = require('path')
     const hookPath = path.join(__dirname, '../../hooks/useMarketingAgentsSocket.ts')
@@ -410,7 +386,7 @@ describe('CLOUD-219: useMarketingAgentsSocket Hook Verification', () => {
 // Test Suite: marketingHistoryService AbortSignal Support
 // ---------------------------------------------------------------------------
 
-describe('CLOUD-219: marketingHistoryService AbortSignal Support', () => {
+describe('CLOUD-229: marketingHistoryService AbortSignal Support', () => {
   test('all service methods accept optional AbortSignal parameter', () => {
     const fs = require('fs')
     const path = require('path')
@@ -441,7 +417,7 @@ describe('CLOUD-219: marketingHistoryService AbortSignal Support', () => {
 // Test Suite: SocketContext Verification
 // ---------------------------------------------------------------------------
 
-describe('CLOUD-219: SocketContext Verification', () => {
+describe('CLOUD-229: SocketContext Verification', () => {
   test('SocketContext connects with correct auth and auto-reconnect', () => {
     const fs = require('fs')
     const path = require('path')

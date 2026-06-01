@@ -3,14 +3,16 @@
  *
  * Tests the /api/marketing/emit and /api/marketing/rooms endpoints
  * that allow backend services to emit marketing socket events via REST.
+ *
+ * Uses a manual HTTP request approach instead of supertest to avoid
+ * dependency issues in the test environment.
  */
 
-const express = require('express');
-const request = require('supertest');
-const { emitToMarketingRoom, getMarketingRoomName } = require('../src/handlers/marketingHandler');
+const http = require('http');
+const { emitToMarketingRoom, getMarketingRoomName } = require('../../handlers/marketingHandler');
 
 // Mock logger
-jest.mock('../src/utils/logger', () => ({
+jest.mock('../../utils/logger', () => ({
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn()
@@ -18,6 +20,7 @@ jest.mock('../src/utils/logger', () => ({
 
 // Create a minimal Express app with the marketing router
 function createTestApp() {
+    const express = require('express');
     const app = express();
     app.use(express.json());
 
@@ -40,10 +43,58 @@ function createTestApp() {
 
     app.set('io', mockIo);
 
-    const marketingRouter = require('../src/routes/marketing');
+    const marketingRouter = require('../marketing');
     app.use('/api/marketing', marketingRouter);
 
     return { app, mockIo };
+}
+
+// Helper: make HTTP request to Express app without supertest
+function makeRequest(app, method, path, body) {
+    return new Promise((resolve, reject) => {
+        const server = http.createServer(app);
+        server.listen(0, () => {
+            const port = server.address().port;
+            const options = {
+                hostname: 'localhost',
+                port: port,
+                path: path,
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            const req = http.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    server.close();
+                    try {
+                        resolve({
+                            status: res.statusCode,
+                            body: JSON.parse(data)
+                        });
+                    } catch (e) {
+                        resolve({
+                            status: res.statusCode,
+                            body: data
+                        });
+                    }
+                });
+            });
+
+            req.on('error', (err) => {
+                server.close();
+                reject(err);
+            });
+
+            if (body) {
+                req.write(JSON.stringify(body));
+            }
+            req.end();
+        });
+    });
 }
 
 describe('Marketing REST API', () => {
@@ -52,16 +103,14 @@ describe('Marketing REST API', () => {
         it('should emit marketing-batch-update event', async () => {
             const { app, mockIo } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({
-                    event: 'marketing-batch-update',
-                    tenantId: 1,
-                    payload: {
-                        agents: [{ id: 'agent-1', status: 'idle' }],
-                        connections: []
-                    }
-                });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                event: 'marketing-batch-update',
+                tenantId: 1,
+                payload: {
+                    agents: [{ id: 'agent-1', status: 'idle' }],
+                    connections: []
+                }
+            });
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
@@ -72,14 +121,12 @@ describe('Marketing REST API', () => {
         it('should emit event with companyId', async () => {
             const { app, mockIo } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({
-                    event: 'marketing-agent-status-update',
-                    tenantId: 1,
-                    companyId: 7,
-                    payload: { agentId: 'agent-1', status: 'working' }
-                });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                event: 'marketing-agent-status-update',
+                tenantId: 1,
+                companyId: 7,
+                payload: { agentId: 'agent-1', status: 'working' }
+            });
 
             expect(response.status).toBe(200);
             expect(response.body.room).toBe('marketing_tenant_1_company_7');
@@ -88,9 +135,10 @@ describe('Marketing REST API', () => {
         it('should return 400 when event is missing', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({ tenantId: 1, payload: {} });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                tenantId: 1,
+                payload: {}
+            });
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('event');
@@ -99,9 +147,10 @@ describe('Marketing REST API', () => {
         it('should return 400 when tenantId is missing', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({ event: 'marketing-batch-update', payload: {} });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                event: 'marketing-batch-update',
+                payload: {}
+            });
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('tenantId');
@@ -110,9 +159,10 @@ describe('Marketing REST API', () => {
         it('should return 400 when payload is missing', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({ event: 'marketing-batch-update', tenantId: 1 });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                event: 'marketing-batch-update',
+                tenantId: 1
+            });
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('payload');
@@ -121,13 +171,11 @@ describe('Marketing REST API', () => {
         it('should return 400 for invalid event name', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .post('/api/marketing/emit')
-                .send({
-                    event: 'invalid-event',
-                    tenantId: 1,
-                    payload: {}
-                });
+            const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                event: 'invalid-event',
+                tenantId: 1,
+                payload: {}
+            });
 
             expect(response.status).toBe(400);
             expect(response.body.error).toContain('Invalid event');
@@ -144,9 +192,11 @@ describe('Marketing REST API', () => {
             ];
 
             for (const event of validEvents) {
-                const response = await request(app)
-                    .post('/api/marketing/emit')
-                    .send({ event, tenantId: 1, payload: {} });
+                const response = await makeRequest(app, 'POST', '/api/marketing/emit', {
+                    event,
+                    tenantId: 1,
+                    payload: {}
+                });
 
                 expect(response.status).toBe(200);
                 expect(response.body.event).toBe(event);
@@ -158,8 +208,7 @@ describe('Marketing REST API', () => {
         it('should return room info without companyId', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .get('/api/marketing/rooms/1');
+            const response = await makeRequest(app, 'GET', '/api/marketing/rooms/1');
 
             expect(response.status).toBe(200);
             expect(response.body.room).toBe('marketing_tenant_1');
@@ -170,8 +219,7 @@ describe('Marketing REST API', () => {
         it('should return room info with companyId', async () => {
             const { app } = createTestApp();
 
-            const response = await request(app)
-                .get('/api/marketing/rooms/1?companyId=7');
+            const response = await makeRequest(app, 'GET', '/api/marketing/rooms/1?companyId=7');
 
             expect(response.status).toBe(200);
             expect(response.body.room).toBe('marketing_tenant_1_company_7');
