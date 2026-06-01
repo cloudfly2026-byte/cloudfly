@@ -489,7 +489,26 @@ def run_sprint():
         import atexit
         atexit.register(connector.shutdown)
         # Intentar elegir Master
-        connector.elect_master()
+        if connector.elect_master():
+            print("🧹 [👑 Master]: Limpiando estados residuales de Redis al iniciar...")
+            try:
+                # Limpiar locks de tareas, estados y tareas activas viejas de ejecuciones previas
+                keys_to_clean = []
+                for k in connector.redis_client.scan_iter("scrum:task:*"):
+                    keys_to_clean.append(k)
+                for k in connector.redis_client.scan_iter("scrum:status:*"):
+                    keys_to_clean.append(k)
+                for k in connector.redis_client.scan_iter("scrum:active_task:*"):
+                    keys_to_clean.append(k)
+                
+                if keys_to_clean:
+                    connector.redis_client.delete(*keys_to_clean)
+                    print(f"🧹 [👑 Master]: Se eliminaron {len(keys_to_clean)} claves residuales de Redis.")
+                
+                # Restablecer bandera de backlog vacío
+                connector.redis_client.delete("scrum:backlog_empty")
+            except Exception as e:
+                print(f"[!] Error al limpiar Redis al iniciar: {e}")
         
     # Balanceador dinámico de cuentas y tokens por worker al iniciar (Ejecutar siempre, incluso en standalone)
     active_key = connector.get_healthy_api_key()
@@ -1470,22 +1489,38 @@ Historial de Comentarios:
 
         print_jira_sprint_stats()
 
-        # ── STEP 1: Check for IN-PROGRESS issues (resume) ──────────────
-        print("\n[🤖 Scrum Master]: Verificando historias en curso...")
+        # ── STEP 1 & 2: Check and Distribute issues (Distributed/Local Flow) ──
         sprint_state = analyse_sprint_state()
+        if use_distributed:
+            has_distributed_any = False
+            
+            in_progress = sprint_state.get("in_progress", [])
+            if in_progress:
+                resume_active_story(in_progress, sprint_state.get("resume_context", {}))
+                has_distributed_any = True
+                
+            pending = sprint_state.get("pending_with_tasks", []) or sprint_state.get("pending_no_tasks", [])
+            if pending:
+                complete_existing_tasks(pending)
+                has_distributed_any = True
+                
+            if has_distributed_any:
+                sprint_number += 1
+                time.sleep(10)
+                continue
+        else:
+            if sprint_state["state"] == "in_progress":
+                resume_active_story(sprint_state["issues"], sprint_state["resume_context"])
+                sprint_number += 1
+                time.sleep(10)
+                continue
 
-        if sprint_state["state"] == "in_progress":
-            resume_active_story(sprint_state["issues"], sprint_state["resume_context"])
-            sprint_number += 1
-            time.sleep(10)
-            continue
-
-        # ── STEP 2: Check for PENDING issues with tasks (complete) ─────
-        if sprint_state["state"] == "pending_with_tasks":
-            complete_existing_tasks(sprint_state["issues"])
-            sprint_number += 1
-            time.sleep(10)
-            continue
+            # ── STEP 2: Check for PENDING issues with tasks (complete) ─────
+            if sprint_state["state"] == "pending_with_tasks":
+                complete_existing_tasks(sprint_state["issues"])
+                sprint_number += 1
+                time.sleep(10)
+                continue
 
         # ── At this point, backlog is clean ────────────────────────────
 

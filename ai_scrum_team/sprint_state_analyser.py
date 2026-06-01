@@ -159,47 +159,42 @@ def analyse_sprint_state() -> dict:
     {
         "state": "in_progress" | "pending_with_tasks" | "clean",
         "issues": [...],   # list of relevant Jira issues
-        "resume_context": {...}  # detailed context for in-progress issues
+        "resume_context": {...},  # detailed context for in-progress issues
+        "in_progress": [...],
+        "pending_with_tasks": [...],
+        "pending_no_tasks": [...]
     }
     """
     print("\n[🤖 Scrum Master]: Analizando estado del sprint en Jira...")
 
-    # 1. Check for in-progress issues first
     in_progress = get_in_progress_issues()
+    resume_context = {}
     if in_progress:
-        resume_context = {}
         for issue in in_progress:
             key = issue.get("key", "")
             if key:
                 resume_context[key] = get_issue_resume_context(key)
-        return {
-            "state": "in_progress",
-            "issues": in_progress,
-            "resume_context": resume_context,
-        }
 
-    # 2. Check for pending issues with subtasks
     pending_with_tasks = get_pending_issues_with_tasks()
-    if pending_with_tasks:
-        return {
-            "state": "pending_with_tasks",
-            "issues": pending_with_tasks,
-            "resume_context": {},
-        }
-
-    # 3. Check for pending issues without subtasks (raw PO input)
     pending_no_tasks = get_pending_issues_without_tasks()
-    if pending_no_tasks:
-        return {
-            "state": "pending_with_tasks",
-            "issues": pending_no_tasks,
-            "resume_context": {},
-        }
 
-    # 4. Clean backlog
-    print("[SprintState] ✅ Backlog limpio. No hay historias pendientes.")
+    # Determine main state (for backward compatibility / non-distributed flow)
+    main_state = "clean"
+    if in_progress:
+        main_state = "in_progress"
+    elif pending_with_tasks:
+        main_state = "pending_with_tasks"
+    elif pending_no_tasks:
+        main_state = "pending_with_tasks"
+
+    if main_state == "clean":
+        print("[SprintState] ✅ Backlog limpio. No hay historias pendientes.")
+
     return {
-        "state": "clean",
-        "issues": [],
-        "resume_context": {},
+        "state": main_state,
+        "issues": in_progress or pending_with_tasks or pending_no_tasks,
+        "resume_context": resume_context,
+        "in_progress": in_progress,
+        "pending_with_tasks": pending_with_tasks,
+        "pending_no_tasks": pending_no_tasks
     }

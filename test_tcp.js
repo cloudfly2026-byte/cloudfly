@@ -1,0 +1,1 @@
+﻿const net = require('net'); const s = net.connect(3001, 'chat_socket', () => { console.log('TCP connected!'); s.end(); process.exit(0); }); s.on('error', (e) => { console.log('TCP error:', e.message); process.exit(1); }); setTimeout(() => { console.log('TCP timeout'); process.exit(1); }, 5000);

@@ -224,27 +224,25 @@ class ScrumConnector:
             if self.redis_client.sismember("scrum:workers", self.instance_id):
                 self.redis_client.srem("scrum:workers", self.instance_id)
                 
-            # Obtener todos los workers registrados
+            # 1. Obtener todos los workers registrados y limpiar los caídos de la lista
             workers = self.redis_client.smembers("scrum:workers")
-            
             for w_id in list(workers):
-                # Verificar si el latido sigue existiendo
                 alive = self.redis_client.get(f"scrum:heartbeat:{w_id}")
                 if not alive:
-                    print(f"\n🚨 [👑 Master]: Se ha detectado caída del Worker {w_id}. Limpiando...")
-                    # Remover del set de workers activos
+                    print(f"\n🚨 [👑 Master]: Se ha detectado caída del Worker {w_id} (sin heartbeat). Limpiando de la lista de activos...")
                     self.redis_client.srem("scrum:workers", w_id)
-                    
-                    # Buscar si tenía alguna tarea asignada en la cola o lock
-                    # Buscamos claves de locks que apunten a ese worker
-                    for k in self.redis_client.scan_iter("scrum:task:*"):
-                        assigned_worker = self.redis_client.get(k)
-                        if assigned_worker == w_id:
-                            task_id = k.split(":")[-1]
-                            print(f"🚨 [👑 Master]: Tarea {task_id} re-encolada por pérdida de latido de {w_id}.")
-                            self.redis_client.delete(k)
-                            self.redis_client.delete(f"scrum:status:{task_id}")
-                            # La tarea queda libre y volverá a ser leída de Jira en el próximo ciclo
+            
+            # 2. Buscar TODOS los locks de tareas y verificar si su poseedor está vivo (tiene heartbeat)
+            # Esto corrige el bug donde tareas quedaban huérfanas si el worker no estaba en la lista pero tenía el lock.
+            for k in self.redis_client.scan_iter("scrum:task:*"):
+                assigned_worker = self.redis_client.get(k)
+                if assigned_worker:
+                    alive = self.redis_client.get(f"scrum:heartbeat:{assigned_worker}")
+                    if not alive:
+                        task_id = k.split(":")[-1]
+                        print(f"🚨 [👑 Master]: Tarea {task_id} estaba asignada al worker inactivo {assigned_worker}. Liberando lock y estado...")
+                        self.redis_client.delete(k)
+                        self.redis_client.delete(f"scrum:status:{task_id}")
         except Exception as e:
             print(f"[!] Error en auto-curación de workers: {e}")
 

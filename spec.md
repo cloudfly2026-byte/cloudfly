@@ -360,11 +360,23 @@ docker-compose -f docker-compose-full-local.yml logs -f backend-api
 docker-compose -f docker-compose-full-local.yml down
 ```
 
-### Servicios Clave en Producción
+## Pruebas de Desarrollo E2E
+
+### Credenciales de Prueba con Playwright
+Para realizar pruebas de interfaz con navegador desde el equipo de desarrollo mediante herramientas de automatización como **Playwright**, se utiliza la siguiente cuenta con rol de manager:
+- **Usuario:** `manager`
+- **Contraseña:** `Password123!`
+
+### Depuración de Errores con Logs de Docker
+Durante la ejecución de pruebas locales, se deben utilizar activamente los logs de los contenedores de Docker para depurar errores y comportamientos inesperados:
+- **Ver logs de todos los servicios en tiempo real:**
+  ```bash
+  docker-compose -f docker-compose-full-local.yml logs -f
+  ```
+- **Ver logs en tiempo real de un servicio específico (ej. backend-api):**
+  ```bash
+  docker-compose -f docker-compose-full-local.yml logs -f backend-api
+  ```
 
 
-````
-<userPrompt>
-Provide the fully rewritten file, incorporating the suggested code change. You must produce the complete file.
-</userPrompt>
 
