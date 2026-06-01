@@ -1,0 +1,114 @@
+import axios from 'axios';
+
+const CHAT_API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || 'https://chat.cloudfly.com.co';
+
+const getChatAuthParams = () => {
+  if (typeof window === 'undefined') return { tenantId: null, companyId: null, jwt: null }
+  try {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+    const tenantId = userData?.customerId || userData?.tenant_id || userData?.tenantId
+    const companyId = userData?.activeCompanyId || userData?.company_id || userData?.companyId
+    const jwt = localStorage.getItem('jwt')
+    return { tenantId, companyId, jwt }
+  } catch {
+    return { tenantId: null, companyId: null, jwt: null }
+  }
+}
+
+export interface ChatMessage {
+  id: string | number;
+  conversationId: string | number;
+  contactId?: number;
+  body: string;
+  direction: 'INBOUND' | 'OUTBOUND';
+  messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT';
+  mediaType?: string; // Support for explicit mediaType
+  mediaUrl?: string;
+  content?: string; // Support for legacy field from socket service
+  sentAt: string;
+  status?: string;
+  createdAt?: string; // Support for legacy field
+}
+
+export const chatService = {
+  /**
+   * Get historical messages for a conversation
+   * NEW: Points to chat.cloudfly.com.co directly for history
+   */
+  getMessages: async (
+    contactUuid: string,
+    tenantId: string | number,
+    companyId?: string | number | null
+  ): Promise<ChatMessage[]> => {
+    const auth = getChatAuthParams()
+    const resolvedCompanyId = companyId ?? auth.companyId
+    const jwt = auth.jwt
+
+    const response = await axios.get(`${CHAT_API_URL}/api/chat/messages/${contactUuid}`, {
+      params: { tenantId, companyId: resolvedCompanyId, limit: 50 },
+      headers: {
+        'Authorization': `Bearer ${jwt || ''}`,
+        'X-Tenant-Id': tenantId,
+        'X-Company-Id': String(resolvedCompanyId ?? '')
+      }
+    });
+    
+    return response.data.map((msg: any) => ({
+      ...msg,
+      body: msg.body || msg.content,
+      mediaType: msg.mediaType || msg.messageType,
+      sentAt: msg.sentAt || msg.createdAt || new Date().toISOString()
+    }));
+  },
+
+  /**
+   * Get historical messages by numeric contactId (fallback when uuid is missing)
+   */
+  getMessagesByContactId: async (
+    contactId: number,
+    tenantId: string | number,
+    companyId?: string | number | null
+  ): Promise<ChatMessage[]> => {
+    const auth = getChatAuthParams()
+    const resolvedCompanyId = companyId ?? auth.companyId
+    const jwt = auth.jwt
+
+    const response = await axios.get(`${CHAT_API_URL}/api/chat/messages/by-contact/${contactId}`, {
+      params: { tenantId, companyId: resolvedCompanyId, limit: 50 },
+      headers: {
+        'Authorization': `Bearer ${jwt || ''}`,
+        'X-Tenant-Id': tenantId,
+        'X-Company-Id': String(resolvedCompanyId ?? '')
+      }
+    });
+    
+    return response.data.map((msg: any) => ({
+      ...msg,
+      body: msg.body || msg.content,
+      mediaType: msg.mediaType || msg.messageType,
+      sentAt: msg.sentAt || msg.createdAt || new Date().toISOString()
+    }));
+  },
+
+  /**
+   * Send a new message via the Java API (consistent with current backend flow)
+   */
+  sendMessage: async (data: {
+    conversationId: string | number; // This is the phone
+    contactId: number; 
+    body: string;
+    messageType?: string;
+    mediaType?: string;
+    mediaUrl?: string;
+    platform?: string;
+  }): Promise<ChatMessage> => {
+    // Dynamic import to avoid circular dependency or issues with axiosInstance initial load
+    const { axiosInstance } = await import('@/utils/axiosInstance');
+    const response = await axiosInstance.post(`/api/v1/chat/send/${data.conversationId}`, {
+      ...data,
+      direction: 'OUTBOUND'
+    });
+    return response.data;
+  }
+};
+
