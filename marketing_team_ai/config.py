@@ -49,6 +49,9 @@ class Config:
     BACKEND_URL = os.getenv("BACKEND_URL", "http://backend-api:8080")
     BACKEND_API_KEY = os.getenv("BACKEND_API_KEY", "")
 
+    # Chat Socket Service (for real-time dashboard events)
+    CHAT_SOCKET_URL = os.getenv("CHAT_SOCKET_URL", "http://chat-socket-service:3001")
+
     # Evolution API (WhatsApp)
     EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://evolution-api:8080")
     EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "")

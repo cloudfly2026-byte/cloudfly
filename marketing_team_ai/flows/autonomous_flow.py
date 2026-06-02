@@ -9,6 +9,12 @@ from tools.mysql_tool import MySQLTool
 from tools.redis_tool import RedisTool
 from services.prospector_service import ProspectorService
 from config import Config
+from services.socket_emitter import (
+    emit_agent_status,
+    emit_agent_task,
+    emit_action_event,
+    emit_batch_snapshot,
+)
 
 logger = logging.getLogger("cloudfly_ai")
 
@@ -234,12 +240,14 @@ class AutonomousMarketingFlow:
         logger.info(f"Found {len(companies)} companies")
 
         for company in companies:
+            tenant_id = company['tenant_id']
+            company_id = company['id']
             logger.info(f"Processing company {company['name']}")
 
-            products = self.get_products(
-                company['tenant_id'],
-                company['id']
-            )
+            # Send initial batch snapshot — all agents idle
+            emit_batch_snapshot(tenant_id, company_id)
+
+            products = self.get_products(tenant_id, company_id)
 
             if not products:
                 continue
@@ -247,13 +255,22 @@ class AutonomousMarketingFlow:
             for product in products:
                 logger.info(f"Processing campaign for product: {product.get('product_name')} (ID: {product.get('id')})")
 
-                # Phase 1: B2B Analysis Crew (Researcher & ICP Strategist)
+                # ── Phase 1: B2B Analysis Crew (Researcher & ICP Strategist) ──
+                emit_agent_status("researcher", "working", tenant_id, company_id,
+                                  current_task=f"Analizando mercado para {product.get('product_name')}")
+                emit_action_event("researcher", "crew_kickoff", "Análisis B2B iniciado",
+                                  f"Analizando mercado para producto: {product.get('product_name')}",
+                                  tenant_id, company_id,
+                                  metadata={"product_id": product.get("id")})
+
                 analysis_crew = build_analysis_crew(
                     company=company,
                     product=product
                 )
                 result = analysis_crew.kickoff()
                 logger.info(f"Crew kickoff results: {result}")
+                emit_agent_status("researcher", "completed", tenant_id, company_id,
+                                  current_task="Análisis de mercado completado")
 
                 # Parse strategist task output with null safety
                 task_output = analysis_crew.tasks[1].output
@@ -270,12 +287,21 @@ class AutonomousMarketingFlow:
                 try:
                     analysis_json = json.loads(analysis_raw)
                     logger.info("✅ B2B analysis successfully parsed as JSON!")
+                    emit_agent_status("icp_agent", "completed", tenant_id, company_id,
+                                      current_task="Perfil ICP definido")
+                    emit_action_event("icp_agent", "analysis_completed", "Análisis ICP completado",
+                                      f"Categorías identificadas: {len(analysis_json.get('categories', []))}",
+                                      tenant_id, company_id)
                 except Exception:
                     logger.warning(f"B2B analysis output is not valid JSON: {analysis_raw}")
+                    emit_agent_status("icp_agent", "error", tenant_id, company_id,
+                                      current_task="Error procesando análisis")
                     continue
 
                 if not analysis_json.get("is_b2b"):
                     logger.info(f"✗ Product {product.get('product_name')} is not B2B. Skipping prospecting.")
+                    emit_agent_status("icp_agent", "idle", tenant_id, company_id,
+                                      current_task="Producto no es B2B, omitiendo")
                     continue
 
                 raw_categories = analysis_json.get("categories", [])
@@ -324,7 +350,15 @@ class AutonomousMarketingFlow:
 
                     logger.info(f"🎯 Processing category: '{category_name}' for product: {product.get('product_name')} (country: {category_country})")
 
-                    # 1. Async lead search via Kafka (no HTTP al scraper)
+                    # ── Phase 2: Prospecting via Kafka ──
+                    emit_agent_status("prospector", "working", tenant_id, company_id,
+                                      current_task=f"Buscando leads: {category_name}")
+                    emit_action_event("prospector", "lead_search_started",
+                                      f"Búsqueda de leads: {category_name}",
+                                      f"Buscando leads B2B en categoría '{category_name}' ({category_country})",
+                                      tenant_id, company_id,
+                                      metadata={"category": category_name, "country": category_country})
+
                     context = {
                         "company": company,
                         "product": product,
@@ -335,11 +369,13 @@ class AutonomousMarketingFlow:
                         keyword=category_name,
                         country=category_country,
                         limit=5,
-                        company_id=company["id"],
+                        company_id=company_id,
                         product_id=product.get("id"),
-                        tenant_id=company["tenant_id"],
+                        tenant_id=tenant_id,
                         context=context,
                     )
+                    emit_agent_status("prospector", "waiting", tenant_id, company_id,
+                                      current_task=f"Esperando resultados: {category_name}")
                     logger.info(
                         "📤 Lead search queued request_id=%s category='%s' — "
                         "qualification/copywriting al recibir lead_search_results",
