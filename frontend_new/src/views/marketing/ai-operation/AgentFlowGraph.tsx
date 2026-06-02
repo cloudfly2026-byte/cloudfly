@@ -83,17 +83,44 @@ const buildCurvedPath = (
   sourcePos: { x: number; y: number },
   targetPos: { x: number; y: number }
 ): { pathD: string; midX: number; midY: number; cx: number; cy: number } => {
-  const startX = sourcePos.x + 50
-  const startY = sourcePos.y + 25
-  const endX = targetPos.x
-  const endY = targetPos.y + 25
+  // Determine flow direction to pick correct card edges
+  const isLeftToRight = targetPos.x > sourcePos.x + 10
+  const isRightToLeft = targetPos.x < sourcePos.x - 10
 
-  const midX = (sourcePos.x + targetPos.x) / 2
-  const midY = (sourcePos.y + targetPos.y) / 2 - 40 // Curve upward
+  let startX: number, startY: number, endX: number, endY: number
 
-  const pathD = `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`
+  if (isLeftToRight) {
+    // Source right-center → Target left-center
+    startX = sourcePos.x + CARD_WIDTH / 2
+    startY = sourcePos.y
+    endX = targetPos.x - CARD_WIDTH / 2
+    endY = targetPos.y
+  } else if (isRightToLeft) {
+    // Source left-center → Target right-center
+    startX = sourcePos.x - CARD_WIDTH / 2
+    startY = sourcePos.y
+    endX = targetPos.x + CARD_WIDTH / 2
+    endY = targetPos.y
+  } else {
+    // Vertical: source bottom-center → target top-center
+    startX = sourcePos.x
+    startY = sourcePos.y + CARD_HEIGHT / 2
+    endX = targetPos.x
+    endY = targetPos.y - CARD_HEIGHT / 2
+  }
 
-  return { pathD, midX, midY, cx: midX, cy: midY }
+  // Control point for the quadratic bezier curve
+  const cx = (startX + endX) / 2
+  const cy = Math.min(startY, endY) - 30
+
+  const pathD = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`
+
+  // Compute label position at t=0.5 on the bezier
+  const t = 0.5
+  const midX = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * cx + t * t * endX
+  const midY = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * cy + t * t * endY
+
+  return { pathD, midX, midY, cx, cy }
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +139,7 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
   // -----------------------------------------------------------------------
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const [dimensions, setDimensions] = useState({ width: propWidth ?? 800, height: propHeight ?? 280 })
+  const [dimensions, setDimensions] = useState({ width: propWidth ?? 900, height: propHeight ?? 400 })
 
   useEffect(() => {
     const measure = () => {

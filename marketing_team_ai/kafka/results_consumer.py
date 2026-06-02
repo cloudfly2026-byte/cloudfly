@@ -7,7 +7,7 @@ from flows.autonomous_flow import AutonomousMarketingFlow
 from flows.lead_search_pipeline import LeadSearchPipeline
 from kafka.client import consume_forever, create_producer, create_results_consumer, publish, flush
 from kafka.topics import TOPIC_ERRORS, TOPIC_REQUESTS, TOPIC_RESULTS
-from services.lead_search_job_service import LeadSearchJobService
+from services.lead_search_job_service import LeadSearchJobService, ensure_schema
 
 logger = logging.getLogger("marketing_team_ai.kafka_consumer")
 
@@ -62,7 +62,7 @@ def _maybe_republish_retry(event: dict) -> None:
 
 
 def _run_consumer() -> None:
-    LeadSearchJobService.ensure_schema()
+    ensure_schema()
     consumer = create_results_consumer()
     consume_forever(consumer, [TOPIC_RESULTS, TOPIC_ERRORS], _handle_message)
 
