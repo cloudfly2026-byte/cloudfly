@@ -28,7 +28,7 @@
 
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { useSocket } from '@/contexts/SocketContext'
-import { marketingHistoryService } from '@/services/marketing/marketingHistoryService'
+import { marketingHistoryService, normalizeAgents, normalizeConnections, normalizeEvent } from '@/services/marketing/marketingHistoryService'
 import type {
   MarketingAgent,
   AgentConnection,
@@ -148,15 +148,16 @@ export const useMarketingAgentsSocket = (
   /**
    * Replace the full agent list AND connections (initial load or periodic refresh).
    * Accepts either MarketingAgentBatchPayload or legacy plain array of agents.
+   * Normalizes raw backend DTOs into the expected frontend interfaces.
    */
-  const handleBatchUpdate = useCallback((payload: MarketingAgentBatchPayload | MarketingAgent[]) => {
+  const handleBatchUpdate = useCallback((payload: any) => {
     if (Array.isArray(payload)) {
-      // Legacy: plain array of agents
-      setAgents(payload)
+      // Legacy: plain array of agents — normalize them
+      setAgents(normalizeAgents(payload))
     } else if (payload && typeof payload === 'object') {
-      // New spec: MarketingAgentBatchPayload
-      if (Array.isArray(payload.agents)) setAgents(payload.agents)
-      if (Array.isArray(payload.connections)) setConnections(payload.connections)
+      // New spec: MarketingAgentBatchPayload — normalize agents and connections
+      if (Array.isArray(payload.agents)) setAgents(normalizeAgents(payload.agents))
+      if (Array.isArray(payload.connections)) setConnections(normalizeConnections(payload.connections))
     }
     touchLastUpdate()
   }, [touchLastUpdate])
@@ -204,13 +205,14 @@ export const useMarketingAgentsSocket = (
     touchLastUpdate()
   }, [touchLastUpdate])
 
-  /** Append a new action event to the timeline (keep last 50) */
-  const handleActionEvent = useCallback((payload: MarketingActionEvent) => {
+  /** Append a new action event to the timeline (keep last 50). Normalizes raw backend DTOs. */
+  const handleActionEvent = useCallback((payload: any) => {
     if (!payload?.id) return
+    const normalized = normalizeEvent(payload)
     setEvents(prev => {
       // Deduplicate by id
-      if (prev.some(ev => ev.id === payload.id)) return prev
-      const updated = [...prev, payload]
+      if (prev.some(ev => ev.id === normalized.id)) return prev
+      const updated = [...prev, normalized]
       // Keep only the last 50 events
       return updated.slice(-50)
     })

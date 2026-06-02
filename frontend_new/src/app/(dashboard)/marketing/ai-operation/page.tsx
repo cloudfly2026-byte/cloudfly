@@ -524,7 +524,9 @@ const MarketingLiveDashboardPage: React.FC = () => {
                   {agents.map(agent => (
                     <Grid item xs={12} sm={6} md={4} key={agent.id}>
                       <Zoom in timeout={500}>
-                        <LiveAgentCard agent={agent} />
+                        <div>
+                          <LiveAgentCard agent={agent} />
+                        </div>
                       </Zoom>
                     </Grid>
                   ))}
