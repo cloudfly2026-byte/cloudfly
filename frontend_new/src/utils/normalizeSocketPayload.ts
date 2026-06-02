@@ -34,7 +34,40 @@ export function mapSocketContact(raw: Record<string, unknown> | null | undefined
   }
 }
 
-/** new-message del socket puede venir plano o como { message, contact, history } */
+/**
+ * CLOUD-239: Validates that a given object is a real Contact (not a Message masquerading as one).
+ * 
+ * The old bug: mapSocketContact(message) would return a fictitious contact because
+ * message.id is non-null (Date.now()). This function ensures we only accept objects
+ * that have actual contact fields (name, phone, uuid).
+ * 
+ * @param obj - The object to validate
+ * @returns true if the object appears to be a real Contact, false otherwise
+ */
+export function isValidContact(obj: unknown): obj is Contact {
+  if (!obj || typeof obj !== 'object') return false
+  const record = obj as Record<string, unknown>
+  
+  // Must have a numeric id
+  if (record.id == null || typeof record.id !== 'number') return false
+  
+  // Must have at least a name (contacts always have a name)
+  if (!record.name || typeof record.name !== 'string') return false
+  
+  // A Message object will have 'direction', 'body', 'content', 'conversationId' etc.
+  // A Contact object will NOT have these fields
+  if ('direction' in record || 'body' in record || 'content' in record) return false
+  
+  return true
+}
+
+/** 
+ * new-message del socket puede venir plano o como { message, contact, history }
+ * 
+ * CLOUD-239: The backend now emits new-message to BOTH the contact room AND
+ * the company room. The payload includes the full contact object, so the
+ * frontend can open the popup instantly without additional HTTP calls.
+ */
 export function normalizeInboundSocketMessage(payload: unknown): {
   message: Message
   contact?: Contact
@@ -47,20 +80,31 @@ export function normalizeInboundSocketMessage(payload: unknown): {
 
   if (direction !== 'INBOUND') return null
 
-  const contact = mapSocketContact((p.contact as Record<string, unknown>) || (rawMsg.contact as Record<string, unknown>))
+  // CLOUD-239: Extract contact from payload using mapSocketContact.
+  // The backend eventPayload includes: { message, contact, history }
+  // where contact is the REAL contact object from getOrCreateContact().
+  // We try p.contact first (the dedicated contact field), then rawMsg.contact
+  // (in case it's nested inside the message object).
+  const rawContact = (p.contact as Record<string, unknown>) || (rawMsg.contact as Record<string, unknown>)
+  const contact = mapSocketContact(rawContact)
+  
+  // CLOUD-239: Validate that the contact is real (not a Message masquerading as Contact)
+  // This is a safety net to prevent the old bug from recurring
+  const validatedContact = contact && isValidContact(rawContact) ? contact : undefined
+
   const contactId =
     rawMsg.contactId != null
       ? Number(rawMsg.contactId)
       : p.contactId != null
         ? Number(p.contactId)
-        : contact?.id
+        : validatedContact?.id
 
   const id = rawMsg.id ?? p.id
   if (id == null && !contactId) return null
 
   const message: Message = {
     id: typeof id === 'number' ? id : Number(id) || Date.now(),
-    conversationId: String(rawMsg.conversationId ?? p.conversationId ?? contact?.phone ?? ''),
+    conversationId: String(rawMsg.conversationId ?? p.conversationId ?? validatedContact?.phone ?? ''),
     contactId,
     direction: 'INBOUND',
     messageType: (rawMsg.messageType as Message['messageType']) || 'TEXT',
@@ -70,7 +114,7 @@ export function normalizeInboundSocketMessage(payload: unknown): {
     createdAt: String(rawMsg.createdAt ?? new Date().toISOString())
   }
 
-  return { message, contact: contact ?? undefined }
+  return { message, contact: validatedContact }
 }
 
 export function isInboundUnreadConversationUpdate(payload: ConversationUpdatedPayload): boolean {

@@ -1,10 +1,17 @@
 'use client'
 
 import React from 'react'
-import { Box, Fab, Badge } from '@mui/material'
+import { Box, Fab, Badge, Tooltip, keyframes } from '@mui/material'
 import { Icon } from '@iconify/react'
 import { usePopupChat } from '@/contexts/PopupChatContext'
 import PopupChatWindow from './PopupChatWindow'
+
+// Pulse animation for the FAB when there are unread messages
+const pulseAnimation = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(115, 103, 240, 0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(115, 103, 240, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(115, 103, 240, 0); }
+`
 
 const ChatPopupsContainer: React.FC = () => {
   const { 
@@ -37,21 +44,47 @@ const ChatPopupsContainer: React.FC = () => {
         flexDirection: 'row-reverse',
         alignItems: 'flex-end',
         gap: 3,
-        pointerEvents: 'none' // Allows clicking elements behind the container
+        pointerEvents: 'none'
       }}
     >
       {/* Main Floating Action Button */}
       <Box sx={{ pointerEvents: 'auto', mb: 2 }}>
-        <Badge badgeContent={unreadCount} color="error">
-          <Fab 
-            color="primary" 
-            aria-label="chat" 
-            onClick={handleFabClick}
-            sx={{ width: 56, height: 56 }}
+        <Tooltip title={unreadCount > 0 ? `${unreadCount} mensaje(s) sin leer` : 'Chat'} placement="left">
+          <Badge 
+            badgeContent={unreadCount} 
+            color="error"
+            sx={{
+              '& .MuiBadge-badge': {
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                animation: unreadCount > 0 ? `${pulseAnimation} 2s infinite` : 'none'
+              }
+            }}
           >
-            <Icon icon="tabler:message-circle" fontSize="1.8rem" />
-          </Fab>
-        </Badge>
+            <Fab 
+              color="primary" 
+              aria-label="chat" 
+              onClick={handleFabClick}
+              sx={{ 
+                width: 56, 
+                height: 56,
+                background: unreadCount > 0 
+                  ? 'linear-gradient(135deg, #7367F0 0%, #9C87FF 100%)' 
+                  : undefined,
+                boxShadow: unreadCount > 0 
+                  ? '0 4px 14px rgba(115, 103, 240, 0.4)' 
+                  : undefined,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.08)',
+                  boxShadow: '0 6px 20px rgba(115, 103, 240, 0.5)'
+                }
+              }}
+            >
+              <Icon icon="tabler:message-circle" fontSize="1.8rem" />
+            </Fab>
+          </Badge>
+        </Tooltip>
       </Box>
 
       {/* List of active popups, they will stack to the left */}
@@ -64,7 +97,6 @@ const ChatPopupsContainer: React.FC = () => {
             onMinimize={() => minimizePopup(popup.contact.id)}
             onToggle={() => {
                 if (popup.state === 'minimized') {
-                    // Open it
                     openPopup(popup.contact)
                 } else {
                     minimizePopup(popup.contact.id)

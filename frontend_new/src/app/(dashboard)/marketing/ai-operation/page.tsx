@@ -13,7 +13,9 @@ import {
   Button,
   Divider,
   Fade,
-  Zoom
+  Zoom,
+  Collapse,
+  Snackbar
 } from '@mui/material'
 import {
   Wifi,
@@ -23,7 +25,9 @@ import {
   Activity,
   Zap,
   Loader,
-  Clock
+  Clock,
+  ShieldAlert,
+  Radio
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useMarketingAgentsSocket } from '@/hooks/useMarketingAgentsSocket'
@@ -31,6 +35,8 @@ import { marketingHistoryService } from '@/services/marketing/marketingHistorySe
 import LiveAgentCard from '@/views/marketing/ai-operation/LiveAgentCard'
 import AgentFlowGraph from '@/views/marketing/ai-operation/AgentFlowGraph'
 import MarketingHistoryTimeline from '@/views/marketing/ai-operation/MarketingHistoryTimeline'
+import MarketingSocketStatus from '@/components/marketing/MarketingSocketStatus'
+import MarketingRoomDebugPanel from '@/components/marketing/MarketingRoomDebugPanel'
 import type { MarketingAgent, AgentConnection, MarketingActionEvent } from '@/types/marketing/aiMarketing'
 
 // ---------------------------------------------------------------------------
@@ -126,6 +132,8 @@ const MarketingLiveDashboardPage: React.FC = () => {
     isConnected,
     connectionStatus,
     lastUpdate,
+    roomName,
+    subscriptionError,
     reconnect
   } = useMarketingAgentsSocket({ tenantId, companyId })
 
@@ -138,12 +146,18 @@ const MarketingLiveDashboardPage: React.FC = () => {
   const [historyEvents, setHistoryEvents] = useState<MarketingActionEvent[]>([])
 
   // -----------------------------------------------------------------------
-  // Initial data load via REST with AbortController cleanup
+  // CLOUD-243: Show snackbar for subscription errors (cross-tenant, etc.)
   // -----------------------------------------------------------------------
-  // CLOUD-218: AbortController prevents state updates on unmounted component.
-  // The controller is created before the async call and aborted on unmount,
-  // which cancels any in-flight REST request. The error handler guards
-  // against AbortError so that intentional cancellation does not set error state.
+  const [showSubError, setShowSubError] = useState(false)
+
+  useEffect(() => {
+    if (subscriptionError) {
+      setShowSubError(true)
+    }
+  }, [subscriptionError])
+
+  // -----------------------------------------------------------------------
+  // Initial data load via REST with AbortController cleanup
   // -----------------------------------------------------------------------
 
   useEffect(() => {
@@ -233,8 +247,6 @@ const MarketingLiveDashboardPage: React.FC = () => {
 
   // -----------------------------------------------------------------------
   // CLOUD-252: Merge socket events + REST history, deduplicated by ID
-  // Socket events take priority over REST events with the same ID.
-  // Total merged events capped at 50.
   // -----------------------------------------------------------------------
 
   const allEvents = useMemo(() => {
@@ -314,12 +326,106 @@ const MarketingLiveDashboardPage: React.FC = () => {
         </Stack>
       </Box>
 
+      {/* CLOUD-243: Subscription error alert (cross-tenant rejection) */}
+      <Collapse in={!!subscriptionError}>
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+          onClose={() => setShowSubError(false)}
+          icon={<ShieldAlert size={20} />}
+        >
+          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+            Error de suscripción al canal de marketing
+          </Typography>
+          <Typography variant='caption'>
+            {subscriptionError || 'Error desconocido'} — Verifique que el tenant y compañía sean correctos.
+          </Typography>
+        </Alert>
+      </Collapse>
+
       {/* Error alert */}
       {error && (
         <Alert severity='warning' sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
+
+      {/* CLOUD-243: Socket Status Panel + Room Info */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <MarketingSocketStatus
+            connectionStatus={connectionStatus}
+            isConnected={isConnected}
+            roomName={roomName}
+            lastUpdate={lastUpdate}
+            tenantId={tenantId}
+            companyId={companyId}
+            showSecurityBadge
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper
+            sx={{
+              p: 2,
+              borderRadius: 2.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}
+          >
+            <Stack direction='row' spacing={2} alignItems='center' justifyContent='space-around'>
+              {/* Room indicator */}
+              <Box sx={{ textAlign: 'center' }}>
+                <Radio size={20} style={{ color: connectionStatus === 'connected' ? '#10b981' : '#94a3b8' }} />
+                <Typography variant='caption' display='block' color='text.secondary' sx={{ mt: 0.5 }}>
+                  Canal
+                </Typography>
+                <Typography
+                  variant='caption'
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    color: roomName ? '#3b82f6' : '#94a3b8',
+                    fontSize: '0.65rem'
+                  }}
+                >
+                  {roomName || 'No suscrito'}
+                </Typography>
+              </Box>
+
+              {/* Tenant isolation */}
+              <Box sx={{ textAlign: 'center' }}>
+                <Chip
+                  label={`T${tenantId}${companyId ? `:C${companyId}` : ''}`}
+                  size='small'
+                  sx={{
+                    bgcolor: 'rgba(99, 102, 241, 0.08)',
+                    color: '#6366f1',
+                    fontWeight: 700,
+                    fontSize: '0.7rem'
+                  }}
+                />
+                <Typography variant='caption' display='block' color='text.secondary' sx={{ mt: 0.5 }}>
+                  Aislamiento
+                </Typography>
+              </Box>
+
+              {/* Agent count */}
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant='h6' sx={{ fontWeight: 700, color: '#3b82f6' }}>
+                  {agents.length}
+                </Typography>
+                <Typography variant='caption' color='text.secondary'>
+                  Agentes
+                </Typography>
+              </Box>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {/* Stats row — CLOUD-253: 5 stat cards including Total Eventos */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -433,6 +539,23 @@ const MarketingLiveDashboardPage: React.FC = () => {
           <MarketingHistoryTimeline events={allEvents} />
         </Grid>
       </Grid>
+
+      {/* CLOUD-243: Debug Panel (only visible in development) */}
+      <MarketingRoomDebugPanel
+        tenantId={tenantId}
+        companyId={companyId}
+        connectionStatus={connectionStatus}
+        currentRoom={roomName}
+      />
+
+      {/* CLOUD-243: Snackbar for subscription errors */}
+      <Snackbar
+        open={showSubError && !!subscriptionError}
+        autoHideDuration={6000}
+        onClose={() => setShowSubError(false)}
+        message={subscriptionError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      />
     </Box>
   )
 }

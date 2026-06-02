@@ -1,5 +1,31 @@
 'use client'
 
+// ============================================================
+// CLOUD-243 / CLOUD-213: useMarketingAgentsSocket Hook — Enhanced
+// ============================================================
+// Custom React hook that extends the shared SocketContext to listen for
+// marketing-specific real-time events from the chat-socket-service.
+//
+// CLOUD-243 Enhancement:
+//   • Tracks the subscribed room name from server confirmation
+//     (subscribed-marketing / unsubsubscribed-marketing events)
+//   • Handles cross-tenant error from server (error event with
+//     "Cross-tenant subscription not allowed" message)
+//   • Exposes roomName and subscriptionError for UI components
+//
+// Expected socket events (server → client):
+//   • subscribed-marketing         — confirmation with room name (CLOUD-243)
+//   • unsubscribed-marketing       — confirmation with room name (CLOUD-243)
+//   • marketing-batch-update       — initial / periodic full snapshot
+//   • marketing-agent-status-update — single agent status change
+//   • marketing-agent-task-update  — single agent task change
+//   • marketing-action-event       — new action for the history timeline
+//
+// Client → Server:
+//   • subscribe-marketing   — join room marketing_tenant_{tenantId}
+//   • unsubscribe-marketing — leave room
+// ============================================================
+
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { useSocket } from '@/contexts/SocketContext'
 import type {
@@ -34,6 +60,10 @@ export interface UseMarketingAgentsSocketReturn {
   connectionStatus: 'connected' | 'disconnected' | 'reconnecting';
   /** ISO-8601 timestamp of the last received event, or null */
   lastUpdate: string | null;
+  /** The name of the currently subscribed marketing room (from server confirmation) */
+  roomName: string | null;
+  /** Subscription error message (e.g., cross-tenant rejection), or null */
+  subscriptionError: string | null;
   /** Manually reconnect (useful after network issues) */
   reconnect: () => void;
 }
@@ -66,9 +96,17 @@ export const useMarketingAgentsSocket = (
   const [events, setEvents] = useState<MarketingActionEvent[]>([])
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected')
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
+  const [roomName, setRoomName] = useState<string | null>(null)
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null)
 
   // Track whether we are currently reconnecting (to set 'reconnecting' status)
   const reconnectingRef = useRef(false)
+
+  // Use a ref to track roomName so that the unsubscribed-marketing handler
+  // always has access to the current value without needing to re-register
+  // the socket listener on every roomName change (fixes stale closure bug).
+  const roomNameRef = useRef<string | null>(null)
+  roomNameRef.current = roomName
 
   // -----------------------------------------------------------------------
   // Helper: update lastUpdate timestamp
@@ -155,11 +193,49 @@ export const useMarketingAgentsSocket = (
   }, [touchLastUpdate])
 
   // -----------------------------------------------------------------------
+  // CLOUD-243: Subscription confirmation handlers
+  // -----------------------------------------------------------------------
+
+  /**
+   * Handle the 'subscribed-marketing' confirmation event from the server.
+   * This confirms that the server has joined the socket to the correct room.
+   * The payload contains: { room, tenantId, companyId }
+   */
+  const handleSubscribedMarketing = useCallback((payload: { room: string; tenantId?: number; companyId?: number }) => {
+    if (payload?.room) {
+      setRoomName(payload.room)
+      setSubscriptionError(null)
+    }
+  }, [])
+
+  /**
+   * Handle the 'unsubscribed-marketing' confirmation event from the server.
+   * Uses roomNameRef to avoid stale closure over roomName state.
+   * The payload contains: { room, tenantId, companyId }
+   */
+  const handleUnsubscribedMarketing = useCallback((payload: { room: string; tenantId?: number; companyId?: number }) => {
+    if (payload?.room && payload.room === roomNameRef.current) {
+      setRoomName(null)
+    }
+  }, [])
+
+  /**
+   * Handle socket 'error' events from the server.
+   * Specifically detects cross-tenant subscription rejection.
+   */
+  const handleSocketError = useCallback((payload: { message?: string }) => {
+    if (payload?.message?.includes('Cross-tenant')) {
+      setSubscriptionError(payload.message)
+    }
+  }, [])
+
+  // -----------------------------------------------------------------------
   // Subscribe / unsubscribe marketing room
   // -----------------------------------------------------------------------
 
   const subscribe = useCallback(() => {
     if (!socket) return
+    setSubscriptionError(null)
     socket.emit('subscribe-marketing', {
       tenantId: options.tenantId,
       companyId: options.companyId
@@ -181,18 +257,37 @@ export const useMarketingAgentsSocket = (
   useEffect(() => {
     if (!socket) return
 
-    socket.on('marketing-agent-batch-update', handleBatchUpdate)
+    socket.on('marketing-batch-update', handleBatchUpdate)
     socket.on('marketing-agent-status-update', handleStatusUpdate)
     socket.on('marketing-agent-task-update', handleTaskUpdate)
     socket.on('marketing-action-event', handleActionEvent)
 
+    // CLOUD-243: Subscription confirmation listeners
+    socket.on('subscribed-marketing', handleSubscribedMarketing)
+    socket.on('unsubscribed-marketing', handleUnsubscribedMarketing)
+    socket.on('error', handleSocketError)
+
     return () => {
-      socket.off('marketing-agent-batch-update', handleBatchUpdate)
+      socket.off('marketing-batch-update', handleBatchUpdate)
       socket.off('marketing-agent-status-update', handleStatusUpdate)
       socket.off('marketing-agent-task-update', handleTaskUpdate)
       socket.off('marketing-action-event', handleActionEvent)
+
+      // CLOUD-243: Cleanup subscription confirmation listeners
+      socket.off('subscribed-marketing', handleSubscribedMarketing)
+      socket.off('unsubscribed-marketing', handleUnsubscribedMarketing)
+      socket.off('error', handleSocketError)
     }
-  }, [socket, handleBatchUpdate, handleStatusUpdate, handleTaskUpdate, handleActionEvent])
+  }, [
+    socket,
+    handleBatchUpdate,
+    handleStatusUpdate,
+    handleTaskUpdate,
+    handleActionEvent,
+    handleSubscribedMarketing,
+    handleUnsubscribedMarketing,
+    handleSocketError
+  ])
 
   // -----------------------------------------------------------------------
   // Connection status tracking + room subscription
@@ -268,6 +363,8 @@ export const useMarketingAgentsSocket = (
     isConnected,
     connectionStatus,
     lastUpdate,
+    roomName,
+    subscriptionError,
     reconnect
   }
 }

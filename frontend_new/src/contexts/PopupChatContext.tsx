@@ -55,13 +55,17 @@ export const PopupChatProvider: React.FC<{ children: ReactNode }> = ({ children 
           return [...prev, { contact, state: 'open' }]
         })
       } catch (error) {
-        console.error('Error fetching contact for popup:', error)
+        console.error('[CLOUD-239] Error fetching contact for popup:', error)
       }
     },
     []
   )
 
-  // Mensaje entrante no leído → abrir popup en dashboard
+  // CLOUD-239: Mensaje entrante no leído → abrir popup en dashboard
+  // When a new-message event arrives (now also emitted to the company room by the backend),
+  // the embeddedContact from the payload contains the REAL contact data (id, uuid, name, phone).
+  // We use it directly to open the popup instantly, without any mapping that could create
+  // fictitious contacts.
   useEffect(() => {
     if (!lastInbound) return
     if (lastInbound.seq === processedInboundSeq.current) return
@@ -71,20 +75,25 @@ export const PopupChatProvider: React.FC<{ children: ReactNode }> = ({ children 
     const contactId = message.contactId ?? embeddedContact?.id
     if (!contactId) return
 
+    // Don't open popup if user is already viewing this contact's detail page
     if (isViewingContactDetail(pathname, contactId)) {
       return
     }
 
     setUnreadCount(prev => prev + 1)
 
-    // FIX CLOUD-239: Eliminar la llamada errónea a mapSocketContact usando 'message'.
-    // Un objeto 'Message' NO es un 'Contact'. Antes, mapSocketContact(message) retornaba
-    // un contacto ficticio con id=Date.now(), name='Contacto', phone=undefined, uuid=undefined,
-    // lo que causaba que el popup se abriera con datos falsos y ChatInterface no pudiera
-    // unirse a la sala ni descargar el historial (mostrando "C Contacto" y "No hay mensajes").
+    // CLOUD-239 FIX: Use embeddedContact directly when it has a valid id.
+    // NEVER attempt to map a Message object as a Contact (the old bug).
     //
-    // Ahora solo usamos 'embeddedContact' (que viene del backend con datos reales del contacto)
-    // y si no existe, cargamos el contacto real mediante fetchContactAndOpenPopup(contactId).
+    // OLD BUG: const mapped = embeddedContact || mapSocketContact(message)
+    //   → mapSocketContact(message) returned a fictitious contact with:
+    //     { id: Date.now(), name: 'Contacto', phone: undefined, uuid: undefined }
+    //   → This caused "C Contacto" and "No hay mensajes todavía" because
+    //     ChatInterface couldn't join the socket room or fetch history.
+    //
+    // NEW FIX: Only use embeddedContact (real data from backend payload).
+    //   If not available, fall back to fetchContactAndOpenPopup(contactId)
+    //   which makes an HTTP call to get the real contact.
     if (embeddedContact && embeddedContact.id) {
       openPopupForContact(embeddedContact)
     } else {

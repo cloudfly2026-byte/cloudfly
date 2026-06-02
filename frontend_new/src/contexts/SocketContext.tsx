@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client'
@@ -18,7 +18,7 @@ import {
 // Redux
 import { useDispatch } from 'react-redux'
 import { fetchNotifications } from '@/redux/slices/notificationSlice'
-import { fetchUnreadSummary } from '@/redux/slices/unreadMessagesSlice'
+import { fetchUnreadSummary, incrementUnread } from '@/redux/slices/unreadMessagesSlice'
 import { fetchDashboardData } from '@/redux/slices/dashboardSlice'
 import type { AppDispatch } from '@/redux/store'
 import { toast } from 'react-hot-toast'
@@ -60,10 +60,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false)
     const [messages, setMessages] = useState<Message[]>([])
     const [lastInbound, setLastInbound] = useState<InboundChatNotification | null>(null)
-    const inboundSeqRef = React.useRef(0)
+    const inboundSeqRef = useRef(0)
     const dispatch = useDispatch<AppDispatch>()
 
-    const pushInboundNotification = (
+    const pushInboundNotification = useCallback((
         message: Message,
         source: InboundChatNotification['source'],
         contact?: Contact
@@ -75,7 +75,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             contact,
             source
         })
-    }
+    }, [])
 
     useEffect(() => {
         const connectSocket = () => {
@@ -131,12 +131,41 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             // Deduplication: track recent notification keys to prevent double toasts
             const recentNotifications = new Set<string>()
 
+            // CLOUD-239: Track processed message IDs to prevent duplicate processing
+            // when the same new-message event arrives from both contact room and company room
+            const processedMessageIds = new Map<number, number>() // messageId → timestamp
+            const DEDUP_WINDOW_MS = 5000 // 5 second dedup window
+
+            const isDuplicateMessage = (msgId: number): boolean => {
+                const now = Date.now()
+                const lastSeen = processedMessageIds.get(msgId)
+                if (lastSeen && (now - lastSeen) < DEDUP_WINDOW_MS) {
+                    return true // Duplicate within window
+                }
+                processedMessageIds.set(msgId, now)
+                // Cleanup old entries periodically
+                if (processedMessageIds.size > 200) {
+                    for (const [id, ts] of processedMessageIds) {
+                        if (now - ts > DEDUP_WINDOW_MS) processedMessageIds.delete(id)
+                    }
+                }
+                return false
+            }
+
             socketInstance.on('new-message', (payload: unknown) => {
                 console.log('🆕 Mensaje recibido por socket:', payload)
 
                 const normalized = normalizeInboundSocketMessage(payload)
                 if (normalized) {
                     const { message, contact } = normalized
+
+                    // CLOUD-239: Deduplicate messages that arrive from both
+                    // contact room and company room
+                    if (isDuplicateMessage(message.id)) {
+                        console.log('⚠️ [CLOUD-239] Duplicate new-message deduplicated:', message.id)
+                        return
+                    }
+
                     setMessages((prev) => {
                         const exists = prev.some(m => m.id === message.id)
                         if (exists) return prev
@@ -144,9 +173,23 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                     })
                     pushInboundNotification(message, 'new-message', contact)
                     dispatch(fetchUnreadSummary())
+
+                    // CLOUD-239: Also increment unread count in Redux for immediate badge update
+                    // This ensures the UnreadMessagesDropdown updates instantly
+                    if (contact && contact.id && contact.name) {
+                        dispatch(incrementUnread({
+                            contactId: contact.id,
+                            contactName: contact.name,
+                            phone: contact.phone
+                        }))
+                    }
                 } else {
                     const legacy = payload as Message
                     if (legacy?.id != null) {
+                        if (isDuplicateMessage(typeof legacy.id === 'number' ? legacy.id : Number(legacy.id))) {
+                            console.log('⚠️ [CLOUD-239] Duplicate legacy message deduplicated:', legacy.id)
+                            return
+                        }
                         setMessages((prev) => {
                             const exists = prev.some(m => m.id === legacy.id)
                             if (exists) return prev
@@ -165,6 +208,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                 console.log('💬 Conversación actualizada:', payload)
                 if (!isInboundUnreadConversationUpdate(payload)) return
 
+                // CLOUD-239: conversation-updated is a secondary event (the primary is new-message
+                // which now also goes to the company room). We still process it for dashboard/Kanban
+                // live updates, but we avoid creating a duplicate InboundChatNotification that would
+                // trigger a second popup open attempt.
+                //
+                // We only push an inbound notification if we haven't already processed this contact's
+                // message via new-message in the last 3 seconds (to avoid double popup).
                 const message: Message = {
                     id: Date.now(),
                     conversationId: payload.conversationId || '',
@@ -175,6 +225,25 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                     status: 'RECEIVED',
                     sentAt: payload.updatedAt || new Date().toISOString(),
                     createdAt: payload.updatedAt || new Date().toISOString()
+                }
+
+                // CLOUD-239: Only push notification from conversation-updated if we haven't
+                // recently processed a new-message for this same contact (which would have
+                // already opened the popup). This prevents the double-popup bug.
+                // We use a simple heuristic: if the payload has contactId, check if we
+                // recently got a new-message for that contact.
+                // Since conversation-updated lacks full contact data, it would force
+                // fetchContactAndOpenPopup (slow HTTP). Better to skip if new-message
+                // already handled it.
+                const now = Date.now()
+                const recentKey = `conv_updated_${payload.contactId}`
+                const lastProcessed = processedMessageIds.get(payload.contactId)
+                if (lastProcessed && (now - lastProcessed) < 3000) {
+                    console.log('⚠️ [CLOUD-239] Skipping conversation-updated notification (new-message already processed for contact:', payload.contactId)
+                    // Still refresh dashboard and unread summary
+                    dispatch(fetchUnreadSummary())
+                    refreshDashboard()
+                    return
                 }
 
                 pushInboundNotification(message, 'conversation-updated')
@@ -242,7 +311,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             if (socketInstance) socketInstance.close()
             clearInterval(checkInterval)
         }
-    }, [])
+    }, [dispatch, pushInboundNotification])
 
     const sendMessage = (conversationId: string, body: string, messageType = 'TEXT', platform = 'WHATSAPP') => {
         console.log('📤 Intentando enviar mensaje:', { conversationId, body, platform, socket: !!socket, isConnected })

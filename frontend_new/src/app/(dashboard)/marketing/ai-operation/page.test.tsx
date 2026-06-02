@@ -10,8 +10,8 @@
  * 6. Event merging works correctly (socket + REST dedup)
  * 7. Total Eventos stat shows correct count
  *
- * NOTE: All MUI and lucide-react imports are mocked via React.createElement
- * to avoid JSX parsing issues in Jest/ts-jest environment.
+ * NOTE: All MUI, lucide-react, framer-motion, date-fns, and internal
+ * component imports are mocked to avoid JSX parsing issues in Jest/ts-jest.
  */
 
 import React from 'react'
@@ -23,11 +23,12 @@ import { marketingHistoryService } from '@/services/marketing/marketingHistorySe
 // ---------------------------------------------------------------------------
 // Mock @mui/material — all components render as simple divs/spans
 // Chip renders its label as text content so getByText works
+// Includes keyframes and styled for MarketingSocketStatus
 // ---------------------------------------------------------------------------
 jest.mock('@mui/material', () => {
   const createMock = (displayName: string, defaultTag = 'div') => {
     const Comp = React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { children, label, ...rest } = props
+      const { children, label, in: _in, item, container, alignItems, justifyContent, flexDirection, ...rest } = props
       // For Chip, render label as text content
       const content = label !== undefined ? label : children
       return React.createElement(defaultTag, { ...rest, 'data-testid': displayName, ref }, content)
@@ -53,6 +54,19 @@ jest.mock('@mui/material', () => {
     Divider: createMock('Divider'),
     Fade: createMock('Fade'),
     Zoom: createMock('Zoom'),
+    Collapse: createMock('Collapse'),
+    Snackbar: createMock('Snackbar'),
+    Tooltip: createMock('Tooltip'),
+    Accordion: createMock('Accordion'),
+    AccordionSummary: createMock('AccordionSummary'),
+    AccordionDetails: createMock('AccordionDetails'),
+    TextField: createMock('TextField'),
+    IconButton: createMock('IconButton'),
+    keyframes: () => 'keyframes-animation',
+    styled: () => () => React.forwardRef((props: any, ref: any) => {
+      const { children, ...rest } = props
+      return React.createElement('div', { ...rest, ref }, children)
+    }),
   }
 })
 
@@ -70,8 +84,42 @@ jest.mock('lucide-react', () => {
     Zap: createIcon('Zap'),
     Loader: createIcon('Loader'),
     Clock: createIcon('Clock'),
+    Loader2: createIcon('Loader2'),
+    Shield: createIcon('Shield'),
+    ShieldCheck: createIcon('ShieldCheck'),
+    ShieldAlert: createIcon('ShieldAlert'),
+    Radio: createIcon('Radio'),
+    Bug: createIcon('Bug'),
+    ChevronDown: createIcon('ChevronDown'),
+    Send: createIcon('Send'),
+    LogOut: createIcon('LogOut'),
+    Trash2: createIcon('Trash2'),
+    Copy: createIcon('Copy'),
   }
 })
+
+// ---------------------------------------------------------------------------
+// Mock framer-motion
+// ---------------------------------------------------------------------------
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: React.forwardRef((props: any, ref: any) => {
+      const { children, initial, animate, exit, transition, ...rest } = props
+      return React.createElement('div', { ...rest, ref }, children)
+    }),
+  },
+  AnimatePresence: ({ children }: any) => children,
+}))
+
+// ---------------------------------------------------------------------------
+// Mock date-fns
+// ---------------------------------------------------------------------------
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: () => 'Hace 2 min',
+}))
+jest.mock('date-fns/locale', () => ({
+  es: {},
+}))
 
 // ---------------------------------------------------------------------------
 // CLOUD-255: Mock next-auth/react useSession
@@ -113,6 +161,8 @@ jest.mock('@/hooks/useMarketingAgentsSocket', () => ({
     isConnected: true,
     connectionStatus: 'connected' as const,
     lastUpdate: null,
+    roomName: null,
+    subscriptionError: null,
     reconnect: mockReconnect,
   })
 }))
@@ -134,6 +184,20 @@ jest.mock('@/views/marketing/ai-operation/AgentFlowGraph', () => ({
 jest.mock('@/views/marketing/ai-operation/MarketingHistoryTimeline', () => ({
   __esModule: true,
   default: () => React.createElement('div', { 'data-testid': 'history-timeline' }, 'Timeline')
+}))
+
+// ---------------------------------------------------------------------------
+// Mock CLOUD-243 components (MarketingSocketStatus, MarketingRoomDebugPanel)
+// These use keyframes/styled from MUI and framer-motion — must be mocked
+// ---------------------------------------------------------------------------
+jest.mock('@/components/marketing/MarketingSocketStatus', () => ({
+  __esModule: true,
+  default: () => React.createElement('div', { 'data-testid': 'marketing-socket-status' }, 'Socket Status'),
+}))
+
+jest.mock('@/components/marketing/MarketingRoomDebugPanel', () => ({
+  __esModule: true,
+  default: () => React.createElement('div', { 'data-testid': 'marketing-room-debug-panel' }, 'Debug Panel'),
 }))
 
 // ---------------------------------------------------------------------------

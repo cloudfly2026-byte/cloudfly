@@ -113,6 +113,7 @@ services:
       EVOLUTION_API_URL: http://evolution-api:8080
       EVOLUTION_API_KEY: CAMBIA_ESTA_LLAVE_LARGA_Y_UNICA
       JWT_SECRET: dev-jwt-secret-change-in-production
+      N8N_SECRET_KEY: dev-n8n-secret-key
     networks:
       - app-net
       - kafka-net

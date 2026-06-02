@@ -53,7 +53,9 @@ export const useChatSocket = ({ conversationId, phone, tenantId, onNewMessage }:
       console.log('✅ Connected to chat socket')
       setIsConnected(true)
       
-      // Unirse a la habitación de la conversación usando Teléfono (soporta duplicados)
+      // CLOUD-239: Join the conversation room using phone.
+      // This joins the contact-specific room: tenant_{t}_company_{c}_contact_{phone}
+      // which is where the backend emits new-message for advisors with the chat open.
       socket.emit('join-conversation', { phone })
     })
 

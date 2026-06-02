@@ -938,12 +938,10 @@ def run_sprint():
             exclude_devops = True
 
         if is_worker:
-            print("\n👷 [Worker Crew]: Iniciando ejecución directa de desarrollo, documentación y pruebas (excluyendo Product Owner / Sprint Planning)...")
+            print("\n👷 [Worker Crew]: Iniciando ejecución directa de desarrollo, documentación y pruebas (excluyendo Product Owner / DevOps / Sprint Planning / Deploy)...")
             agents_list = [system_architect, software_developer, frontend_developer]
             tasks_list = [research_task, development_task, frontend_development_task]
-            if not exclude_devops:
-                agents_list.append(devops_engineer)
-                tasks_list.append(deployment_prep)
+            # DevOps is excluded on workers as there is only a single DevOps agent located in the Master team
             agents_list.extend([technical_writer, qa_engineer])
             tasks_list.extend([documentation_task, quality_assurance])
         else:

@@ -44,6 +44,8 @@ jest.mock('@/hooks/useMarketingAgentsSocket', () => ({
     isConnected: mockIsConnected,
     connectionStatus: mockConnectionStatus,
     lastUpdate: mockLastUpdate,
+    roomName: null,
+    subscriptionError: null,
     reconnect: mockReconnect
   })
 }))
@@ -84,6 +86,17 @@ jest.mock('@/views/marketing/ai-operation/AgentFlowGraph', () => ({
 jest.mock('@/views/marketing/ai-operation/MarketingHistoryTimeline', () => ({
   __esModule: true,
   default: () => <div data-testid='history-timeline'>History Timeline</div>
+}))
+
+// Mock CLOUD-243 components (MarketingSocketStatus, MarketingRoomDebugPanel)
+jest.mock('@/components/marketing/MarketingSocketStatus', () => ({
+  __esModule: true,
+  default: () => <div data-testid='marketing-socket-status'>Socket Status</div>,
+}))
+
+jest.mock('@/components/marketing/MarketingRoomDebugPanel', () => ({
+  __esModule: true,
+  default: () => <div data-testid='marketing-room-debug-panel'>Debug Panel</div>,
 }))
 
 // ---------------------------------------------------------------------------

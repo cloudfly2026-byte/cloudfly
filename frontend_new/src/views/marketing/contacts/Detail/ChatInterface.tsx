@@ -181,10 +181,21 @@ export default function ChatInterface({ contact, isNew, isPopup = false }: Props
     }
   }, [messages])
 
-  // Fetch history
+  // CLOUD-239: Fetch history when contact changes.
+  // Uses contact.uuid (preferred) or contact.id (fallback) to load messages.
+  // This ensures the popup shows full conversation history when opened
+  // from a new-message event (not just "No hay mensajes todavía").
   useEffect(() => {
     const fetchHistory = async () => {
       if (isNew || !contact) return
+      
+      // CLOUD-239: Validate that the contact has the minimum required fields
+      // to fetch history. Without uuid or id, we can't load messages.
+      if (!contact.uuid && !contact.id) {
+        console.warn('[CLOUD-239] Contact missing both uuid and id — cannot fetch history', contact)
+        return
+      }
+      
       setLoading(true)
       try {
         const user = userMethods.getUserLogin()
@@ -196,7 +207,7 @@ export default function ChatInterface({ contact, isNew, isPopup = false }: Props
           user?.companyId
 
         if (!tenantId || !companyId) {
-          console.warn('No tenantId/companyId for history fetch', { tenantId, companyId, contactId: contact.id })
+          console.warn('[CLOUD-239] No tenantId/companyId for history fetch', { tenantId, companyId, contactId: contact.id })
           return
         }
 
@@ -210,7 +221,7 @@ export default function ChatInterface({ contact, isNew, isPopup = false }: Props
 
         setMessages(history)
       } catch (error) {
-        console.error('Error fetching chat history:', error)
+        console.error('[CLOUD-239] Error fetching chat history:', error)
       } finally {
         setLoading(false)
       }
