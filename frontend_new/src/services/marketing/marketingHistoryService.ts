@@ -89,12 +89,21 @@ export const marketingHistoryService = {
       params.append('page', String(page))
       if (companyId) params.append('companyId', String(companyId))
 
-      const { data } = await axiosInstance.get<MarketingHistoryResponse>(
+      const { data } = await axiosInstance.get<any>(
         `${API_URL}/agents/history?${params}`,
         { signal }
       )
 
-      return data
+      const events = data?.events || data?.recentEvents || []
+      return {
+        events,
+        total: data?.total !== undefined ? data.total : events.length,
+        hasMore: data?.hasMore !== undefined ? data.hasMore : false,
+        agents: data?.agents || [],
+        connections: data?.connections || [],
+        recentEvents: data?.recentEvents || events,
+        generatedAt: data?.generatedAt
+      }
     } catch (error: unknown) {
       if (isAbortError(error)) {
         return { events: [], total: 0, hasMore: false }

@@ -346,6 +346,14 @@ export interface MarketingHistoryResponse {
   total: number;
   /** Whether there are more events to load */
   hasMore: boolean;
+  /** Mapped agents from backend history response */
+  agents?: MarketingAgent[];
+  /** Mapped connections from backend history response */
+  connections?: AgentConnection[];
+  /** Raw events returned by the backend */
+  recentEvents?: MarketingActionEvent[];
+  /** Backend generation timestamp */
+  generatedAt?: string;
 }
 
 /**

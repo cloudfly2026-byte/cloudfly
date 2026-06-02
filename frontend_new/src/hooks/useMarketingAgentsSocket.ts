@@ -28,6 +28,7 @@
 
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { useSocket } from '@/contexts/SocketContext'
+import { marketingHistoryService } from '@/services/marketing/marketingHistoryService'
 import type {
   MarketingAgent,
   AgentConnection,
@@ -107,6 +108,30 @@ export const useMarketingAgentsSocket = (
   // the socket listener on every roomName change (fixes stale closure bug).
   const roomNameRef = useRef<string | null>(null)
   roomNameRef.current = roomName
+
+  // Load initial agents and connections from REST on mount or option changes
+  useEffect(() => {
+    let active = true
+    const loadInitialLiveAgents = async () => {
+      try {
+        const data = await marketingHistoryService.getLiveAgents(options.tenantId, options.companyId)
+        if (active) {
+          if (Array.isArray(data?.agents)) {
+            setAgents(data.agents)
+          }
+          if (Array.isArray(data?.connections)) {
+            setConnections(data.connections)
+          }
+        }
+      } catch (err) {
+        console.error('[useMarketingAgentsSocket] failed to load initial live status:', err)
+      }
+    }
+    loadInitialLiveAgents()
+    return () => {
+      active = false
+    }
+  }, [options.tenantId, options.companyId])
 
   // -----------------------------------------------------------------------
   // Helper: update lastUpdate timestamp
