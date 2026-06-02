@@ -1,10 +1,10 @@
 {
   "healthiest_model": "openrouter/owl-alpha",
-  "last_check": "2026-06-01T20:23:40.120239",
+  "last_check": "2026-06-01T20:26:10.604307",
   "models_status": {
     "openrouter/owl-alpha": {
       "status": "healthy",
-      "latency": 2.19
+      "latency": 5.67
     }
   }
 }
