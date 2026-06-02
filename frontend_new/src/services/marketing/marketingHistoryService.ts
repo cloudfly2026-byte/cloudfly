@@ -21,10 +21,10 @@ const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/marketing`
  * Used when the backend does not provide these fields.
  */
 const AGENT_DEFAULTS: Record<string, { color: string; role: string; position: { x: number; y: number } }> = {
-  researcher:          { color: '#3b82f6', role: 'Investigador de Mercado',  position: { x: 80,  y: 120 } },
-  icp_agent:           { color: '#8b5cf6', role: 'Agente de ICP',           position: { x: 280, y: 60  } },
-  qualification_agent: { color: '#22c55e', role: 'Agente de Calificación',  position: { x: 480, y: 120 } },
-  copywriter_agent:    { color: '#f59e0b', role: 'Copywriter',              position: { x: 680, y: 60  } }
+  researcher:          { color: '#3b82f6', role: 'Investigador de Mercado',  position: { x: 80,  y: 150 } },
+  icp_agent:           { color: '#8b5cf6', role: 'Agente de ICP',           position: { x: 360, y: 75  } },
+  qualification_agent: { color: '#22c55e', role: 'Agente de Calificación',  position: { x: 640, y: 150 } },
+  copywriter_agent:    { color: '#f59e0b', role: 'Copywriter',              position: { x: 920, y: 75  } }
 }
 
 /**
@@ -52,7 +52,7 @@ function normalizeAgent(raw: any, index: number): MarketingAgent {
     lastActivity: raw.lastActivity ?? new Date().toISOString(),
     avatar: raw.avatar ?? raw.avatarUrl ?? undefined,
     color: raw.color ?? defaults?.color ?? '#94a3b8',
-    position: raw.position ?? defaults?.position ?? { x: 40 + col * 240, y: 40 + row * 180 }
+    position: raw.position ?? defaults?.position ?? { x: 60 + col * 280, y: 80 + row * 220 }
   }
 }
 

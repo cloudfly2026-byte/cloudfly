@@ -156,19 +156,13 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
     return () => window.removeEventListener('resize', measure)
   }, [propWidth, propHeight])
 
-  const svgWidth = propWidth ?? dimensions.width
-  const svgHeight = propHeight ?? dimensions.height
-
-  // -----------------------------------------------------------------------
-  // Compute node positions — priority: AGENT_POSITIONS → agent.position → grid
-  // -----------------------------------------------------------------------
-
   const cols = Math.max(1, Math.ceil(Math.sqrt(agents.length)))
 
+  // 1. Compute node positions (priority: AGENT_POSITIONS → agent.position → grid)
   const nodePositions = useMemo(() => {
     const map: Record<string, { x: number; y: number }> = {}
     
-    // 1. Compute initial positions (relative/local)
+    // Compute initial positions (relative/local)
     agents.forEach((agent, index) => {
       if (AGENT_POSITIONS[agent.id]) {
         // Priority 1: Predefined positions from spec
@@ -190,7 +184,7 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
       }
     });
 
-    // 2. Center all positions horizontally within svgWidth
+    // Center all positions horizontally within dimensions.width (the parent container width)
     const keys = Object.keys(map)
     if (keys.length > 0) {
       let minX = Infinity
@@ -204,9 +198,9 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
       })
 
       const contentWidth = maxX - minX
-      const shiftX = (svgWidth - contentWidth) / 2 - minX
+      const shiftX = (dimensions.width - contentWidth) / 2 - minX
 
-      // Only shift if there is space to center and keep it bounded by padding
+      // Only shift if there is space to center
       if (shiftX > 0) {
         keys.forEach((id) => {
           map[id].x += shiftX
@@ -215,7 +209,22 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
     }
 
     return map
-  }, [agents, cols, svgWidth])
+  }, [agents, cols, dimensions.width])
+
+  // 2. Compute dynamic height to fit all cards with padding
+  const dynamicHeight = useMemo(() => {
+    let maxY = 360 // default minimum height
+    Object.values(nodePositions).forEach((pos) => {
+      const bottom = pos.y + CARD_HEIGHT / 2 + 40 // card bottom + margin
+      if (bottom > maxY) {
+        maxY = bottom
+      }
+    })
+    return maxY
+  }, [nodePositions])
+
+  const svgWidth = propWidth ?? dimensions.width
+  const svgHeight = propHeight ?? dynamicHeight
 
   // -----------------------------------------------------------------------
   // Stable callback for agent click
