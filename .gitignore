@@ -39,6 +39,7 @@ certs/acme.json
 backup-service/public/*.json
 callcenterIA/asterisk/data/*.sqlite3
 *.sql
+!marketing_team_ai/sql/*.sql
 *.b64
 
 # IDEs
