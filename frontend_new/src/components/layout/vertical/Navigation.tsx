@@ -77,15 +77,15 @@ const Navigation = (props: Props) => {
   }
 
   const scrollMenu = (container: any, isPerfectScrollbar: boolean) => {
-    container = isBreakpointReached || !isPerfectScrollbar ? container.target : container
+    container = isBreakpointReached || !isPerfectScrollbar ? container?.target : container
 
-    if (shadowRef && container.scrollTop > 0) {
+    if (shadowRef && shadowRef.current && container && container.scrollTop > 0) {
       // @ts-ignore
       if (!shadowRef.current.classList.contains('scrolled')) {
         // @ts-ignore
         shadowRef.current.classList.add('scrolled')
       }
-    } else {
+    } else if (shadowRef && shadowRef.current) {
       // @ts-ignore
       shadowRef.current.classList.remove('scrolled')
     }
