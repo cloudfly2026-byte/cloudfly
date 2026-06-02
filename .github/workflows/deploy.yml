@@ -100,7 +100,14 @@ jobs:
           password: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
+            if [ ! -d "/apps/cloudfly/.git" ]; then
+              echo "Repository not found on VPS. Cloning..."
+              rm -rf /apps/cloudfly
+              mkdir -p /apps
+              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/cloudfly2026-byte/cloudfly.git /apps/cloudfly
+            fi
             cd /apps/cloudfly
+            git config --global --add safe.directory /apps/cloudfly
             git pull origin main
             
             # Login to GHCR on the VPS using a Personal Access Token (PAT) or GITHUB_TOKEN configured in the VPS env
