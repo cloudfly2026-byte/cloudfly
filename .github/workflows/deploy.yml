@@ -47,7 +47,7 @@ jobs:
             context: ./lead-scrapper-google
             file: ./lead-scrapper-google/Dockerfile
           - name: marketing-agent
-            context: .
+            context: ./marketing_team_ai
             file: ./marketing_team_ai/Dockerfile
           - name: marketing-worker
             context: ./marketing-worker

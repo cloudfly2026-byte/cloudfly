@@ -442,8 +442,8 @@ services:
   marketing-agent:
     image: ghcr.io/cloudfly2026-byte/cloudfly/marketing-agent:latest
     build:
-      context: .
-      dockerfile: marketing_team_ai/Dockerfile
+      context: ./marketing_team_ai
+      dockerfile: Dockerfile
 
     container_name: marketing-agent
     restart: always
