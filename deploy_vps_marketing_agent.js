@@ -18,8 +18,8 @@ conn.on('ready', () => {
   const deploymentCmd = [
     'cd /apps/cloudfly',
     'git stash',
-    'git checkout develop-may-2026',
-    'git pull origin develop-may-2026',
+    'git checkout main',
+    'git pull origin main',
     'docker compose -f docker-compose-full-vps.yml up -d --build marketing-agent lead-scrapper-google'
   ].join(' && ');
 
