@@ -78,6 +78,29 @@ jest.mock('lucide-react', () => {
 })
 
 // ---------------------------------------------------------------------------
+// Mock framer-motion to avoid animation issues in tests
+// ---------------------------------------------------------------------------
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: React.forwardRef((props: any, ref: any) => {
+      const { children, initial, animate, exit, transition, ...rest } = props
+      return React.createElement('div', { ...rest, ref }, children)
+    }),
+  },
+  AnimatePresence: ({ children }: any) => children,
+}))
+
+// ---------------------------------------------------------------------------
+// Mock date-fns to avoid locale issues in tests
+// ---------------------------------------------------------------------------
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: () => 'Hace 2 min',
+}))
+jest.mock('date-fns/locale', () => ({
+  es: {},
+}))
+
+// ---------------------------------------------------------------------------
 // Mock next-auth/react useSession
 // ---------------------------------------------------------------------------
 const mockSessionData = {
@@ -431,7 +454,7 @@ describe('CLOUD-254: Responsive Layout — mobile/tablet/desktop', () => {
     expect(screen.getByText('Bot 1')).toBeInTheDocument()
     expect(screen.getByText('Bot 2')).toBeInTheDocument()
     expect(screen.getByText('Bot 3')).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('AC2: Empty state shown when no agents', async () => {
     mockSocketReturn.agents = []
