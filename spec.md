@@ -279,104 +279,44 @@ C:\apps\cloudfly\
 └── developmentAI/                # Configuraciones de desarrollo VoIP/IA FreeSWITCH
 
 ## Despliegue en Producción
-
 El archivo principal para despliegue en producción es `docker-compose-full-vps.yml`.
 
-### Despliegue en Ambiente Local
+## Desarrollo Local
 
-Para desarrollo local, se debe crear un archivo `docker-compose-full-local.yml` basado en `docker-compose-full-vps.yml` con las siguientes diferencias:
+Para el desarrollo local se utiliza una arquitectura híbrida donde el frontend se ejecuta de manera nativa y los servicios backend corren sobre Docker:
 
-#### Diferencias clave respecto a la versión VPS:
+1. **Frontend**: Se corre localmente desde la carpeta `frontend_new` con:
+   ```bash
+   npm run dev
+   ```
+   Este servidor de desarrollo local se conecta a `localhost:8080` (el servicio de API backend ejecutándose en Docker).
 
-1. **Sin Traefik**: No se necesita proxy inverso ni SSL en ambiente local. Se elimina completamente el servicio `traefik` y todas sus dependencias (certificados, configuración dinámica, entrypoints SSL).
-
-2. **Acceso directo por puerto**: Cada servicio expone su puerto directamente sin pasar por Traefik:
-   - `backend-api` → puerto `8080`
-   - `frontend` → puerto `3000`
-   - `evolution-api` → puerto `8081`
-   - `chat-socket-service` → puerto `3001`
-   - `qdrant` → puerto `6333`
-   - `redis` → puerto `6379`
-   - `postgres` → puerto `5432`
-   - `mysql` → puerto `3306`
-   - `kafka` → puerto `9092`
-
-3. **Sin redes internas de Traefik**: Se simplifican las redes, eliminando las configuraciones de `traefik-public` y usando solo `default`, `kafka-net` y `app-net`.
-
-4. **Sin volúmenes de certificados**: Se eliminan los montajes de `./certs` y configuración de Let's Encrypt.
-
-5. **Perfiles de Spring en desarrollo**: Los servicios Java usan `SPRING_PROFILES_ACTIVE=development` en lugar de `production`.
-
-6. **Sin restricciones de recursos**: Se eliminan los `deploy.resources.limits` ya que en local no son necesarios.
-
-#### Estructura del archivo:
-
-```yaml
-# docker-compose-full-local.yml
-# Basado en docker-compose-full-vps.yml
-# Diferencias: Sin Traefik, acceso directo por puerto, perfil development
-
-services:
-  db:
-    # ... (igual que VPS)
-    
-  backend-api:
-    # ... (igual que VPS pero con:)
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=development
-    # Sin labels de Traefik
-    
-  frontend:
-    # ... (igual que VPS pero con:)
-    ports:
-      - "3000:3000"
-    # Sin labels de Traefik
-    
-  evolution-api:
-    # ... (igual que VPS pero con:)
-    ports:
-      - "8081:8080"
-    # Sin labels de Traefik
-    
-  # ... (resto de servicios sin Traefik)
-  
-  # NO incluir servicio traefik
-  # NO incluir volúmenes de certs
-  # NO incluir red traefik-public
-```
-
-#### Comandos para desarrollo local:
+2. **Backend y Servicios**: Se ejecutan en Docker local usando un archivo `docker-compose-full-local.yml` basado en `docker-compose-full-vps.yml` con las siguientes adaptaciones:
+   - **Sin Traefik**: Se expone cada puerto directamente (ej. `backend-api` en `8080:8080`, `evolution-api` en `8081:8080`, `mysql` en `3306:3306`, `kafka` en `9092:9092`).
+   - **Perfil de Desarrollo**: Variable `SPRING_PROFILES_ACTIVE=development`.
 
 ```bash
-# Iniciar todo el stack local
+# Levantar servicios Docker (excepto frontend)
 docker-compose -f docker-compose-full-local.yml up -d
-
-# Ver logs de un servicio específico
-docker-compose -f docker-compose-full-local.yml logs -f backend-api
-
-# Detener todo
-docker-compose -f docker-compose-full-local.yml down
 ```
 
 ## Pruebas de Desarrollo E2E
 
-### Credenciales de Prueba con Playwright
-Para realizar pruebas de interfaz con navegador desde el equipo de desarrollo mediante herramientas de automatización como **Playwright**, se utiliza la siguiente cuenta con rol de manager:
+### Herramientas de Pruebas en Navegador
+El equipo **`ai_scrum_team`** cuenta con herramientas de automatización de navegador integradas:
+- **Playwright / MCP / `chrome-devtools-mcp`**: Permiten interactuar y realizar pruebas dinámicas directamente sobre la interfaz de usuario en el navegador web local.
+
+### Credenciales de Prueba
+Para pruebas automáticas o manuales:
 - **Usuario:** `manager`
 - **Contraseña:** `Password123!`
 
-### Depuración de Errores con Logs de Docker
-Durante la ejecución de pruebas locales, se deben utilizar activamente los logs de los contenedores de Docker para depurar errores y comportamientos inesperados:
-- **Ver logs de todos los servicios en tiempo real:**
-  ```bash
-  docker-compose -f docker-compose-full-local.yml logs -f
-  ```
-- **Ver logs en tiempo real de un servicio específico (ej. backend-api):**
+### Inspección de Logs
+- **Ver logs del backend API en tiempo real:**
   ```bash
   docker-compose -f docker-compose-full-local.yml logs -f backend-api
   ```
+
 
 
 
