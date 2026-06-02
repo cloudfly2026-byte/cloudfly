@@ -6,8 +6,70 @@ on:
       - main
 
 jobs:
+  detect-changes:
+    name: Detect Service Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      backend-api: ${{ steps.filter.outputs.backend-api }}
+      billing-service: ${{ steps.filter.outputs.billing-service }}
+      scheduler-service: ${{ steps.filter.outputs.scheduler-service }}
+      notification-service: ${{ steps.filter.outputs.notification-service }}
+      frontend-react: ${{ steps.filter.outputs.frontend-react }}
+      chat-socket-service: ${{ steps.filter.outputs.chat-socket-service }}
+      ai-agent: ${{ steps.filter.outputs.ai-agent }}
+      lead-generator: ${{ steps.filter.outputs.lead-generator }}
+      lead-scrapper-google: ${{ steps.filter.outputs.lead-scrapper-google }}
+      marketing-agent: ${{ steps.filter.outputs.marketing-agent }}
+      marketing-worker: ${{ steps.filter.outputs.marketing-worker }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check path filters
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend-api:
+              - 'backend_new/**'
+              - '.github/workflows/deploy.yml'
+            billing-service:
+              - 'billing-service/**'
+              - '.github/workflows/deploy.yml'
+            scheduler-service:
+              - 'scheduler_service/**'
+              - '.github/workflows/deploy.yml'
+            notification-service:
+              - 'notifications/**'
+              - '.github/workflows/deploy.yml'
+            frontend-react:
+              - 'frontend_new/**'
+              - '.github/workflows/deploy.yml'
+            chat-socket-service:
+              - 'chat-socket-service/**'
+              - '.github/workflows/deploy.yml'
+            ai-agent:
+              - 'ai-agent/**'
+              - '.github/workflows/deploy.yml'
+            lead-generator:
+              - 'lead-generator/**'
+              - '.github/workflows/deploy.yml'
+            lead-scrapper-google:
+              - 'lead-scrapper-google/**'
+              - 'lead_scrapper_google/**'
+              - '.github/workflows/deploy.yml'
+            marketing-agent:
+              - 'marketing_team_ai/**'
+              - '.github/workflows/deploy.yml'
+            marketing-worker:
+              - 'marketing-worker/**'
+              - '.github/workflows/deploy.yml'
+
   build-and-push:
     name: Build & Push Microservices
+    needs: detect-changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -19,44 +81,58 @@ jobs:
           - name: backend-api
             context: ./backend_new
             file: ./backend_new/Dockerfile
+            key: backend-api
           - name: billing-service
             context: ./billing-service
             file: ./billing-service/Dockerfile
+            key: billing-service
           - name: scheduler-service
             context: ./scheduler_service
             file: ./scheduler_service/Dockerfile
+            key: scheduler-service
           - name: notification-service
             context: ./notifications
             file: ./notifications/Dockerfile
+            key: notification-service
           - name: frontend-react
             context: ./frontend_new
             file: ./frontend_new/Dockerfile
+            key: frontend-react
           - name: chat-socket-service
             context: ./chat-socket-service
             file: ./chat-socket-service/Dockerfile
+            key: chat-socket-service
           - name: ai-agent
             context: ./ai-agent
             file: ./ai-agent/Dockerfile
+            key: ai-agent
           - name: lead-generator
             context: ./lead-generator
             file: ./lead-generator/Dockerfile
+            key: lead-generator
           - name: lead-scrapper-google
             context: ./lead-scrapper-google
             file: ./lead-scrapper-google/Dockerfile
+            key: lead-scrapper-google
           - name: marketing-agent
             context: ./marketing_team_ai
             file: ./marketing_team_ai/Dockerfile
+            key: marketing-agent
           - name: marketing-worker
             context: ./marketing-worker
             file: ./marketing-worker/Dockerfile
+            key: marketing-worker
     steps:
       - name: Checkout repository
+        if: ${{ needs.detect-changes.outputs[matrix.service.key] == 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
+        if: ${{ needs.detect-changes.outputs[matrix.service.key] == 'true' }}
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
+        if: ${{ needs.detect-changes.outputs[matrix.service.key] == 'true' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -64,10 +140,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Downcase repository owner
+        if: ${{ needs.detect-changes.outputs[matrix.service.key] == 'true' }}
         id: repository_owner
         run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
+        if: ${{ needs.detect-changes.outputs[matrix.service.key] == 'true' }}
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
@@ -85,7 +163,7 @@ jobs:
 
   deploy:
     name: VPS Deploy
-    needs: build-and-push
+    needs: [detect-changes, build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -110,16 +188,8 @@ jobs:
             git config --global --add safe.directory /apps/cloudfly
             git pull origin main
             
-            # Login to GHCR on the VPS using a Personal Access Token (PAT) or GITHUB_TOKEN configured in the VPS env
-            # (Note: In standard GitHub Actions, secrets.GITHUB_TOKEN is not accessible directly on the VPS unless we pass it,
-            # or use a VPS-stored secret. Alternatively, we can login from the action before SSH, or pass it via env).
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Pull the new images from GHCR
             docker compose -f docker-compose-full-vps.yml pull
-            
-            # Restart containers with the updated images
             docker compose -f docker-compose-full-vps.yml up -d
-            
-            # Clean up old dangling images
             docker image prune -f
