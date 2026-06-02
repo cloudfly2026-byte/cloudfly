@@ -45,6 +45,8 @@ def collect_google_links(page: Page, query: str, pages: int, verbose: bool) -> l
     import urllib.parse
     import re
     import html
+    import time
+    import random
 
     links: list[str] = []
     seen: set[str] = set()
@@ -64,45 +66,65 @@ def collect_google_links(page: Page, query: str, pages: int, verbose: bool) -> l
             "Accept-Language": "es-ES,es;q=0.8"
         }
 
+        # Add a random delay to prevent rate-limiting (4.5 to 7.5 seconds)
+        delay = random.uniform(4.5, 7.5)
+        logger.info("Sleeping %.2f seconds before search query to avoid rate limits...", delay)
+        time.sleep(delay)
+
+        max_attempts = 3
+        content = ""
+        for attempt in range(max_attempts):
+            try:
+                req = urllib.request.Request(search_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=12) as response:
+                    content = response.read().decode('utf-8', errors='ignore')
+                    break
+            except Exception as e:
+                logger.warning("Attempt %s/%s failed querying Yahoo: %s", attempt + 1, max_attempts, e)
+                if attempt < max_attempts - 1:
+                    backoff = (attempt + 1) * 8.0 + random.uniform(2.0, 5.0)
+                    logger.info("Retrying Yahoo search in %.2f seconds...", backoff)
+                    time.sleep(backoff)
+                else:
+                    if verbose:
+                        print(f"  ⚠️  Error persistente en Yahoo: {e}")
+
+        if not content:
+            continue
+
         try:
-            req = urllib.request.Request(search_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=12) as response:
-                content = response.read().decode('utf-8', errors='ignore')
-                
-                blocks = []
-                matches = list(re.finditer(r'<div class="[^"]*algo-sr[^"]*"', content))
-                for i in range(len(matches)):
-                    start_idx = matches[i].start()
-                    end_idx = matches[i+1].start() if i + 1 < len(matches) else len(content)
-                    blocks.append(content[start_idx:end_idx])
+            blocks = []
+            matches = list(re.finditer(r'<div class="[^"]*algo-sr[^"]*"', content))
+            for i in range(len(matches)):
+                start_idx = matches[i].start()
+                end_idx = matches[i+1].start() if i + 1 < len(matches) else len(content)
+                blocks.append(content[start_idx:end_idx])
 
-                for block in blocks:
-                    link_match = re.search(r'href="([^"]+)"', block)
-                    if not link_match:
-                        continue
-                    raw_url = link_match.group(1)
-                    real_url = raw_url
-                    if "/RU=" in raw_url:
-                        parts = raw_url.split("/RU=")
-                        if len(parts) > 1:
-                            target = parts[1].split("/")[0]
-                            real_url = urllib.parse.unquote(target)
+            for block in blocks:
+                link_match = re.search(r'href="([^"]+)"', block)
+                if not link_match:
+                    continue
+                raw_url = link_match.group(1)
+                real_url = raw_url
+                if "/RU=" in raw_url:
+                    parts = raw_url.split("/RU=")
+                    if len(parts) > 1:
+                        target = parts[1].split("/")[0]
+                        real_url = urllib.parse.unquote(target)
 
-                    if "search.yahoo.com" in real_url:
-                        continue
-                    if not real_url.startswith("http"):
-                        continue
-                    if debe_saltar(real_url):
-                        continue
+                if "search.yahoo.com" in real_url:
+                    continue
+                if not real_url.startswith("http"):
+                    continue
+                if debe_saltar(real_url):
+                    continue
 
-                    key = real_url.rstrip("/").lower()
-                    if key not in seen:
-                        seen.add(key)
-                        links.append(real_url)
+                key = real_url.rstrip("/").lower()
+                if key not in seen:
+                    seen.add(key)
+                    links.append(real_url)
         except Exception as e:
-            logger.warning("Error fetching/parsing Yahoo page_num=%s: %s", page_num + 1, e)
-            if verbose:
-                print(f"  ⚠️  Error en Yahoo: {e}")
+            logger.warning("Error parsing Yahoo page_num=%s: %s", page_num + 1, e)
 
     return prioritize_links(links)
 
