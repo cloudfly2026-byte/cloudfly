@@ -58,8 +58,9 @@ class LeadSearchPipeline:
             logger.warning("request_id=%s no WhatsApp channel", request_id)
             return
 
+        from agents.llm_config import execute_crew_with_retry
         campaign_crew = build_campaign_crew(company=company, product=product, leads=leads)
-        campaign_crew.kickoff()
+        execute_crew_with_retry(campaign_crew, task_label="Campaign Crew")
 
         task_output = campaign_crew.tasks[1].output
         if not task_output or not task_output.raw:

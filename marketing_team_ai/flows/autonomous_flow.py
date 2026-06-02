@@ -263,11 +263,12 @@ class AutonomousMarketingFlow:
                                   tenant_id, company_id,
                                   metadata={"product_id": product.get("id")})
 
+                from agents.llm_config import execute_crew_with_retry
                 analysis_crew = build_analysis_crew(
                     company=company,
                     product=product
                 )
-                result = analysis_crew.kickoff()
+                result = execute_crew_with_retry(analysis_crew, task_label="B2B Analysis Crew")
                 logger.info(f"Crew kickoff results: {result}")
                 emit_agent_status("researcher", "completed", tenant_id, company_id,
                                   current_task="Análisis de mercado completado")
