@@ -1,1 +1,0 @@
-# AI Marketing Team 2026 - CrewAI Agent
