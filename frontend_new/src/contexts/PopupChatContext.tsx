@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { useSocket } from './SocketContext'
 import { Contact } from '@/types/marketing/contactTypes'
 import { contactService } from '@/services/marketing/contactService'
-import { mapSocketContact } from '@/utils/normalizeSocketPayload'
 
 export interface PopupChat {
   contact: Contact
@@ -78,9 +77,16 @@ export const PopupChatProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     setUnreadCount(prev => prev + 1)
 
-    const mapped = embeddedContact || mapSocketContact(message as unknown as Record<string, unknown>)
-    if (mapped) {
-      openPopupForContact(mapped)
+    // FIX CLOUD-239: Eliminar la llamada errónea a mapSocketContact usando 'message'.
+    // Un objeto 'Message' NO es un 'Contact'. Antes, mapSocketContact(message) retornaba
+    // un contacto ficticio con id=Date.now(), name='Contacto', phone=undefined, uuid=undefined,
+    // lo que causaba que el popup se abriera con datos falsos y ChatInterface no pudiera
+    // unirse a la sala ni descargar el historial (mostrando "C Contacto" y "No hay mensajes").
+    //
+    // Ahora solo usamos 'embeddedContact' (que viene del backend con datos reales del contacto)
+    // y si no existe, cargamos el contacto real mediante fetchContactAndOpenPopup(contactId).
+    if (embeddedContact && embeddedContact.id) {
+      openPopupForContact(embeddedContact)
     } else {
       fetchContactAndOpenPopup(contactId)
     }

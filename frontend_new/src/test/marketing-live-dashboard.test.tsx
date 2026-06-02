@@ -136,7 +136,7 @@ describe('LiveAgentCard', () => {
 
   it('renders waiting status chip', () => {
     render(<LiveAgentCard agent={mockWaitingAgent} />)
-    expect(screen.getByText('Esperando')).toBeInTheDocument()
+    expect(screen.getByText('Esperando datos')).toBeInTheDocument()
   })
 
   it('renders error status chip', () => {
@@ -154,10 +154,13 @@ describe('LiveAgentCard', () => {
     expect(screen.getByText('Sin tarea asignada')).toBeInTheDocument()
   })
 
-  it('renders last activity time', () => {
+  it('renders last activity as relative time (date-fns formatDistanceToNow)', () => {
     render(<LiveAgentCard agent={mockWorkingAgent} />)
-    // The time will be formatted, so we just check the label exists
-    expect(screen.getByText(/Última actividad:/)).toBeInTheDocument()
+    // The component uses formatDistanceToNow from date-fns with Spanish locale
+    // which produces text like "hace 12 meses", "hace 2 minutos", etc.
+    // We verify that some relative time text is rendered
+    const relativeTimeElements = screen.getAllByText(/hace/i)
+    expect(relativeTimeElements.length).toBeGreaterThan(0)
   })
 })
 

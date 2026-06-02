@@ -177,11 +177,16 @@ class ChatService {
                 history: history.reverse()
             };
 
+            // Emitir a la sala del contacto (para asesores con el chat ya abierto)
             io.to(roomName).emit('new-message', eventPayload);
-            logger.info(`✅ [WEBHOOK_STEP_6_OK] Socket event emitted.`);
+            logger.info(`✅ [WEBHOOK_STEP_6_OK] Socket event emitted to contact room.`);
+
+            // FIX CLOUD-239: Emitir también a la sala de la compañía (para que a todos se les abra el popup/badge)
+            const companyRoom = `tenant_${tenantId}_company_${companyId}`;
+            io.to(companyRoom).emit('new-message', eventPayload);
+            logger.info(`📡 [WEBHOOK_STEP_6_COMPANY] Emitted new-message to company room: ${companyRoom}`);
             
             // 6.1 Emit to company room for Kanban/Dashboard live updates
-            const companyRoom = `tenant_${tenantId}_company_${companyId}`;
             const [unreadRes] = await db.execute(
                 "SELECT COUNT(*) as cnt FROM omni_channel_messages WHERE tenant_id = ? AND company_id = ? AND contact_id = ? AND direction = 'INBOUND' AND (status IS NULL OR status != 'READ')",
                 [tenantId, companyId, contact.id]
@@ -327,11 +332,16 @@ class ChatService {
                 history: history.reverse()
             };
 
+            // Emitir a la sala del contacto (para asesores con el chat ya abierto)
             io.to(roomName).emit('new-message', eventPayload);
             logger.info(`✅ [FB_WEBHOOK] Socket event emitted to: ${roomName}`);
 
-            // 6.1 Emit to company room for Kanban/Dashboard live updates
+            // FIX CLOUD-239: Emitir también a la sala de la compañía (para que a todos se les abra el popup/badge)
             const companyRoom = `tenant_${tenantId}_company_${companyId}`;
+            io.to(companyRoom).emit('new-message', eventPayload);
+            logger.info(`📡 [FB_WEBHOOK_COMPANY] Emitted new-message to company room: ${companyRoom}`);
+
+            // 6.1 Emit to company room for Kanban/Dashboard live updates
             const [unreadRes] = await db.execute(
                 "SELECT COUNT(*) as cnt FROM omni_channel_messages WHERE tenant_id = ? AND company_id = ? AND contact_id = ? AND direction = 'INBOUND' AND (status IS NULL OR status != 'READ')",
                 [tenantId, companyId, contact.id]
@@ -427,7 +437,8 @@ class ChatService {
             }
 
             // 3. Crear contacto nuevo con UUID + pipeline/stage asignados
-            const contactName = name ? `${name} (${cleanPhone})` : `Nuevo Contacto ${cleanPhone}`;
+            // FIX CLOUD-239: Usar pushName directamente como nombre del contacto (sin sufijo de teléfono)
+            const contactName = name || `Nuevo Contacto ${cleanPhone}`;
             const contactUuid = require('crypto').randomUUID();
 
             try {

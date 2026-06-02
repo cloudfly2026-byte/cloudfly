@@ -1472,6 +1472,57 @@ Historial de Comentarios:
         threading.Thread(target=listen_events_master, daemon=True).start()
 
     # ═══════════════════════════════════════════════════════════════════
+    def print_workers_status_summary():
+        if not use_distributed or not connector.redis_client or not connector.is_master:
+            return
+        try:
+            workers = list(connector.redis_client.smembers("scrum:workers"))
+            if not workers:
+                print("👷 [Master - Workers]: No hay Workers registrados en Redis.")
+                return
+                
+            print("==================================================")
+            print("👷 [Master - Workers]: MONITOREO DE WORKERS Y CARGA")
+            print("==================================================")
+            print(f"Total Workers Registrados: {len(workers)}")
+            
+            for w_id in workers:
+                # Check heartbeat
+                alive = connector.redis_client.get(f"scrum:heartbeat:{w_id}") is not None
+                hb_str = "🟢 Activo" if alive else "🔴 Inactivo (Sin Latido)"
+                
+                # Get all queued tasks
+                queued_tasks = connector.redis_client.lrange(f"scrum:queue:{w_id}", 0, -1) or []
+                q_len = len(queued_tasks)
+                q_str = f"{q_len}"
+                if q_len > 0:
+                    q_str += f" ({', '.join(queued_tasks)})"
+                
+                # Check active task
+                active_task = connector.redis_client.get(f"scrum:active_task:{w_id}")
+                
+                task_info = "Ninguna (Libre)"
+                status_info = ""
+                if active_task:
+                    task_info = active_task
+                    # Fetch task execution status
+                    status_raw = connector.redis_client.get(f"scrum:status:{active_task}")
+                    if status_raw:
+                        try:
+                            status_data = json.loads(status_raw)
+                            status_info = f" [Estado: {status_data.get('status')} - {status_data.get('details')}]"
+                        except Exception:
+                            status_info = f" [Estado: {status_raw}]"
+                
+                print(f" 👤 Worker: {w_id}")
+                print(f"   ├─ Latido: {hb_str}")
+                print(f"   ├─ Tarea Actual: {task_info}{status_info}")
+                print(f"   └─ Tareas en Cola: {q_str}")
+                
+            print("==================================================\n")
+        except Exception as e:
+            print(f"[!] Error al generar reporte de workers: {e}")
+
     # NEW CASCADE DECISION FLOW
     # Priority: In-Progress → Pending with Tasks → Kafka → Ask User
     # ═══════════════════════════════════════════════════════════════════
@@ -1488,6 +1539,7 @@ Historial de Comentarios:
             connector.rebalance_tasks()
 
         print_jira_sprint_stats()
+        print_workers_status_summary()
 
         # ── STEP 1 & 2: Check and Distribute issues (Distributed/Local Flow) ──
         sprint_state = analyse_sprint_state()
