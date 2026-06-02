@@ -46,9 +46,16 @@ class LeadSearchPipeline:
             event.get("total_leads"),
         )
 
+        from services.socket_emitter import emit_agent_status, emit_action_event
+
+        # Prospector completed
+        emit_agent_status("prospector", "completed", company["tenant_id"], company["id"], current_task="Búsqueda de leads completada")
+        emit_action_event("prospector", "lead_search_completed", "Búsqueda de leads completada", f"Encontrados {event.get('total_leads')} leads para {category_name}", company["tenant_id"], company["id"])
+
         leads = self.prospector.load_leads_by_job_id(job_id, category_country)
         if not leads:
             logger.warning("request_id=%s no leads with phone in DB", request_id)
+            emit_agent_status("prospector", "idle", company["tenant_id"], company["id"])
             return
 
         channel_id = self.flow.get_active_whatsapp_channel(
@@ -56,15 +63,25 @@ class LeadSearchPipeline:
         )
         if not channel_id:
             logger.warning("request_id=%s no WhatsApp channel", request_id)
+            emit_agent_status("prospector", "idle", company["tenant_id"], company["id"])
             return
+
+        # Start Qualifier and Copywriter
+        emit_agent_status("qualifier", "working", company["tenant_id"], company["id"], current_task="Calificando prospectos")
+        emit_agent_status("copywriter", "working", company["tenant_id"], company["id"], current_task="Creando copies personalizados")
+        emit_action_event("qualifier", "crew_kickoff", "Calificación y Mensajes", "Iniciando análisis de prospectos y copy de campaña", company["tenant_id"], company["id"])
 
         from agents.llm_config import execute_crew_with_retry
         campaign_crew = build_campaign_crew(company=company, product=product, leads=leads)
         execute_crew_with_retry(campaign_crew, task_label="Campaign Crew")
 
+        emit_agent_status("qualifier", "completed", company["tenant_id"], company["id"], current_task="Prospectos calificados")
+        emit_agent_status("copywriter", "completed", company["tenant_id"], company["id"], current_task="Copys generados exitosamente")
+
         task_output = campaign_crew.tasks[1].output
         if not task_output or not task_output.raw:
             logger.warning("request_id=%s campaign task returned empty output", request_id)
+            self._reset_all_agents_idle(company["tenant_id"], company["id"])
             return
         campaign_raw = task_output.raw.strip()
         if campaign_raw.startswith("```json"):
@@ -77,10 +94,12 @@ class LeadSearchPipeline:
             campaign_json = json.loads(campaign_raw)
         except Exception:
             logger.warning("request_id=%s invalid campaign JSON", request_id)
+            self._reset_all_agents_idle(company["tenant_id"], company["id"])
             return
 
         message_body = campaign_json.get("message")
         if not message_body:
+            self._reset_all_agents_idle(company["tenant_id"], company["id"])
             return
 
         qual_raw = campaign_crew.tasks[0].output.raw.strip()
@@ -104,6 +123,7 @@ class LeadSearchPipeline:
             company["tenant_id"], company["id"], sending_list_id, qualified_leads
         )
         if not contact_ids:
+            self._reset_all_agents_idle(company["tenant_id"], company["id"])
             return
 
         scheduled_at = datetime.now() + timedelta(days=2)
@@ -131,12 +151,20 @@ class LeadSearchPipeline:
                 product_id=product.get("id"),
                 company_id=company["id"],
             )
+            emit_action_event("copywriter", "campaign_created", "Campaña Programada", f"Campaña de prospección autónoma creada para {category_name}", company["tenant_id"], company["id"])
             logger.info(
                 "request_id=%s campaign completed campaign_id=%s contacts=%s",
                 request_id,
                 campaign_id,
                 len(contact_ids),
             )
+        
+        self._reset_all_agents_idle(company["tenant_id"], company["id"])
+
+    def _reset_all_agents_idle(self, tenant_id: int, company_id: int) -> None:
+        from services.socket_emitter import emit_agent_status
+        for agent in ["researcher", "icp_agent", "prospector", "qualifier", "copywriter"]:
+            emit_agent_status(agent, "idle", tenant_id, company_id, current_task="Waiting for tasks")
 
     def on_search_error(self, event: dict) -> None:
         logger.error(
