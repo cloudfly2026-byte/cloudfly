@@ -23,8 +23,11 @@ const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/marketing`
 const AGENT_DEFAULTS: Record<string, { color: string; role: string; position: { x: number; y: number } }> = {
   researcher:          { color: '#3b82f6', role: 'Investigador de Mercado',  position: { x: 80,  y: 150 } },
   icp_agent:           { color: '#8b5cf6', role: 'Agente de ICP',           position: { x: 360, y: 75  } },
-  qualification_agent: { color: '#22c55e', role: 'Agente de Calificación',  position: { x: 640, y: 150 } },
-  copywriter_agent:    { color: '#f59e0b', role: 'Copywriter',              position: { x: 920, y: 75  } }
+  prospector:          { color: '#ec4899', role: 'Prospector de Leads',      position: { x: 640, y: 150 } },
+  qualifier:           { color: '#f59e0b', role: 'Calificador de Leads',    position: { x: 920, y: 75  } },
+  qualification_agent: { color: '#f59e0b', role: 'Calificador de Leads',    position: { x: 920, y: 75  } },
+  copywriter:          { color: '#10b981', role: 'Copywriter',              position: { x: 1200, y: 150 } },
+  copywriter_agent:    { color: '#10b981', role: 'Copywriter',              position: { x: 1200, y: 150 } }
 }
 
 /**

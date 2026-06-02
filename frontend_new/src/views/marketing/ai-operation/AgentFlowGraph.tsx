@@ -14,9 +14,15 @@ const H_GAP = 40
 const V_GAP = 80
 const SVG_PADDING = 40
 
-// ---------------------------------------------------------------------------
-// Predefined agent positions (from System Architect spec)
-// ---------------------------------------------------------------------------
+const AGENT_POSITIONS_RELATIVE: Record<string, { rx: number; y: number }> = {
+  researcher:          { rx: 0.15, y: 120 },
+  icp_agent:           { rx: 0.45, y: 60  },
+  prospector:          { rx: 0.45, y: 220 },
+  qualifier:           { rx: 0.75, y: 120 },
+  qualification_agent: { rx: 0.75, y: 120 },
+  copywriter:          { rx: 0.55, y: 340 },
+  copywriter_agent:    { rx: 0.55, y: 340 }
+}
 
 const AGENT_POSITIONS: Record<string, { x: number; y: number }> = {
   researcher:          { x: 80,  y: 120 },
@@ -164,7 +170,14 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
     
     // Compute initial positions (relative/local)
     agents.forEach((agent, index) => {
-      if (AGENT_POSITIONS[agent.id]) {
+      const rel = AGENT_POSITIONS_RELATIVE[agent.id]
+      if (rel) {
+        // Priority 0: Relative positions scaling with container width
+        map[agent.id] = {
+          x: rel.rx * dimensions.width,
+          y: rel.y
+        }
+      } else if (AGENT_POSITIONS[agent.id]) {
         // Priority 1: Predefined positions from spec
         map[agent.id] = { ...AGENT_POSITIONS[agent.id] }
       } else if (agent.position && typeof agent.position.x === 'number' && typeof agent.position.y === 'number') {

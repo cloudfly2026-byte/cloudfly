@@ -46,13 +46,16 @@ llm = LLM(
 
 def get_healthy_api_key(current_key=None, mark_rate_limited=False):
     global local_rate_limits
+    if current_key:
+        current_key = current_key.strip(' "\'')
     keys = []
     pool_str = os.getenv("OPENROUTER_KEYS_POOL") or os.getenv("OPENROUTER_API_KEY")
     if pool_str:
-        keys = [k.strip() for k in pool_str.split(",") if k.strip()]
+        keys = [k.strip(' "\'') for k in pool_str.split(",") if k.strip(' "\'')]
     
     if not keys:
-        return current_key or os.getenv("OPENROUTER_API_KEY")
+        raw_key = current_key or os.getenv("OPENROUTER_API_KEY")
+        return raw_key.strip(' "\'') if raw_key else None
 
     now = time.time()
     
@@ -67,11 +70,14 @@ def get_healthy_api_key(current_key=None, mark_rate_limited=False):
             logger.warning(f"⚠️ [Balanceador - Standalone]: Registrado rate limit para la clave ...{current_key[-8:]} en memoria local. ({e})")
 
     healthy_keys = []
+    logger.info(f"🔍 [Balanceador] Evaluando {len(keys)} claves del pool.")
     for k in keys:
         is_limited = False
+        reason = ""
         if k in local_rate_limits:
             if now < local_rate_limits[k]:
                 is_limited = True
+                reason = "local_rate_limit"
             else:
                 del local_rate_limits[k]
         
@@ -80,12 +86,16 @@ def get_healthy_api_key(current_key=None, mark_rate_limited=False):
                 r = RedisTool.get_client()
                 if r.get(f"scrum:rate_limit:{k}"):
                     is_limited = True
-            except Exception:
+                    reason = "redis_rate_limit"
+            except Exception as e:
+                logger.warning(f"Error checking Redis for key: {e}")
                 pass
         
+        logger.info(f"  - Clave ...{k[-8:]}: {'LIMITADA ('+reason+')' if is_limited else 'SALUDABLE'}")
         if not is_limited:
             healthy_keys.append(k)
 
+    logger.info(f"🔍 [Balanceador] Claves saludables encontradas: {[k[-8:] for k in healthy_keys]}")
     if not healthy_keys:
         logger.warning("🚨 [Balanceador] ADVERTENCIA: Todas las claves del pool han alcanzado su límite. Reseteando límites locales.")
         local_rate_limits.clear()

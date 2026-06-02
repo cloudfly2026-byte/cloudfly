@@ -104,7 +104,10 @@ const STATUS_CONFIG: Record<
 const AGENT_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
   researcher: Search,
   icp_agent: Target,
+  prospector: Search,
+  qualifier: Users,
   qualification_agent: Users,
+  copywriter: PenTool,
   copywriter_agent: PenTool,
   default: Brain
 }
