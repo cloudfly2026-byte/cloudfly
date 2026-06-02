@@ -31,9 +31,6 @@ jobs:
           - name: frontend-react
             context: ./frontend_new
             file: ./frontend_new/Dockerfile
-            build-args: |
-              NEXT_PUBLIC_API_URL=https://api.cloudfly.com.co
-              NEXT_PUBLIC_BASE_URL=https://dashboard.cloudfly.com.co
           - name: chat-socket-service
             context: ./chat-socket-service
             file: ./chat-socket-service/Dockerfile
@@ -76,7 +73,10 @@ jobs:
           context: ${{ matrix.service.context }}
           file: ${{ matrix.service.file }}
           push: true
-          build-args: ${{ matrix.service.build-args || '' }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL || 'https://api.cloudfly.com.co' }}
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL || vars.NEXT_PUBLIC_BASE_URL || 'https://dashboard.cloudfly.com.co' }}
+            NEXT_PUBLIC_WOMPI_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || vars.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || 'pub_test_fGQ5uisyUhqe79cakGHXNKbdsr4K4EVI' }}
           tags: |
             ghcr.io/${{ steps.repository_owner.outputs.owner }}/cloudfly/${{ matrix.service.name }}:latest
             ghcr.io/${{ steps.repository_owner.outputs.owner }}/cloudfly/${{ matrix.service.name }}:${{ github.sha }}
