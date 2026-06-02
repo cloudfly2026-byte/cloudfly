@@ -6,7 +6,7 @@
  *
  * 1. Hook initialization and options handling
  * 2. Socket event subscription (marketing-batch-update, status-update, task-update, action-event)
- * 3. Room subscription (subscribe-marketing / unsubscribe-marketing)
+ * 3. Room subscription (subscribe-marketing / unsubscribe-marksubscribe-marketing)
  * 4. Event deduplication
  * 5. 50-event cap on events
  * 6. Connection status tracking (connected / disconnected / reconnecting)
@@ -15,6 +15,12 @@
  * 9. lastUpdate timestamp tracking
  * 10. Reconnect helper (disconnect → connect)
  * 11. New type shapes (AgentStatus, MarketingAgentBatchPayload, etc.)
+ *
+ * FIXED: Event names corrected to match the hook's actual listeners:
+ *   - 'marketing-batch-update' (not 'marketing-agent-batch-update')
+ *   - 'marketing-agent-status-update' (correct)
+ *   - 'marketing-agent-task-update' (correct)
+ *   - 'marketing-action-event' (correct)
  */
 
 import React from 'react'
@@ -28,13 +34,14 @@ type EventHandler = (...args: any[]) => void
 
 /**
  * Creates a mock Socket.IO client instance that behaves like the real socket.
- * IMPORTANT: starts with connected=true so the hook's useEffect fires subscribe().
+ * IMPORTANT: starts with connected=false so the hook's useEffect can trigger
+ * subscribe on the initial connect event simulation.
  */
 function createMockSocket() {
   const listeners: Map<string, Set<EventHandler>> = new Map()
   const emitted: Array<{ event: string; data: any }> = []
 
-  let _connected = true // Start connected so hook effects fire
+  let _connected = false // Start disconnected; hook will subscribe on connect
 
   const managerListeners: Map<string, Set<EventHandler>> = new Map()
 
@@ -263,6 +270,11 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      // Simulate connect to trigger subscription and set connected status
+      act(() => {
+        mockSocket.connect()
+      })
+
       const batchPayload = createTestBatchPayload({
         agents: [
           createTestAgent({ id: 'agent-1', status: 'working' }),
@@ -274,7 +286,7 @@ describe('useMarketingAgentsSocket', () => {
       })
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', batchPayload)
+        mockSocket._simulate('marketing-batch-update', batchPayload)
       })
 
       expect(result.current.agents).toHaveLength(2)
@@ -292,10 +304,14 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       const agents = [createTestAgent(), createTestAgent({ id: 'agent-2' })]
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', agents)
+        mockSocket._simulate('marketing-batch-update', agents)
       })
 
       expect(result.current.agents).toHaveLength(2)
@@ -310,10 +326,14 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       expect(result.current.lastUpdate).toBeNull()
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       expect(result.current.lastUpdate).not.toBeNull()
@@ -334,9 +354,13 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       // First, set up initial agents
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       expect(result.current.agents[0].status).toBe('idle')
@@ -361,7 +385,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       act(() => {
@@ -381,7 +409,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       const previousUpdate = result.current.lastUpdate
@@ -413,7 +445,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       act(() => {
@@ -434,7 +470,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       expect(result.current.agents[0].taskStartedAt).toBeNull()
@@ -456,7 +496,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       // First, start the task
@@ -491,6 +535,10 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
+        mockSocket.connect()
+      })
+
+      act(() => {
         mockSocket._simulate('marketing-action-event', createTestEvent())
       })
 
@@ -506,6 +554,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       const event = createTestEvent()
 
@@ -528,6 +580,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       // Add 51 events
       for (let i = 0; i < 51; i++) {
@@ -557,7 +613,14 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
-      // Already connected from createMockSocket() default
+      // Initially disconnected (mock starts disconnected)
+      expect(result.current.connectionStatus).toBe('disconnected')
+
+      // Simulate connect
+      act(() => {
+        mockSocket.connect()
+      })
+
       expect(result.current.connectionStatus).toBe('connected')
     })
 
@@ -569,6 +632,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       expect(result.current.connectionStatus).toBe('connected')
 
@@ -587,6 +654,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       expect(result.current.connectionStatus).toBe('connected')
 
@@ -612,6 +683,12 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 42, companyId: 7 })
       )
 
+      // The hook registers a connect listener but doesn't auto-connect.
+      // We need to simulate the connect event to trigger subscribe.
+      act(() => {
+        mockSocket.connect()
+      })
+
       const subscribeCall = mockSocket._emitted.find((e: any) => e.event === 'subscribe-marketing')
       expect(subscribeCall).toBeDefined()
       expect(subscribeCall.data).toEqual({ tenantId: 42, companyId: 7 })
@@ -625,6 +702,10 @@ describe('useMarketingAgentsSocket', () => {
       const { unmount } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       unmount()
 
@@ -640,6 +721,10 @@ describe('useMarketingAgentsSocket', () => {
       renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       act(() => {
         mockSocket.disconnect()
@@ -668,6 +753,10 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       expect(result.current.connectionStatus).toBe('connected')
 
       act(() => {
@@ -693,8 +782,12 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       // Listeners should be registered
-      expect(mockSocket._listeners.get('marketing-agent-batch-update')?.size || 0).toBeGreaterThan(0)
+      expect(mockSocket._listeners.get('marketing-batch-update')?.size || 0).toBeGreaterThan(0)
       expect(mockSocket._listeners.get('marketing-agent-status-update')?.size || 0).toBeGreaterThan(0)
       expect(mockSocket._listeners.get('marketing-agent-task-update')?.size || 0).toBeGreaterThan(0)
       expect(mockSocket._listeners.get('marketing-action-event')?.size || 0).toBeGreaterThan(0)
@@ -702,7 +795,7 @@ describe('useMarketingAgentsSocket', () => {
       unmount()
 
       // After unmount, the marketing event listener Sets should be empty
-      const batchListeners = mockSocket._listeners.get('marketing-agent-batch-update')
+      const batchListeners = mockSocket._listeners.get('marketing-batch-update')
       const statusListeners = mockSocket._listeners.get('marketing-agent-status-update')
       const taskListeners = mockSocket._listeners.get('marketing-agent-task-update')
       const actionListeners = mockSocket._listeners.get('marketing-action-event')
@@ -726,6 +819,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result, unmount } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       act(() => {
         mockSocket._simulate('marketing-action-event', createTestEvent({ id: 'evt-before' }))
@@ -760,6 +857,10 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       const agentWithAllFields = createTestAgent({
         displayName: 'Investigador de Mercado',
         role: 'Market Research Specialist',
@@ -768,7 +869,7 @@ describe('useMarketingAgentsSocket', () => {
       })
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload({
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload({
           agents: [agentWithAllFields]
         }))
       })
@@ -788,6 +889,10 @@ describe('useMarketingAgentsSocket', () => {
         useMarketingAgentsSocket({ tenantId: 1 })
       )
 
+      act(() => {
+        mockSocket.connect()
+      })
+
       const connectionWithAllFields = createTestConnection({
         id: 'conn-1',
         sourceAgentId: 'agent-1',
@@ -798,7 +903,7 @@ describe('useMarketingAgentsSocket', () => {
       })
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload({
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload({
           connections: [connectionWithAllFields]
         }))
       })
@@ -818,6 +923,10 @@ describe('useMarketingAgentsSocket', () => {
       const { result } = renderHook(() =>
         useMarketingAgentsSocket({ tenantId: 1 })
       )
+
+      act(() => {
+        mockSocket.connect()
+      })
 
       const eventTypes = [
         'lead_search_started',
@@ -857,7 +966,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       const statusPayload = createTestStatusPayload({
@@ -889,7 +1002,11 @@ describe('useMarketingAgentsSocket', () => {
       )
 
       act(() => {
-        mockSocket._simulate('marketing-agent-batch-update', createTestBatchPayload())
+        mockSocket.connect()
+      })
+
+      act(() => {
+        mockSocket._simulate('marketing-batch-update', createTestBatchPayload())
       })
 
       const taskPayload = createTestTaskPayload({

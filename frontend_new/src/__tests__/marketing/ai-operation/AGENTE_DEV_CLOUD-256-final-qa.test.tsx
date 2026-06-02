@@ -15,7 +15,7 @@
  * 
  * HOW TO EXECUTE:
  * 1. cd C:\apps\cloudfly\frontend_new
- * 2. npx jest --testPathPatterns="AGENTE_DEV_CLOUD-256" --no-coverage
+ * 2. npx jest --testPathPatterns="AGENTE_DEV_CLOUD-256" --no-coverage --forceExit
  * 
  * EXPECTED RESULT: All 27 tests pass
  */
@@ -57,6 +57,8 @@ jest.mock('@mui/material', () => {
     Divider: createMock('Divider'),
     Fade: createMock('Fade'),
     Zoom: createMock('Zoom'),
+    Collapse: ({ children }: any) => children,
+    Snackbar: ({ children }: any) => children,
     keyframes: () => 'keyframes-animation',
     styled: () => () => React.forwardRef((props: any, ref: any) => {
       const { children, ...rest } = props
@@ -79,6 +81,8 @@ jest.mock('lucide-react', () => {
     Zap: createIcon('Zap'),
     Loader: createIcon('Loader'),
     Clock: createIcon('Clock'),
+    ShieldAlert: createIcon('ShieldAlert'),
+    Radio: createIcon('Radio'),
   }
 })
 
@@ -108,7 +112,7 @@ jest.mock('date-fns/locale', () => ({
 // ---------------------------------------------------------------------------
 // Mock next-auth/react useSession
 // ---------------------------------------------------------------------------
-const mockSessionData = {
+const mockSessionData: { data: { user: Record<string, any> } } = {
   data: {
     user: {
       tenantId: 42,
@@ -147,6 +151,8 @@ const mockSocketReturn = {
   isConnected: true,
   connectionStatus: 'connected' as const,
   lastUpdate: null as string | null,
+  roomName: null as string | null,
+  subscriptionError: null as string | null,
   reconnect: mockReconnect,
 }
 
@@ -172,6 +178,18 @@ jest.mock('@/views/marketing/ai-operation/MarketingHistoryTimeline', () => ({
   __esModule: true,
   default: (props: { events: MarketingActionEvent[] }) =>
     React.createElement('div', { 'data-testid': 'history-timeline' }, `Timeline (${props.events.length} events)`)
+}))
+
+// Mock MarketingSocketStatus (uses framer-motion)
+jest.mock('@/components/marketing/MarketingSocketStatus', () => ({
+  __esModule: true,
+  default: () => React.createElement('div', { 'data-testid': 'marketing-socket-status' }, 'Socket Status')
+}))
+
+// Mock MarketingRoomDebugPanel (uses framer-motion)
+jest.mock('@/components/marketing/MarketingRoomDebugPanel', () => ({
+  __esModule: true,
+  default: () => null
 }))
 
 // ---------------------------------------------------------------------------

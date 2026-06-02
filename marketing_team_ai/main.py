@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import Config
 from flows.autonomous_flow import AutonomousMarketingFlow
 from kafka.results_consumer import start_results_consumer_background
-from services.lead_search_job_service import LeadSearchJobService
+from services.lead_search_job_service import LeadSearchJobService, ensure_schema
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,7 +29,7 @@ def _signal_handler(signum, frame):
 
 def run_loop():
     Config.validate()
-    LeadSearchJobService.ensure_schema()
+    ensure_schema()
     start_results_consumer_background()
 
     flow = AutonomousMarketingFlow()

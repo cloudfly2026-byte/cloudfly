@@ -13,10 +13,13 @@
 //   • Agent-specific Lucide icons (researcher→Search, icp→Target, etc.)
 //   • Relative time formatting via date-fns with Spanish locale
 //   • Task duration counter (live MM:SS from taskStartedAt)
-//   • Shimmer progress bar for working status
+//   • Shimmer progress bar for working status (framer-motion)
 //   • Compact mode for inline/grid use
 //   • React.memo() for performance optimization
 //   • isHighlighted & onClick props for drill-down
+//
+// CLOUD-259: All CSS keyframes replaced with framer-motion declarative animations.
+//            No CSS <style> tags or MUI keyframes remain.
 // ============================================================
 
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
@@ -28,10 +31,7 @@ import {
   Chip,
   Avatar,
   Tooltip,
-  LinearProgress,
-  Stack,
-  keyframes,
-  styled
+  Stack
 } from '@mui/material'
 import {
   Brain,
@@ -48,42 +48,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { MarketingAgent, AgentStatus } from '@/types/marketing/aiMarketing'
-
-// ---------------------------------------------------------------------------
-// CSS Keyframes (MUI styled keyframes — replaces styled-jsx)
-// ---------------------------------------------------------------------------
-
-const pulseRing = keyframes`
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-`
-
-const shimmer = keyframes`
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-`
-
-const shake = keyframes`
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-4px); }
-  40%, 80% { transform: translateX(4px); }
-`
-
-const glowPulse = keyframes`
-  0%, 100% { box-shadow: 0 0 6px 0 rgba(245, 158, 11, 0.3); }
-  50% { box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.15); }
-`
 
 // ---------------------------------------------------------------------------
 // Status Configuration (System Architect spec — authoritative)
@@ -158,19 +122,134 @@ interface LiveAgentCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Styled Shimmer Progress Bar
+// Helper: Convert hex color to rgba string
 // ---------------------------------------------------------------------------
 
-const ShimmerProgress = styled(LinearProgress)(({ theme }) => ({
-  height: 4,
-  borderRadius: 2,
-  backgroundColor: 'rgba(59, 130, 246, 0.1)',
-  '& .MuiLinearProgress-bar': {
-    background: `linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%)`,
-    backgroundSize: '200% 100%',
-    animation: `${shimmer} 2s linear infinite`
-  }
-}))
+/**
+ * Converts a hex color (#rrggbb) to an rgba string with the given alpha.
+ * Used for glow box-shadow effects in inline styles.
+ */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// =====================================================================
+// Sub-component: Framer-motion shimmer progress bar
+// Replaces the old MUI keyframes-based ShimmerProgress styled component.
+// Uses framer-motion to animate background-position for the shimmer effect.
+// =====================================================================
+
+const MotionShimmerBar: React.FC<{ color: string }> = ({ color }) => (
+  <Box
+    sx={{
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: hexToRgba(color, 0.1),
+      overflow: 'hidden',
+      position: 'relative'
+    }}
+  >
+    <motion.div
+      style={{
+        height: '100%',
+        borderRadius: 2,
+        background: `linear-gradient(90deg, ${color} 0%, ${hexToRgba(color, 0.7)} 50%, ${color} 100%)`,
+        backgroundSize: '200% 100%',
+        width: '100%'
+      }}
+      animate={{
+        backgroundPosition: ['-200% 0', '200% 0']
+      }}
+      transition={{
+        duration: 2,
+        repeat: Infinity,
+        ease: 'linear'
+      }}
+    />
+  </Box>
+)
+
+// =====================================================================
+// Sub-component: Framer-motion working pulse wrapper
+// Provides the pulsing box-shadow animation for working status cards.
+// =====================================================================
+
+const WorkingPulseWrapper: React.FC<{
+  color: string
+  children: React.ReactNode
+}> = ({ color, children }) => (
+  <motion.div
+    animate={{
+      boxShadow: [
+        `0 0 0 0 ${hexToRgba(color, 0.4)}`,
+        `0 0 0 12px ${hexToRgba(color, 0)}`,
+        `0 0 0 0 ${hexToRgba(color, 0)}`
+      ]
+    }}
+    transition={{
+      duration: 2,
+      repeat: Infinity,
+      ease: 'easeOut'
+    }}
+    style={{ borderRadius: 12, display: 'contents' }}
+  >
+    {children}
+  </motion.div>
+)
+
+// =====================================================================
+// Sub-component: Framer-motion error shake wrapper
+// Provides the horizontal shake animation for error status cards.
+// =====================================================================
+
+const ErrorShakeWrapper: React.FC<{
+  children: React.ReactNode
+}> = ({ children }) => (
+  <motion.div
+    animate={{
+      x: [0, -5, 5, -5, 5, 0]
+    }}
+    transition={{
+      duration: 0.4,
+      repeat: Infinity,
+      repeatDelay: 2,
+      ease: 'easeInOut'
+    }}
+  >
+    {children}
+  </motion.div>
+)
+
+// =====================================================================
+// Sub-component: Framer-motion waiting glow wrapper
+// Provides the subtle glow pulse for waiting status cards.
+// =====================================================================
+
+const WaitingGlowWrapper: React.FC<{
+  color: string
+  children: React.ReactNode
+}> = ({ color, children }) => (
+  <motion.div
+    animate={{
+      boxShadow: [
+        `0 0 6px 0 ${hexToRgba(color, 0.3)}`,
+        `0 0 12px 4px ${hexToRgba(color, 0.15)}`,
+        `0 0 6px 0 ${hexToRgba(color, 0.3)}`
+      ]
+    }}
+    transition={{
+      duration: 3,
+      repeat: Infinity,
+      ease: 'easeInOut'
+    }}
+    style={{ borderRadius: 12, display: 'contents' }}
+  >
+    {children}
+  </motion.div>
+)
 
 // ---------------------------------------------------------------------------
 // Component
@@ -228,58 +307,15 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
     if (onClick) onClick(agent)
   }, [onClick, agent])
 
-  // ---- Animation variants ----
-  const cardVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 }
-  }
-
-  const taskVariants = {
-    initial: { x: -20, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: 20, opacity: 0 }
-  }
-
-  const errorShake = {
-    animate: {
-      x: [0, -5, 5, -5, 5, 0]
-    },
-    transition: {
-      duration: 0.4,
-      repeat: Infinity,
-      repeatDelay: 2
-    }
-  }
-
-  // ---- Status-specific card sx ----
-  const getStatusSx = (): Record<string, unknown> => {
-    const base: Record<string, unknown> = {}
-
-    if (agent.status === 'working') {
-      base.animation = `${pulseRing} 2s ease-out infinite`
-    }
-
-    if (agent.status === 'waiting') {
-      base.animation = `${glowPulse} 3s ease-in-out infinite`
-    }
-
-    if (agent.status === 'error') {
-      base.animation = `${shake} 0.4s ease-in-out`
-    }
-
-    return base
-  }
-
   // =====================================================================
   // COMPACT MODE
   // =====================================================================
   if (compact) {
     return (
       <motion.div
-        initial={cardVariants.initial}
-        animate={cardVariants.animate}
-        exit={cardVariants.exit}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3 }}
       >
         <Card
@@ -291,19 +327,21 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
             px: 1.5,
             py: 0.75,
             borderRadius: 2,
-            border: '1px solid',
+            border: isHighlighted ? '2px solid' : '1px solid',
             borderColor: isHighlighted ? config.color : 'divider',
             bgcolor: isHighlighted ? config.bg : 'background.paper',
             cursor: onClick ? 'pointer' : 'default',
-            transition: 'all 0.3s ease',
+            transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
             minWidth: 180,
+            ...(isHighlighted && {
+              boxShadow: `0 0 8px 2px ${hexToRgba(config.color, 0.25)}`
+            }),
             '&:hover': onClick
               ? {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                   borderColor: config.color
                 }
-              : {},
-            ...getStatusSx()
+              : {}
           }}
         >
           {/* Agent Icon */}
@@ -334,20 +372,37 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
             {agent.displayName || agent.name}
           </Typography>
 
-          {/* Status dot */}
+          {/* Status dot — framer-motion pulse for working */}
           <Tooltip title={config.label} arrow>
-            <Box
-              sx={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                bgcolor: config.color,
-                flexShrink: 0,
-                ...(agent.status === 'working' && {
-                  animation: `${pulseRing} 2s ease-out infinite`
-                })
-              }}
-            />
+            {agent.status === 'working' ? (
+              <motion.div
+                animate={{
+                  boxShadow: [
+                    `0 0 0 0 ${hexToRgba(config.color, 0.4)}`,
+                    `0 0 0 6px ${hexToRgba(config.color, 0)}`,
+                    `0 0 0 0 ${hexToRgba(config.color, 0)}`
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: config.color,
+                  flexShrink: 0
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: config.color,
+                  flexShrink: 0
+                }}
+              />
+            )}
           </Tooltip>
         </Card>
       </motion.div>
@@ -355,190 +410,219 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
   }
 
   // =====================================================================
-  // FULL MODE
+  // FULL MODE — Build the card content, then wrap with status animations
   // =====================================================================
-  return (
+
+  const cardContent = (
+    <>
+      {/* Status indicator dot — top-right corner */}
+      <Tooltip title={config.label} arrow placement='left'>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            bgcolor: config.color,
+            zIndex: 1,
+            border: '2px solid',
+            borderColor: 'background.paper'
+          }}
+        />
+      </Tooltip>
+
+      <CardContent sx={{ p: 2.5 }}>
+        {/* Header: Avatar + Name + Role */}
+        <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2 }}>
+          <Avatar
+            src={agent.avatar}
+            sx={{
+              width: 44,
+              height: 44,
+              bgcolor: agent.color || config.color,
+              fontSize: '1rem',
+              fontWeight: 700
+            }}
+          >
+            <AgentIcon size={22} />
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{
+                fontWeight: 600,
+                lineHeight: 1.2,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {agent.displayName || agent.name}
+            </Typography>
+            {agent.role && (
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block' }}
+              >
+                {agent.role}
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+
+        {/* Status Chip */}
+        <Chip
+          icon={<StatusIcon size={14} />}
+          label={config.label}
+          size='small'
+          sx={{
+            mb: 1.5,
+            bgcolor: config.bg,
+            color: config.color,
+            fontWeight: 600,
+            fontSize: '0.7rem',
+            height: 22,
+            '& .MuiChip-icon': { color: config.color }
+          }}
+        />
+
+        {/* Current Task — with slide-in animation on change */}
+        <Box sx={{ mb: 1.5 }}>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{
+              fontWeight: 500,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5
+            }}
+          >
+            Tarea actual
+          </Typography>
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={agent.currentTask || 'idle'}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 20, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Typography
+                variant='body2'
+                sx={{
+                  mt: 0.5,
+                  fontWeight: 500,
+                  color:
+                    agent.status === 'idle' ? 'text.secondary' : 'text.primary',
+                  fontStyle: agent.status === 'idle' ? 'italic' : 'normal'
+                }}
+              >
+                {agent.currentTask || 'Sin tarea asignada'}
+              </Typography>
+            </motion.div>
+          </AnimatePresence>
+        </Box>
+
+        {/* Task Duration Counter (only for working status) */}
+        {taskDuration && (
+          <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Loader2 size={14} style={{ color: config.color }} className='fa-spin' />
+            <Typography
+              variant='caption'
+              sx={{ color: config.color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {taskDuration}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Shimmer Progress Bar (only for working status) — framer-motion */}
+        {agent.status === 'working' && (
+          <Box sx={{ mb: 1.5 }}>
+            <MotionShimmerBar color={config.color} />
+          </Box>
+        )}
+
+        {/* Error shake animation wrapper */}
+        {agent.status === 'error' && (
+          <ErrorShakeWrapper>
+            <Typography
+              variant='caption'
+              sx={{ color: 'error.main', fontWeight: 500 }}
+            >
+              Requiere atención
+            </Typography>
+          </ErrorShakeWrapper>
+        )}
+
+        {/* Last Activity — relative time */}
+        <Typography variant='caption' color='text.secondary'>
+          {relativeTime}
+        </Typography>
+      </CardContent>
+    </>
+  )
+
+  // Wrap the card with the appropriate status animation wrapper
+  const animatedCard = (
     <motion.div
-      initial={cardVariants.initial}
-      animate={cardVariants.animate}
-      exit={cardVariants.exit}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.3 }}
     >
       <Card
         onClick={handleClick}
+        elevation={isHighlighted ? 4 : 1}
         sx={{
           minWidth: 260,
           maxWidth: 320,
           borderRadius: 3,
-          border: '1px solid',
+          border: isHighlighted ? '2px solid' : '1px solid',
           borderColor: isHighlighted ? config.color : 'divider',
           bgcolor: isHighlighted ? config.bg : 'background.paper',
-          transition: 'all 0.3s ease',
+          transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
           position: 'relative',
           overflow: 'visible',
           cursor: onClick ? 'pointer' : 'default',
+          ...(isHighlighted && {
+            boxShadow: `0 0 12px 3px ${hexToRgba(config.color, 0.3)}`
+          }),
           '&:hover': {
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            boxShadow: onClick
+              ? `0 8px 24px rgba(0,0,0,0.12), 0 0 12px 3px ${hexToRgba(config.color, 0.2)}`
+              : '0 8px 24px rgba(0,0,0,0.12)',
             transform: 'translateY(-2px)',
             ...(onClick && { borderColor: config.color })
-          },
-          ...getStatusSx()
+          }
         }}
       >
-        {/* Status indicator dot — top-right corner */}
-        <Tooltip title={config.label} arrow placement='left'>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              bgcolor: config.color,
-              zIndex: 1,
-              border: '2px solid',
-              borderColor: 'background.paper',
-              ...(agent.status === 'working' && {
-                animation: `${pulseRing} 2s ease-out infinite`
-              })
-            }}
-          />
-        </Tooltip>
-
-        <CardContent sx={{ p: 2.5 }}>
-          {/* Header: Avatar + Name + Role */}
-          <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2 }}>
-            <Avatar
-              src={agent.avatar}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: agent.color || config.color,
-                fontSize: '1rem',
-                fontWeight: 700
-              }}
-            >
-              <AgentIcon size={22} />
-            </Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant='subtitle1'
-                sx={{
-                  fontWeight: 600,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {agent.displayName || agent.name}
-              </Typography>
-              {agent.role && (
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ display: 'block' }}
-                >
-                  {agent.role}
-                </Typography>
-              )}
-            </Box>
-          </Stack>
-
-          {/* Status Chip */}
-          <Chip
-            icon={<StatusIcon size={14} />}
-            label={config.label}
-            size='small'
-            sx={{
-              mb: 1.5,
-              bgcolor: config.bg,
-              color: config.color,
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              height: 22,
-              '& .MuiChip-icon': { color: config.color }
-            }}
-          />
-
-          {/* Current Task — with slide-in animation on change */}
-          <Box sx={{ mb: 1.5 }}>
-            <Typography
-              variant='caption'
-              color='text.secondary'
-              sx={{
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: 0.5
-              }}
-            >
-              Tarea actual
-            </Typography>
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={agent.currentTask || 'idle'}
-                initial={taskVariants.initial}
-                animate={taskVariants.animate}
-                exit={taskVariants.exit}
-                transition={{ duration: 0.3 }}
-              >
-                <Typography
-                  variant='body2'
-                  sx={{
-                    mt: 0.5,
-                    fontWeight: 500,
-                    color:
-                      agent.status === 'idle' ? 'text.secondary' : 'text.primary',
-                    fontStyle: agent.status === 'idle' ? 'italic' : 'normal'
-                  }}
-                >
-                  {agent.currentTask || 'Sin tarea asignada'}
-                </Typography>
-              </motion.div>
-            </AnimatePresence>
-          </Box>
-
-          {/* Task Duration Counter (only for working status) */}
-          {taskDuration && (
-            <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Loader2 size={14} style={{ color: config.color }} className='fa-spin' />
-              <Typography
-                variant='caption'
-                sx={{ color: config.color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
-              >
-                {taskDuration}
-              </Typography>
-            </Box>
-          )}
-
-          {/* Shimmer Progress Bar (only for working status) */}
-          {agent.status === 'working' && (
-            <Box sx={{ mb: 1.5 }}>
-              <ShimmerProgress />
-            </Box>
-          )}
-
-          {/* Error shake animation wrapper */}
-          {agent.status === 'error' && (
-            <motion.div {...errorShake}>
-              <Typography
-                variant='caption'
-                sx={{ color: 'error.main', fontWeight: 500 }}
-              >
-                Requiere atención
-              </Typography>
-            </motion.div>
-          )}
-
-          {/* Last Activity — relative time */}
-          <Typography variant='caption' color='text.secondary'>
-            {relativeTime}
-          </Typography>
-        </CardContent>
+        {cardContent}
       </Card>
     </motion.div>
   )
+
+  // Apply status-specific outer wrappers
+  if (agent.status === 'working') {
+    return (
+      <WorkingPulseWrapper color={config.color}>
+        {animatedCard}
+      </WorkingPulseWrapper>
+    )
+  }
+
+  if (agent.status === 'waiting') {
+    return (
+      <WaitingGlowWrapper color={config.color}>
+        {animatedCard}
+      </WaitingGlowWrapper>
+    )
+  }
+
+  return animatedCard
 }
 
 // ---------------------------------------------------------------------------

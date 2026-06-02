@@ -283,6 +283,9 @@ services:
       DB_DATABASE: cloud_master
       DB_USERNAME: root
       DB_PASSWORD: widowmaker
+      REDIS_HOST: redis_server
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: Elian2020#
       KAFKA_HOST: kafka
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVOLUTION_API_URL: http://evolution_api:8080
@@ -295,6 +298,8 @@ services:
       kafka:
         condition: service_healthy
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   # ── Kafdrop (Kafka UI) ──────────────────────────────────────────────────

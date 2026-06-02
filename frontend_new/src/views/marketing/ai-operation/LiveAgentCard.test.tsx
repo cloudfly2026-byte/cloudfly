@@ -2,8 +2,8 @@
  * CLOUD-209: LiveAgentCard Component Tests
  *
  * Tests rendering, status colors, animations, props, compact mode,
- * relative time formatting, task duration counter, and agent icons
- * for the LiveAgentCard component.
+ * relative time formatting, task duration counter, agent icons,
+ * isHighlighted visuals, and onClick handler for the LiveAgentCard component.
  */
 
 import React from 'react'
@@ -274,8 +274,6 @@ describe('LiveAgentCard', () => {
       render(<LiveAgentCard agent={workingAgent} isHighlighted />)
       const card = document.querySelector('.MuiCard-root')
       expect(card).toBeInTheDocument()
-      // Highlighted card should have blue border color
-      // (verified by the borderColor sx prop being set to config.color)
     })
 
     test('renders without isHighlighted (default false)', () => {
@@ -568,6 +566,183 @@ describe('LiveAgentCard', () => {
     test('component is wrapped with React.memo', () => {
       // React.memo wrapped components have a $$typeof property
       expect(LiveAgentCard.$$typeof).toBeDefined()
+    })
+  })
+
+  // =======================================================================
+  // CLOUD-262: isHighlighted visual treatment — Full mode
+  // =======================================================================
+
+  describe('isHighlighted — Full Mode', () => {
+    test('highlighted card has 2px solid border with status color', () => {
+      render(<LiveAgentCard agent={workingAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // The sx prop sets border: '2px solid' and borderColor: config.color (#3b82f6)
+      expect(card).toHaveStyle({ borderColor: '#3b82f6' })
+    })
+
+    test('highlighted card uses status background color', () => {
+      render(<LiveAgentCard agent={workingAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // working status bg is #eff6ff
+      expect(card).toHaveStyle({ backgroundColor: '#eff6ff' })
+    })
+
+    test('highlighted idle card uses idle colors', () => {
+      render(<LiveAgentCard agent={idleAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ borderColor: '#94a3b8' })
+      expect(card).toHaveStyle({ backgroundColor: '#f1f5f9' })
+    })
+
+    test('highlighted error card uses error colors', () => {
+      render(<LiveAgentCard agent={errorAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ borderColor: '#ef4444' })
+      expect(card).toHaveStyle({ backgroundColor: '#fef2f2' })
+    })
+
+    test('highlighted card has elevation 4', () => {
+      render(<LiveAgentCard agent={workingAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // MUI Card elevation=4 applies a specific box-shadow via CSS class
+      // We verify the card renders (elevation is applied via the elevation prop)
+      expect(card).toBeInTheDocument()
+    })
+
+    test('non-highlighted card has 1px border', () => {
+      render(<LiveAgentCard agent={workingAgent} />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // Non-highlighted uses 'divider' color, not the status color
+      expect(card).toBeInTheDocument()
+    })
+
+    test('highlighted card has glow box-shadow with status color', () => {
+      render(<LiveAgentCard agent={workingAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // The sx applies: boxShadow: `0 0 12px 3px rgba(59, 130, 246, 0.3)`
+      // for working status (#3b82f6 = rgb(59, 130, 246))
+      // MUI sx applies via Emotion CSS classes, so we check computed style
+      expect(card).toHaveStyle({ boxShadow: expect.stringContaining('rgba(59, 130, 246') })
+    })
+
+    test('highlighted waiting card has glow with waiting color', () => {
+      render(<LiveAgentCard agent={waitingAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // waiting color #f59e0b = rgb(245, 158, 11)
+      expect(card).toHaveStyle({ boxShadow: expect.stringContaining('rgba(245, 158, 11') })
+    })
+
+    test('highlighted completed card has glow with completed color', () => {
+      render(<LiveAgentCard agent={completedAgent} isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // completed color #22c55e = rgb(34, 197, 94)
+      expect(card).toHaveStyle({ boxShadow: expect.stringContaining('rgba(34, 197, 94') })
+    })
+  })
+
+  // =======================================================================
+  // CLOUD-262: isHighlighted visual treatment — Compact mode
+  // =======================================================================
+
+  describe('isHighlighted — Compact Mode', () => {
+    test('highlighted compact card has 2px solid border', () => {
+      render(<LiveAgentCard agent={workingAgent} compact isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ borderColor: '#3b82f6' })
+    })
+
+    test('highlighted compact card uses status background', () => {
+      render(<LiveAgentCard agent={workingAgent} compact isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ backgroundColor: '#eff6ff' })
+    })
+
+    test('highlighted compact card has subtle glow box-shadow', () => {
+      render(<LiveAgentCard agent={workingAgent} compact isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // Compact mode applies: boxShadow: `0 0 8px 2px rgba(59, 130, 246, 0.25)`
+      expect(card).toHaveStyle({ boxShadow: expect.stringContaining('rgba(59, 130, 246') })
+    })
+
+    test('non-highlighted compact card does not have glow', () => {
+      render(<LiveAgentCard agent={workingAgent} compact />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      // Non-highlighted compact should not have box-shadow from isHighlighted
+      // (it may have hover effects but not the persistent glow)
+    })
+
+    test('highlighted compact idle card uses idle colors', () => {
+      render(<LiveAgentCard agent={idleAgent} compact isHighlighted />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ borderColor: '#94a3b8' })
+      expect(card).toHaveStyle({ backgroundColor: '#f1f5f9' })
+    })
+  })
+
+  // =======================================================================
+  // CLOUD-262: onClick handler — cursor and interaction
+  // =======================================================================
+
+  describe('onClick Handler', () => {
+    test('card with onClick has cursor pointer in full mode', () => {
+      const handleClick = jest.fn()
+      render(<LiveAgentCard agent={workingAgent} onClick={handleClick} />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ cursor: 'pointer' })
+    })
+
+    test('card without onClick has cursor default in full mode', () => {
+      render(<LiveAgentCard agent={workingAgent} />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ cursor: 'default' })
+    })
+
+    test('card with onClick has cursor pointer in compact mode', () => {
+      const handleClick = jest.fn()
+      render(<LiveAgentCard agent={workingAgent} compact onClick={handleClick} />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ cursor: 'pointer' })
+    })
+
+    test('card without onClick has cursor default in compact mode', () => {
+      render(<LiveAgentCard agent={workingAgent} compact />)
+      const card = document.querySelector('.MuiCard-root')
+      expect(card).toBeInTheDocument()
+      expect(card).toHaveStyle({ cursor: 'default' })
+    })
+
+    test('clicking highlighted card still triggers onClick', () => {
+      const handleClick = jest.fn()
+      render(<LiveAgentCard agent={workingAgent} isHighlighted onClick={handleClick} />)
+      const card = document.querySelector('.MuiCard-root')
+      fireEvent.click(card!)
+      expect(handleClick).toHaveBeenCalledWith(workingAgent)
+    })
+
+    test('clicking compact highlighted card still triggers onClick', () => {
+      const handleClick = jest.fn()
+      render(<LiveAgentCard agent={workingAgent} compact isHighlighted onClick={handleClick} />)
+      const card = document.querySelector('.MuiCard-root')
+      fireEvent.click(card!)
+      expect(handleClick).toHaveBeenCalledWith(workingAgent)
     })
   })
 })

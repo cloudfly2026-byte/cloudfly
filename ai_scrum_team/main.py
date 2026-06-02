@@ -1503,14 +1503,13 @@ Historial de Comentarios:
                 status_info = ""
                 if active_task:
                     task_info = active_task
-                    # Fetch task execution status
-                    status_raw = connector.redis_client.get(f"scrum:status:{active_task}")
-                    if status_raw:
-                        try:
-                            status_data = json.loads(status_raw)
+                    # Fetch task execution status (stored as a Hash in Redis)
+                    try:
+                        status_data = connector.redis_client.hgetall(f"scrum:status:{active_task}")
+                        if status_data:
                             status_info = f" [Estado: {status_data.get('status')} - {status_data.get('details')}]"
-                        except Exception:
-                            status_info = f" [Estado: {status_raw}]"
+                    except Exception:
+                        pass
                 
                 print(f" 👤 Worker: {w_id}")
                 print(f"   ├─ Latido: {hb_str}")
