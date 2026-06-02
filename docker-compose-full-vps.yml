@@ -55,7 +55,7 @@ services:
       - kafka-net
 
   backend-api:
-    image: cloudfly-backend-api:latest
+    image: ghcr.io/cloudfly2026-byte/cloudfly/backend-api:latest
     container_name: backend-api
     build:
       context: ./backend_new
@@ -93,7 +93,7 @@ services:
       - "traefik.docker.network=cloudfly_app-net"
 
   billing-service:
-    image: cloudfly-billing-service:latest
+    image: ghcr.io/cloudfly2026-byte/cloudfly/billing-service:latest
     container_name: billing-service
     build:
       context: ./billing-service
@@ -122,7 +122,7 @@ services:
       - kafka
 
   scheduler-service:
-    image: cloudfly-scheduler-service:latest
+    image: ghcr.io/cloudfly2026-byte/cloudfly/scheduler-service:latest
     container_name: scheduler-service
     restart: always
     ports:
@@ -160,6 +160,7 @@ services:
       - "traefik.docker.network=cloudfly_app-net"
 
   notification-service:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/notification-service:latest
     build:
       context: ./notifications
       dockerfile: Dockerfile
@@ -191,6 +192,7 @@ services:
   # reference so the frontend can resolve chat_socket hostname.
   # ============================================================
   frontend-react:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/frontend-react:latest
     build:
       context: ./frontend_new
       dockerfile: Dockerfile
@@ -319,6 +321,7 @@ services:
   
   
   chat-socket-service:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/chat-socket-service:latest
     build:
       context: ./chat-socket-service
       dockerfile: Dockerfile
@@ -347,6 +350,7 @@ services:
       - "traefik.http.services.chatsocket.loadbalancer.server.port=3001"
 
   ai-agent:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/ai-agent:latest
     build:
       context: ./ai-agent
       dockerfile: Dockerfile
@@ -372,6 +376,7 @@ services:
       - ./uploads:/app/uploads
 
   ai-vector-worker:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/ai-agent:latest
     build:
       context: ./ai-agent
       dockerfile: Dockerfile
@@ -394,6 +399,7 @@ services:
     command: ["python", "vector_worker.py"]
 
   lead-generator:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/lead-generator:latest
     build:
       context: ./lead-generator
       dockerfile: Dockerfile
@@ -409,6 +415,7 @@ services:
 
   # Kafka consumer workers — escalar: docker compose up -d --scale lead-scrapper-google=3
   lead-scrapper-google:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/lead-scrapper-google:latest
     build:
       context: ./lead-scrapper-google
       dockerfile: Dockerfile
@@ -433,6 +440,7 @@ services:
       - LOG_LEVEL=INFO
 
   marketing-agent:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/marketing-agent:latest
     build:
       context: .
       dockerfile: marketing_team_ai/Dockerfile
@@ -506,7 +514,7 @@ services:
       - app-net
 
   marketing-worker:
-    image: cloudfly-marketing-worker:latest
+    image: ghcr.io/cloudfly2026-byte/cloudfly/marketing-worker:latest
     container_name: marketing-worker
     restart: always
     build:
