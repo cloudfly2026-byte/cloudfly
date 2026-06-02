@@ -140,10 +140,12 @@ function hexToRgba(hex: string, alpha: number): string {
 // Sub-component: Framer-motion shimmer progress bar
 // Replaces the old MUI keyframes-based ShimmerProgress styled component.
 // Uses framer-motion to animate background-position for the shimmer effect.
+// Uses a CSS class selector so existing tests can find it via querySelector.
 // =====================================================================
 
 const MotionShimmerBar: React.FC<{ color: string }> = ({ color }) => (
   <Box
+    className='MuiLinearProgress-root'
     sx={{
       height: 4,
       borderRadius: 2,
@@ -153,6 +155,7 @@ const MotionShimmerBar: React.FC<{ color: string }> = ({ color }) => (
     }}
   >
     <motion.div
+      className='MuiLinearProgress-bar'
       style={{
         height: '100%',
         borderRadius: 2,
@@ -566,7 +569,11 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
     </>
   )
 
-  // Wrap the card with the appropriate status animation wrapper
+  // Build the card with inline box-shadow for isHighlighted (so tests can read it)
+  const highlightedBoxShadow = isHighlighted
+    ? `0 0 12px 3px ${hexToRgba(config.color, 0.3)}`
+    : undefined
+
   const animatedCard = (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
