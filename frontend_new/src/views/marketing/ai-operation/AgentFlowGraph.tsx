@@ -167,6 +167,8 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
 
   const nodePositions = useMemo(() => {
     const map: Record<string, { x: number; y: number }> = {}
+    
+    // 1. Compute initial positions (relative/local)
     agents.forEach((agent, index) => {
       if (AGENT_POSITIONS[agent.id]) {
         // Priority 1: Predefined positions from spec
@@ -174,21 +176,46 @@ const AgentFlowGraph: React.FC<AgentFlowGraphProps> = React.memo(({
       } else if (agent.position && typeof agent.position.x === 'number' && typeof agent.position.y === 'number') {
         // Priority 2: Position from agent data
         map[agent.id] = {
-          x: SVG_PADDING + agent.position.x,
-          y: SVG_PADDING + agent.position.y
+          x: agent.position.x,
+          y: agent.position.y
         }
       } else {
         // Priority 3: Grid fallback
         const col = index % cols
         const row = Math.floor(index / cols)
         map[agent.id] = {
-          x: SVG_PADDING + col * (CARD_WIDTH + H_GAP) + CARD_WIDTH / 2,
-          y: SVG_PADDING + row * (CARD_HEIGHT + V_GAP) + CARD_HEIGHT / 2
+          x: col * (CARD_WIDTH + H_GAP) + CARD_WIDTH / 2,
+          y: row * (CARD_HEIGHT + V_GAP) + CARD_HEIGHT / 2
         }
       }
-    })
+    });
+
+    // 2. Center all positions horizontally within svgWidth
+    const keys = Object.keys(map)
+    if (keys.length > 0) {
+      let minX = Infinity
+      let maxX = -Infinity
+      keys.forEach((id) => {
+        const x = map[id].x
+        const left = x - CARD_WIDTH / 2
+        const right = x + CARD_WIDTH / 2
+        if (left < minX) minX = left
+        if (right > maxX) maxX = right
+      })
+
+      const contentWidth = maxX - minX
+      const shiftX = (svgWidth - contentWidth) / 2 - minX
+
+      // Only shift if there is space to center and keep it bounded by padding
+      if (shiftX > 0) {
+        keys.forEach((id) => {
+          map[id].x += shiftX
+        })
+      }
+    }
+
     return map
-  }, [agents, cols])
+  }, [agents, cols, svgWidth])
 
   // -----------------------------------------------------------------------
   // Stable callback for agent click
