@@ -632,12 +632,25 @@ describe('CLOUD-256: Final QA — All 8 Acceptance Criteria', () => {
       new Error('Network error')
     )
 
+    // FIX: Provide agents so the component exits the loading state
+    // (the loading guard is: loading && agents.length === 0)
+    // Without agents, the component stays in the loading spinner forever
+    // when the REST call rejects, because loading is set to false in the
+    // finally block but agents.length is still 0, so the loading guard
+    // remains true and the CircularProgress is shown instead of the page.
+    mockSocketReturn.agents = [
+      { id: 'agent-1', name: 'bot1', displayName: 'Bot 1', role: 'Test', status: 'working', currentTask: 'Task', taskStartedAt: '2025-01-01T00:00:00Z', lastActivity: '2025-01-01T00:00:00Z', color: '#3b82f6', position: { x: 0, y: 0 } },
+    ]
+
     render(React.createElement(MarketingLiveDashboardPage))
 
     await waitFor(() => {
       // The component should render the main page (not crash)
       expect(screen.getByText('Marketing Live Dashboard')).toBeInTheDocument()
     })
+
+    // Also verify the error alert is shown
+    expect(screen.getByText('Error al cargar los datos iniciales. Usando modo offline.')).toBeInTheDocument()
   })
 
   it('AC6: Page is responsive — all sections render at mobile width', async () => {

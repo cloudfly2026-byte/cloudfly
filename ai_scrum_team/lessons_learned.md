@@ -535,3 +535,8 @@ Este archivo registra errores históricos y lecciones aprendidas para que el equ
 ## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-01 21:17:11) - Área: Resume-CLOUD-246
 *   **Fallo Detectado**: `'NoneType' object is not subscriptable`
 *   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-02 07:37:33) - Área: Resume-CLOUD-260
+*   **Fallo Detectado**: `'NoneType' object is not subscriptable`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.

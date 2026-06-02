@@ -20,6 +20,9 @@
 //
 // CLOUD-259: All CSS keyframes replaced with framer-motion declarative animations.
 //            No CSS <style> tags or MUI keyframes remain.
+//
+// CLOUD-261: Agent icons mapping + status indicator dot with pulse animation
+//            for working status in both full and compact modes.
 // ============================================================
 
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react'
@@ -254,6 +257,84 @@ const WaitingGlowWrapper: React.FC<{
   </motion.div>
 )
 
+// =====================================================================
+// Sub-component: Status Indicator Dot (CLOUD-261)
+// Renders a colored dot at the top-right corner of the card.
+// For working status, wraps the dot in a framer-motion pulse animation.
+// =====================================================================
+
+const StatusIndicatorDot: React.FC<{
+  status: AgentStatus
+  color: string
+  label: string
+}> = ({ status, color, label }) => {
+  const dotStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: '50%',
+    backgroundColor: color,
+    zIndex: 1,
+    border: '2px solid',
+    borderColor: '#fff'
+  }
+
+  // CLOUD-261: Working status gets a pulse animation on the dot
+  if (status === 'working') {
+    return (
+      <Tooltip title={label} arrow placement='left'>
+        <motion.div
+          animate={{
+            boxShadow: [
+              `0 0 0 0 ${hexToRgba(color, 0.5)}`,
+              `0 0 0 8px ${hexToRgba(color, 0)}`,
+              `0 0 0 0 ${hexToRgba(color, 0)}`
+            ]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeOut'
+          }}
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor: color,
+            zIndex: 1,
+            border: '2px solid',
+            borderColor: '#fff'
+          }}
+        />
+      </Tooltip>
+    )
+  }
+
+  return (
+    <Tooltip title={label} arrow placement='left'>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          bgcolor: color,
+          zIndex: 1,
+          border: '2px solid',
+          borderColor: 'background.paper'
+        }}
+      />
+    </Tooltip>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -418,23 +499,12 @@ const LiveAgentCard: React.FC<LiveAgentCardProps> = ({
 
   const cardContent = (
     <>
-      {/* Status indicator dot — top-right corner */}
-      <Tooltip title={config.label} arrow placement='left'>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            bgcolor: config.color,
-            zIndex: 1,
-            border: '2px solid',
-            borderColor: 'background.paper'
-          }}
-        />
-      </Tooltip>
+      {/* CLOUD-261: Status indicator dot — top-right corner with pulse for working */}
+      <StatusIndicatorDot
+        status={agent.status}
+        color={config.color}
+        label={config.label}
+      />
 
       <CardContent sx={{ p: 2.5 }}>
         {/* Header: Avatar + Name + Role */}
