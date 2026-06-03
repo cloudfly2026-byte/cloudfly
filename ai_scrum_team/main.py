@@ -582,11 +582,25 @@ def run_sprint():
                         for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
                             configure_agent_llm(agent, new_key, current_model)
                     else:
-                        print(f"⏳ [{task_label}]: Esperando 15s antes de reintentar...")
-                        time.sleep(15)
+                        # Extraer dinámicamente Retry-After si existe, o usar backoff exponencial
+                        wait_time = 10
+                        import re
+                        match = re.search(r"(?:retry after|try again in|retry in|after)\s+([\d\.]+)\s*(?:s|second|seconds)", err_msg, re.IGNORECASE)
+                        if match:
+                            try:
+                                wait_time = float(match.group(1))
+                                print(f"⏳ [Retry Dynamic] Detectado tiempo de espera sugerido de {wait_time}s")
+                            except ValueError:
+                                pass
+                        else:
+                            wait_time = 5 * (2 ** (retry_count - 1))
+                        
+                        print(f"⏳ [{task_label}]: Esperando {wait_time}s antes de reintentar...")
+                        time.sleep(wait_time)
                 else:
                     raise e
         return result
+
 
     def _print_token_metrics(crew_instance, result):
         """Print token usage metrics from a Crew execution."""
@@ -1007,11 +1021,25 @@ def run_sprint():
                                     
                         print("🔄 Reintentando ejecución del Crew con la nueva clave saludable...")
                     else:
-                        print("⏳ No hay nuevas claves diferentes en el pool. Esperando 15 segundos antes de reintentar...")
+                        # Extraer dinámicamente Retry-After si existe, o usar backoff exponencial
+                        wait_time = 10
+                        import re
+                        match = re.search(r"(?:retry after|try again in|retry in|after)\s+([\d\.]+)\s*(?:s|second|seconds)", err_msg, re.IGNORECASE)
+                        if match:
+                            try:
+                                wait_time = float(match.group(1))
+                                print(f"⏳ [Retry Dynamic] Detectado tiempo de espera sugerido de {wait_time}s")
+                            except ValueError:
+                                pass
+                        else:
+                            wait_time = 5 * (2 ** (retry_count - 1))
+                        
+                        print(f"⏳ No hay nuevas claves diferentes en el pool. Esperando {wait_time} segundos antes de reintentar...")
                         import time
-                        time.sleep(15)
+                        time.sleep(wait_time)
                 else:
                     raise e
+
         
         # Mostrar indicador de uso de tokens
         try:
