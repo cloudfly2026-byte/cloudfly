@@ -119,7 +119,8 @@ class AutonomousMarketingFlow:
                 phone = ''.join(filter(str.isdigit, raw_phone))
                 if len(phone) == 10 and phone.startswith('3'):
                     phone = '57' + phone
-                if not phone:
+                if not (len(phone) == 12 and phone.startswith('573')):
+                    logger.info(f"Skipping contact '{name}' with invalid phone '{raw_phone}' (not a Colombian mobile starts with 3)")
                     continue
 
                 # Check with both the normalized phone and the raw phone to avoid duplicates

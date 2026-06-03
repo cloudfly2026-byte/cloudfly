@@ -55,8 +55,9 @@ class ProspectorService:
         if "colombia" in country_lower:
             if len(digits) == 10 and digits.startswith("3"):
                 return "57" + digits
-            if len(digits) == 12 and digits.startswith("57"):
+            if len(digits) == 12 and digits.startswith("573"):
                 return digits
+            return ""
         return digits
 
     def submit_lead_search_request(

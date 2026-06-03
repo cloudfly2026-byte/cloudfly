@@ -154,9 +154,10 @@ Devuelve únicamente la palabra clave, sin explicaciones ni texto adicional."""
             # Colombia mobile starts with 3 (10 digits)
             if len(digits) == 10 and digits.startswith("3"):
                 return "57" + digits
-            # If it already starts with 57 and has 12 digits, it's correct
-            if len(digits) == 12 and digits.startswith("57"):
+            # If it already starts with 57 and has 12 digits starting with 573, it's correct
+            if len(digits) == 12 and digits.startswith("573"):
                 return digits
+            return ""
         elif "mexico" in country_lower or "méxico" in country_lower:
             # Mexico mobile code is 52
             if len(digits) == 10:
@@ -236,7 +237,12 @@ Devuelve únicamente la palabra clave, sin explicaciones ni texto adicional."""
                 
                 # Clean phone number
                 phone = ''.join(filter(str.isdigit, phone))
-                if not phone:
+                if len(phone) == 10 and phone.startswith("3"):
+                    phone = "57" + phone
+                
+                # Check for Colombian phone validation (must be 12 digits starting with 573)
+                if not (len(phone) == 12 and phone.startswith("573")):
+                    logger.info(f"⏭️ Skipping invalid Colombian mobile phone: {phone} (name: {name})")
                     continue
                 
                 # Check duplicate
