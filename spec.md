@@ -81,7 +81,7 @@ CloudFly AI es una plataforma SaaS de automatización empresarial todo-en-uno di
 |---|---|
 | **Containerización** | Docker, Docker Compose (múltiples archivos compose) |
 | **Proxy Inverso** | Traefik v3.6.7 (con SSL automático vía Let's Encrypt) |
-| **Orquestación** | Docker Compose (despliegue completo VPS con `docker-compose-full-vps.yml`) |
+| **Orquestación** | Docker Compose |
 | **Monitoreo** | Prometheus + Grafana (en monitoring/) |
 | **Secretos** | Archivos `.env` para configuración |
 
@@ -121,7 +121,6 @@ C:\apps\cloudfly\
 ├── package.json                  # Paquete raíz (utilidades Node.js)
 ├── docker-compose.yml            # Compose mínimo (scraper)
 ├── docker-compose-full.yml       # Compose completo de producción
-├── docker-compose-full-vps.yml   # Compose para despliegue en VPS (principal)
 ├── docker-compose-local.yml      # Compose para desarrollo local
 ├── docker-compose-monitoring.yml # Compose para stack de monitoreo
 ├── Dockerfile                    # Dockerfile raíz
@@ -278,8 +277,8 @@ C:\apps\cloudfly\
 ├── certs/                        # Certificados SSL
 └── developmentAI/                # Configuraciones de desarrollo VoIP/IA FreeSWITCH
 
-## Despliegue en Producción
-El archivo principal para despliegue en producción es `docker-compose-full-vps.yml`.
+## Entrega y Despliegue
+La entrega del proyecto y su despliegue se gestiona de manera automática al realizar un push a la rama `main` del repositorio.
 
 ## Desarrollo Local
 
@@ -291,7 +290,7 @@ Para el desarrollo local se utiliza una arquitectura híbrida donde el frontend 
    ```
    Este servidor de desarrollo local se conecta a `localhost:8080` (el servicio de API backend ejecutándose en Docker).
 
-2. **Backend y Servicios**: Se ejecutan en Docker local usando un archivo `docker-compose-full-local.yml` basado en `docker-compose-full-vps.yml` con las siguientes adaptaciones:
+2. **Backend y Servicios**: Se ejecutan en Docker local usando un archivo `docker-compose-full-local.yml` con las siguientes adaptaciones:
    - **Sin Traefik**: Se expone cada puerto directamente (ej. `backend-api` en `8080:8080`, `evolution-api` en `8081:8080`, `mysql` en `3306:3306`, `kafka` en `9092:9092`).
    - **Perfil de Desarrollo**: Variable `SPRING_PROFILES_ACTIVE=development`.
 
