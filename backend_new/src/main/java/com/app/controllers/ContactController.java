@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v2/contacts")
+@RequestMapping({"/api/v2/contacts", "/api/v1/contacts"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class ContactController {
