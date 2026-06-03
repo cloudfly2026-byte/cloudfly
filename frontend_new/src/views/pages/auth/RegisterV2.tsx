@@ -1,16 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 import Link from 'next/link'
 
 // Next Imports
 import { useRouter } from 'next/navigation'
-import { useParams } from 'next/navigation'
 
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
@@ -21,19 +20,14 @@ import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
 
-
 import { Alert } from '@mui/material'
 
 import CheckIcon from '@mui/icons-material/Check'
-
 import DangerousIcon from '@mui/icons-material/Dangerous'
 
 import classnames from 'classnames'
 
-import { set } from 'date-fns'
-
 import CustomTextField from '@core/components/mui/TextField'
-
 
 import { AuthManager } from '@/utils/authManager'
 
@@ -44,7 +38,8 @@ import { useSettings } from '@core/hooks/useSettings'
 // Component Imports
 import Logo from '@components/layout/shared/Logo'
 
-
+// CLOUD-281/CLOUD-282: OAuth imports
+import { triggerFacebookLogin } from '@/components/OAuthProvider'
 
 // Styled Custom Components
 const RegisterIllustration = styled('img')(({ theme }) => ({
@@ -74,16 +69,13 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState(false)
-
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [disabled, setDisabled] = useState(true)
-
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
 
   useEffect(() => {
-
     setDisabled(false)
-
   }, [])
 
   // Vars
@@ -95,7 +87,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
   const borderedLightIllustration = '/images/illustrations/auth/v2-register-light-border.png'
 
   // Hooks
-
   const { settings } = useSettings()
   const router = useRouter()
   const theme = useTheme()
@@ -113,6 +104,162 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
   const handleClickShowConfirmPassword = () => setIsConfirmPasswordShown(show => !show)
 
+  // ============================================================
+  // CLOUD-281: Google OAuth Handler
+  // ============================================================
+  const handleGoogleOAuth = useCallback(() => {
+    setOauthLoading('google')
+    setError(null)
+
+    // @ts-ignore - Google Identity Services global
+    if (window.google?.accounts?.id) {
+      // @ts-ignore
+      window.google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed:', notification.getNotDisplayedReason())
+          setOauthLoading(null)
+          // Fallback: redirect to Google OAuth page flow
+          const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+          if (googleClientId) {
+            const redirectUri = encodeURIComponent(window.location.origin + '/register')
+            const scope = encodeURIComponent('email profile')
+            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+          }
+        }
+      })
+    } else {
+      console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+      if (googleClientId) {
+        const redirectUri = encodeURIComponent(window.location.origin + '/register')
+        const scope = encodeURIComponent('email profile')
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+      } else {
+        setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
+        setOauthLoading(null)
+      }
+    }
+  }, [])
+
+  /**
+   * Handle Google credential response (called from global callback or redirect).
+   */
+  const handleGoogleCredentialResponse = useCallback(async (credential: string) => {
+    try {
+      setOauthLoading('google')
+      setError(null)
+
+      const response = await AuthManager.loginWithGoogle(credential)
+
+      if (response.status) {
+        setSuccess(true)
+
+        // Redirect based on user state
+        const user = response.user
+        if (user && !user.onboardingCompleted) {
+          router.push('/account-setup')
+        } else {
+          router.push('/home')
+        }
+      } else {
+        setError(response.message || 'Error en autenticación con Google')
+      }
+    } catch (err: any) {
+      console.error('❌ [GOOGLE-OAUTH] Error:', err)
+      setError(err.response?.data?.message || 'Error en autenticación con Google')
+    } finally {
+      setOauthLoading(null)
+    }
+  }, [router])
+
+  // ============================================================
+  // CLOUD-282: Facebook OAuth Handler
+  // ============================================================
+  const handleFacebookOAuth = useCallback(() => {
+    setOauthLoading('facebook')
+    setError(null)
+
+    triggerFacebookLogin(
+      async (accessToken: string, userId: string) => {
+        try {
+          const response = await AuthManager.loginWithFacebook(accessToken, userId)
+
+          if (response.status) {
+            setSuccess(true)
+
+            // Redirect based on user state
+            const user = response.user
+            if (user && !user.onboardingCompleted) {
+              router.push('/account-setup')
+            } else {
+              router.push('/home')
+            }
+          } else {
+            setError(response.message || 'Error en autenticación con Facebook')
+          }
+        } catch (err: any) {
+          console.error('❌ [FACEBOOK-OAUTH] Error:', err)
+          setError(err.response?.data?.message || 'Error en autenticación con Facebook')
+        } finally {
+          setOauthLoading(null)
+        }
+      },
+      (err) => {
+        console.error('❌ [FACEBOOK-OAUTH] Login failed:', err)
+        setError('Error en autenticación con Facebook: ' + (err.message || 'Cancelado por el usuario'))
+        setOauthLoading(null)
+      }
+    )
+  }, [router])
+
+  // ============================================================
+  // Set up global Google callback
+  // ============================================================
+  useEffect(() => {
+    // @ts-ignore
+    window.handleGoogleCredentialResponse = handleGoogleCredentialResponse
+
+    // Check for OAuth redirect response (access_token in URL hash)
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get('access_token')
+      if (accessToken) {
+        // This is a redirect-based Google OAuth response
+        // We need to exchange it for user info
+        fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`)
+          .then(res => res.json())
+          .then(async (userInfo) => {
+            if (userInfo.sub && userInfo.email) {
+              // Create a pseudo-credential from the user info
+              // In production, you'd verify this properly
+              const response = await AuthManager.loginWithGoogle(accessToken)
+              if (response.status) {
+                setSuccess(true)
+                const user = response.user
+                if (user && !user.onboardingCompleted) {
+                  router.push('/account-setup')
+                } else {
+                  router.push('/home')
+                }
+              }
+            }
+          })
+          .catch(err => {
+            console.error('❌ [GOOGLE-OAUTH] Redirect flow error:', err)
+            setError('Error procesando respuesta de Google')
+          })
+        // Clear the hash
+        window.location.hash = ''
+      }
+    }
+
+    return () => {
+      // @ts-ignore
+      delete window.handleGoogleCredentialResponse
+    }
+  }, [handleGoogleCredentialResponse, router])
+
   // Validaciones con yup
   const schema = yup.object().shape({
     nombres: yup.string().required('El nombre es obligatorio'),
@@ -122,10 +269,8 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
       .required('El nombre de usuario es obligatorio')
       .test('username-exists', 'El nombre de usuario ya está en uso', async value => {
         if (!value) return false
-
         try {
           const response = await AuthManager.validateUsername({ username: value })
-
           return response.isAvailable
         } catch {
           return false
@@ -137,10 +282,8 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
       .required('El correo electrónico es obligatorio')
       .test('email-exists', 'El correo electrónico ya está en uso', async value => {
         if (!value) return false
-
         try {
           const response = await AuthManager.validateEmail({ email: value })
-
           return response.isAvailable
         } catch {
           return false
@@ -165,43 +308,34 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
     register,
     handleSubmit,
     formState: { errors },
-    trigger // Importante para activar validación en eventos específicos
+    trigger
   } = useForm({
     resolver: yupResolver(schema),
-    mode: 'onBlur' // O usa 'onChange' si prefieres validar mientras escribe
+    mode: 'onBlur'
   })
 
   // Manejo del envío del formulario
   const onSubmit = async (data: { username: string; password: string; email: string; confirmPassword: string }) => {
     try {
-      // Add the default role to the data
       const roleData = {
         ...data,
         roleRequest: {
-          roleListName: ['ADMIN'] // Set the default role to 'ADMIN'
+          roleListName: ['ADMIN']
         }
       }
 
-      //console.log('Data to send:', roleData)
       const response = await AuthManager.register(roleData)
 
       console.log('Registro exitoso:', response)
-
       setSuccess(true)
       setError(null)
       setDisabled(false)
-
-      router.push('/verify-email') // Redirigir al usuario al home después de login exitoso
-
-
+      router.push('/verify-email')
     } catch (error: any) {
-
       console.error('Error al registrar:', error)
       setError(error.message)
       setSuccess(false)
-
       setDisabled(false)
-
     }
   }
 
@@ -237,7 +371,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
 
           {/* Beneficios Clave con Iconos */}
           <div className='grid gap-6 lg:grid-cols-2'>
-            {/* Beneficio 1 */}
             <div className='flex gap-4'>
               <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center'>
                 <i className='tabler-rocket text-2xl text-primary' />
@@ -252,7 +385,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               </div>
             </div>
 
-            {/* Beneficio 2 */}
             <div className='flex gap-4'>
               <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center'>
                 <i className='tabler-chart-line text-2xl text-success' />
@@ -267,7 +399,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               </div>
             </div>
 
-            {/* Beneficio 3 */}
             <div className='flex gap-4'>
               <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center'>
                 <i className='tabler-clock text-2xl text-warning' />
@@ -282,7 +413,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               </div>
             </div>
 
-            {/* Beneficio 4 */}
             <div className='flex gap-4'>
               <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center'>
                 <i className='tabler-shield-check text-2xl text-info' />
@@ -336,27 +466,18 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               Empresas que confían en CloudFly
             </Typography>
             <div className='flex gap-6 items-center justify-center flex-wrap'>
-              {/* Retail */}
               <div className='w-20 h-20 rounded-xl bg-[#2D3748] flex items-center justify-center hover:bg-[#1a202c] transition-colors'>
                 <i className='tabler-shopping-cart text-4xl text-gray-400' />
               </div>
-
-              {/* Food & Delivery */}
               <div className='w-20 h-20 rounded-xl bg-[#2D3748] flex items-center justify-center hover:bg-[#1a202c] transition-colors'>
                 <i className='tabler-bike text-4xl text-gray-400' />
               </div>
-
-              {/* Banking */}
               <div className='w-20 h-20 rounded-xl bg-[#2D3748] flex items-center justify-center hover:bg-[#1a202c] transition-colors'>
                 <i className='tabler-building-bank text-4xl text-gray-400' />
               </div>
-
-              {/* Tech */}
               <div className='w-20 h-20 rounded-xl bg-[#2D3748] flex items-center justify-center hover:bg-[#1a202c] transition-colors'>
                 <i className='tabler-code text-4xl text-gray-400' />
               </div>
-
-              {/* eCommerce */}
               <div className='w-20 h-20 rounded-xl bg-[#2D3748] flex items-center justify-center hover:bg-[#1a202c] transition-colors'>
                 <i className='tabler-package text-4xl text-gray-400' />
               </div>
@@ -597,20 +718,33 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               </Typography>
             </Divider>
 
+            {/* CLOUD-281/CLOUD-282: OAuth Buttons with onClick handlers */}
             <div className='flex justify-center items-center gap-3'>
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
                 startIcon={<i className='tabler-brand-facebook' />}
+                onClick={handleFacebookOAuth}
+                disabled={oauthLoading !== null}
               >
-                Facebook
+                {oauthLoading === 'facebook' ? (
+                  <i className='tabler-loader-2 animate-spin' />
+                ) : (
+                  'Facebook'
+                )}
               </Button>
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
                 startIcon={<i className='tabler-brand-google' />}
+                onClick={handleGoogleOAuth}
+                disabled={oauthLoading !== null}
               >
-                Google
+                {oauthLoading === 'google' ? (
+                  <i className='tabler-loader-2 animate-spin' />
+                ) : (
+                  'Google'
+                )}
               </Button>
             </div>
 

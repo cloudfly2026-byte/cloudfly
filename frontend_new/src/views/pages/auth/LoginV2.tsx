@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 // Next Imports
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -42,6 +42,10 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 import type { SystemMode } from '@/@core/types'
 
+// CLOUD-281/CLOUD-282: OAuth imports
+import { AuthManager } from '@/utils/authManager'
+import { triggerFacebookLogin } from '@/components/OAuthProvider'
+
 // Styled Custom Components
 const MaskImg = styled('img')({
   blockSize: 'auto',
@@ -69,7 +73,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [disabled, setDisabled] = useState(false)
-
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
 
   useEffect(() => { setDisabled(false) }, [])
 
@@ -83,6 +87,161 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   const authBackground = useImageVariant(mode, '/images/pages/auth-mask-light.png', '/images/pages/auth-mask-dark.png')
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+
+  // ============================================================
+  // CLOUD-281: Google OAuth Handler for Login
+  // ============================================================
+  const handleGoogleOAuth = useCallback(() => {
+    setOauthLoading('google')
+    setError(null)
+
+    // @ts-ignore
+    if (window.google?.accounts?.id) {
+      // @ts-ignore
+      window.google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed, using redirect flow')
+          const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+          if (googleClientId) {
+            const redirectUri = encodeURIComponent(window.location.origin + '/login')
+            const scope = encodeURIComponent('email profile')
+            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+          }
+        }
+      })
+    } else {
+      console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+      if (googleClientId) {
+        const redirectUri = encodeURIComponent(window.location.origin + '/login')
+        const scope = encodeURIComponent('email profile')
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+      } else {
+        setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
+        setOauthLoading(null)
+      }
+    }
+  }, [])
+
+  /**
+   * Handle Google credential response for login.
+   */
+  const handleGoogleCredentialResponse = useCallback(async (credential: string) => {
+    try {
+      setOauthLoading('google')
+      setError(null)
+
+      const response = await AuthManager.loginWithGoogle(credential)
+
+      if (response.status) {
+        setSuccess(true)
+
+        // Redirect based on user state
+        const user = response.user
+        if (user && !user.onboardingCompleted) {
+          router.push('/account-setup')
+        } else if (callbackUrl) {
+          router.push(callbackUrl)
+        } else {
+          router.push('/home')
+        }
+      } else {
+        setError(response.message || 'Error en autenticación con Google')
+      }
+    } catch (err: any) {
+      console.error('❌ [GOOGLE-OAUTH] Error:', err)
+      setError(err.response?.data?.message || 'Error en autenticación con Google')
+    } finally {
+      setOauthLoading(null)
+    }
+  }, [router, callbackUrl])
+
+  // ============================================================
+  // CLOUD-282: Facebook OAuth Handler for Login
+  // ============================================================
+  const handleFacebookOAuth = useCallback(() => {
+    setOauthLoading('facebook')
+    setError(null)
+
+    triggerFacebookLogin(
+      async (accessToken: string, userId: string) => {
+        try {
+          const response = await AuthManager.loginWithFacebook(accessToken, userId)
+
+          if (response.status) {
+            setSuccess(true)
+
+            // Redirect based on user state
+            const user = response.user
+            if (user && !user.onboardingCompleted) {
+              router.push('/account-setup')
+            } else if (callbackUrl) {
+              router.push(callbackUrl)
+            } else {
+              router.push('/home')
+            }
+          } else {
+            setError(response.message || 'Error en autenticación con Facebook')
+          }
+        } catch (err: any) {
+          console.error('❌ [FACEBOOK-OAUTH] Error:', err)
+          setError(err.response?.data?.message || 'Error en autenticación con Facebook')
+        } finally {
+          setOauthLoading(null)
+        }
+      },
+      (err) => {
+        console.error('❌ [FACEBOOK-OAUTH] Login failed:', err)
+        setError('Error en autenticación con Facebook: ' + (err.message || 'Cancelado por el usuario'))
+        setOauthLoading(null)
+      }
+    )
+  }, [router, callbackUrl])
+
+  // ============================================================
+  // Set up global Google callback and check for redirect response
+  // ============================================================
+  useEffect(() => {
+    // @ts-ignore
+    window.handleGoogleCredentialResponse = handleGoogleCredentialResponse
+
+    // Check for OAuth redirect response (access_token in URL hash)
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get('access_token')
+      if (accessToken) {
+        fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`)
+          .then(res => res.json())
+          .then(async (userInfo) => {
+            if (userInfo.sub && userInfo.email) {
+              const response = await AuthManager.loginWithGoogle(accessToken)
+              if (response.status) {
+                setSuccess(true)
+                const user = response.user
+                if (user && !user.onboardingCompleted) {
+                  router.push('/account-setup')
+                } else if (callbackUrl) {
+                  router.push(callbackUrl)
+                } else {
+                  router.push('/home')
+                }
+              }
+            }
+          })
+          .catch(err => {
+            console.error('❌ [GOOGLE-OAUTH] Redirect flow error:', err)
+            setError('Error procesando respuesta de Google')
+          })
+        window.location.hash = ''
+      }
+    }
+
+    return () => {
+      // @ts-ignore
+      delete window.handleGoogleCredentialResponse
+    }
+  }, [handleGoogleCredentialResponse, router, callbackUrl])
 
   const onSubmit = async (data: FormInputs) => {
     try {
@@ -102,13 +261,12 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
         return
       }
 
-      // Obtener datos del usuario desde la sesión de NextAuth (evita doble petición)
+      // Obtener datos del usuario desde la sesión de NextAuth
       const session = await getSession()
       const user = session?.user as any
       const jwt = (session as any)?.accessToken
 
       if (jwt && user) {
-        // ESTANDARIZADO: usar 'jwt' y 'userData' en localStorage
         localStorage.setItem('jwt', jwt)
         localStorage.setItem('userData', JSON.stringify(user))
 
@@ -118,8 +276,8 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
 
         if (!user?.enabled && user?.verificationToken != null && user?.verificationToken !== '') {
           router.push('/verify-email')
-          
-return false
+
+          return false
         } else {
           setSuccess(true)
           setError(null)
@@ -136,8 +294,7 @@ return false
               router.push('/home')
             }
 
-            
-return true
+            return true
           }
 
           // Regla 2: Dueños de Negocio (ADMIN) - Deben completar onboarding
@@ -151,8 +308,7 @@ return true
               router.push('/home')
             }
 
-            
-return true
+            return true
           }
 
           // Regla 3: Colaboradores / Usuarios (USER, BIOMEDICAL, BIOEDICAL)
@@ -163,8 +319,7 @@ return true
               router.push('/accounts/user/view')
             }
 
-            
-return true
+            return true
           }
 
           // Regla 4: Fallback
@@ -174,8 +329,7 @@ return true
             router.push('/home')
           }
 
-          
-return true
+          return true
         }
       } else {
         setError('Error al obtener la sesión de usuario')
@@ -428,20 +582,33 @@ return true
               </Typography>
             </Divider>
 
+            {/* CLOUD-281/CLOUD-282: OAuth Buttons with onClick handlers */}
             <div className='flex justify-center items-center gap-3'>
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
                 startIcon={<i className='tabler-brand-google' />}
+                onClick={handleGoogleOAuth}
+                disabled={oauthLoading !== null}
               >
-                Google
+                {oauthLoading === 'google' ? (
+                  <i className='tabler-loader-2 animate-spin' />
+                ) : (
+                  'Google'
+                )}
               </Button>
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
                 startIcon={<i className='tabler-brand-microsoft' />}
+                onClick={handleFacebookOAuth}
+                disabled={oauthLoading !== null}
               >
-                Microsoft
+                {oauthLoading === 'facebook' ? (
+                  <i className='tabler-loader-2 animate-spin' />
+                ) : (
+                  'Facebook'
+                )}
               </Button>
             </div>
 

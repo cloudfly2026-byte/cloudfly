@@ -57,6 +57,16 @@ public class UserEntity {
     @Column("avatar_id")
     private Long avatarId;
 
+    // CLOUD-278: OAuth fields
+    @Column("oauth_provider")
+    private String oauthProvider;
+
+    @Column("oauth_provider_id")
+    private String oauthProviderId;
+
+    @Column("avatar_url")
+    private String avatarUrl;
+
     @Column("created_at")
     private java.time.LocalDateTime createdAt;
 
@@ -108,4 +118,12 @@ public class UserEntity {
     public void setOnboardingCompleted(boolean onboardingCompleted) { this.onboardingCompleted = onboardingCompleted; }
     public Long getCompanyId() { return companyId; }
     public void setCompanyId(Long companyId) { this.companyId = companyId; }
+
+    // CLOUD-278: OAuth getters/setters
+    public String getOauthProvider() { return oauthProvider; }
+    public void setOauthProvider(String oauthProvider) { this.oauthProvider = oauthProvider; }
+    public String getOauthProviderId() { return oauthProviderId; }
+    public void setOauthProviderId(String oauthProviderId) { this.oauthProviderId = oauthProviderId; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 }

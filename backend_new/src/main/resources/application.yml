@@ -65,5 +65,10 @@ facebook:
     secret: ${FACEBOOK_APP_SECRET:}
     version: v19.0
 
+# CLOUD-279/CLOUD-280: OAuth Configuration
+google:
+  client:
+    id: ${GOOGLE_CLIENT_ID:}
+
 lead-generator:
   url: ${LEAD_GENERATOR_URL:http://lead-generator:8000}

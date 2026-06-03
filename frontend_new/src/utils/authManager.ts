@@ -117,6 +117,7 @@ export const AuthManager = {
       // ESTANDARIZADO: limpiar 'jwt'
       localStorage.removeItem('jwt')
       localStorage.removeItem('userData')
+      localStorage.removeItem('isOAuthUser')
     } catch (error: any) {
       console.log(error)
     }
@@ -176,6 +177,100 @@ export const AuthManager = {
       return response.data
     } catch (error) {
       console.error('Error durante el reseteo de la contraseña:', error)
+      throw error
+    }
+  },
+
+  // ============================================================
+  // CLOUD-283: OAuth Session Management
+  // ============================================================
+
+  /**
+   * Save OAuth session data after successful Google/Facebook login.
+   * Stores JWT, user data, and OAuth flag in localStorage.
+   */
+  saveOAuthSession(jwt: string, userData: any) {
+    try {
+      localStorage.setItem('jwt', jwt)
+      localStorage.setItem('userData', JSON.stringify(userData))
+      localStorage.setItem('isOAuthUser', 'true')
+
+      if (userData && userData.activeCompanyId) {
+        localStorage.setItem('activeCompanyId', userData.activeCompanyId.toString())
+      }
+
+      const decoded: any = jwtDecode(jwt)
+      console.log('🔑 [OAUTH] Token decodificado:', decoded)
+      console.log('🏢 [OAUTH] Company ID extraído del token:', decoded.company_id)
+      console.log('✅ [OAUTH] Sesión OAuth guardada exitosamente')
+    } catch (error) {
+      console.error('❌ [OAUTH] Error guardando sesión OAuth:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Check if the current user authenticated via OAuth.
+   */
+  isOAuthUser(): boolean {
+    return localStorage.getItem('isOAuthUser') === 'true'
+  },
+
+  /**
+   * CLOUD-281: Login with Google OAuth.
+   * Sends the Google ID token credential to the backend.
+   */
+  async loginWithGoogle(credential: string) {
+    try {
+      console.log('🔐 [GOOGLE-OAUTH] Enviando credencial al backend...')
+
+      const response = await axios.post(`${API_BASE_URL}/api/v2/auth/oauth/google`, {
+        credential: credential,
+        provider: 'GOOGLE'
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.data.status && response.data.jwt) {
+        this.saveOAuthSession(response.data.jwt, response.data.user)
+        console.log('✅ [GOOGLE-OAUTH] Login exitoso:', response.data)
+      }
+
+      return response.data
+    } catch (error: any) {
+      console.error('❌ [GOOGLE-OAUTH] Error:', error.response?.data?.message || error.message)
+      throw error
+    }
+  },
+
+  /**
+   * CLOUD-282: Login with Facebook OAuth.
+   * Sends the Facebook access token and user ID to the backend.
+   */
+  async loginWithFacebook(accessToken: string, userId: string) {
+    try {
+      console.log('🔐 [FACEBOOK-OAUTH] Enviando access token al backend...')
+
+      const response = await axios.post(`${API_BASE_URL}/api/v2/auth/oauth/facebook`, {
+        credential: accessToken,
+        userId: userId,
+        provider: 'FACEBOOK'
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.data.status && response.data.jwt) {
+        this.saveOAuthSession(response.data.jwt, response.data.user)
+        console.log('✅ [FACEBOOK-OAUTH] Login exitoso:', response.data)
+      }
+
+      return response.data
+    } catch (error: any) {
+      console.error('❌ [FACEBOOK-OAUTH] Error:', error.response?.data?.message || error.message)
       throw error
     }
   }

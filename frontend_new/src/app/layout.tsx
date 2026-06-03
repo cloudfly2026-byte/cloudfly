@@ -1,3 +1,5 @@
+'use client'
+
 // Third-party Imports
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
@@ -22,6 +24,11 @@ const RootLayout = ({ children }: ChildrenType) => {
 
   return (
     <html id='__next' lang='en' dir={direction}>
+      <head>
+        {/* CLOUD-281: Google Identity Services script for OAuth */}
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        {/* CLOUD-282: Facebook SDK will be initialized in a client component */}
+      </head>
       <body className='flex is-full min-bs-full flex-auto flex-col'>{children}</body>
     </html>
   )
