@@ -129,29 +129,31 @@ export default function ContactFormPanel({ contact, pipelines, onSave, saving }:
           }
         }
       ),
-      phone: yup.string().required('El teléfono es obligatorio').matches(/^[0-9]+$/, 'Solo números').test(
-        'checkPhone',
-        'Este número ya está registrado en esta compañía',
-        async (value, context) => {
-          if (!value) return true
-          const prefix = context.parent.countryPrefix || '+57'
-          const finalPhone = value.startsWith(prefix.replace('+', '')) ? `+${value}` : `${prefix}${value}`
-          
-          const normalize = (p?: string | null) => (p || '').replace(/\D/g, '')
-          
-          if (contact && normalize(contact.phone) === normalize(finalPhone)) return true
-          
-          setIsValidating(true)
-          try {
-            const isDuplicate = await contactService.checkPhoneAvailability(finalPhone)
-            return !isDuplicate
-          } catch (e) {
-            return true
-          } finally {
-            setIsValidating(false)
+      phone: yup.string().required('El teléfono es obligatorio')
+        .matches(/^3\d{9}$/, 'El celular debe tener 10 dígitos y empezar con 3')
+        .test(
+          'checkPhone',
+          'Este número ya está registrado en esta compañía',
+          async (value, context) => {
+            if (!value) return true
+            const prefix = context.parent.countryPrefix || '+57'
+            const finalPhone = `${prefix}${value}`
+            
+            const normalize = (p?: string | null) => (p || '').replace(/\D/g, '')
+            
+            if (contact && normalize(contact.phone) === normalize(finalPhone)) return true
+            
+            setIsValidating(true)
+            try {
+              const isDuplicate = await contactService.checkPhoneAvailability(finalPhone)
+              return !isDuplicate
+            } catch (e) {
+              return true
+            } finally {
+              setIsValidating(false)
+            }
           }
-        }
-      ),
+        ),
       countryPrefix: yup.string().default('+57'),
       address: yup.string().nullable(),
       documentType: yup.string().default('CC'),
@@ -228,15 +230,21 @@ export default function ContactFormPanel({ contact, pipelines, onSave, saving }:
   // Load initial data
   useEffect(() => {
     if (contact) {
-      let phoneOnly = contact.phone || ''
+      const cleanPhoneDigits = (contact.phone || '').replace(/\D/g, '')
       let prefix = '+57'
-      
-      if (phoneOnly.startsWith('+')) {
-        const found = COUNTRY_CODES.find(cc => phoneOnly.startsWith(cc.value))
-        if (found) {
-          prefix = found.value
-          phoneOnly = phoneOnly.replace(found.value, '')
-        }
+      let phoneOnly = cleanPhoneDigits
+
+      const found = [...COUNTRY_CODES]
+        .sort((a, b) => b.value.length - a.value.length)
+        .find(cc => {
+          const prefixDigits = cc.value.replace('+', '')
+          return cleanPhoneDigits.startsWith(prefixDigits)
+        })
+
+      if (found) {
+        prefix = found.value
+        const prefixDigits = found.value.replace('+', '')
+        phoneOnly = cleanPhoneDigits.substring(prefixDigits.length)
       }
 
       reset({
@@ -276,9 +284,7 @@ export default function ContactFormPanel({ contact, pipelines, onSave, saving }:
 
   const onFormSubmit = async (data: any) => {
     try {
-      const finalPhone = data.phone.startsWith(data.countryPrefix.replace('+', '')) 
-        ? `+${data.phone}` 
-        : `${data.countryPrefix}${data.phone.replace(/\D/g, '')}`
+      const finalPhone = `${data.countryPrefix}${data.phone.replace(/\D/g, '')}`
 
       const stageName = availableStages.find(s => s.id === data.stageId)?.name || 'LEAD'
 
