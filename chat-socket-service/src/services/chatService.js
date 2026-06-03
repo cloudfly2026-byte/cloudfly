@@ -84,22 +84,22 @@ class ChatService {
                 mediaType = 'audio';
                 body = '[Audio Message]';
                 logger.info(`🎵 [WEBHOOK_AUDIO] Detected audio message from ${remoteJid}. Fetching decrypted content...`);
-                mediaUrl = await evolutionClient.getBase64FromMediaMessage(instance, messageId);
+                mediaUrl = await evolutionClient.getBase64FromMediaMessage(instance, externalMsgId);
                 if (mediaUrl) {
                     logger.info(`✅ [WEBHOOK_AUDIO] Decrypted audio fetched successfully (size: ${mediaUrl.length})`);
                 } else {
-                    logger.warn(`⚠️ [WEBHOOK_AUDIO] Failed to fetch decrypted audio for ${messageId}`);
+                    logger.warn(`⚠️ [WEBHOOK_AUDIO] Failed to fetch decrypted audio for ${externalMsgId}`);
                     mediaUrl = message.audioMessage.url; // Fallback to raw URL
                 }
             } else if (message.imageMessage) {
                 mediaType = 'image';
                 body = '[Image Message]';
                 logger.info(`🖼️ [WEBHOOK_IMAGE] Detected image message from ${remoteJid}. Fetching decrypted content...`);
-                mediaUrl = await evolutionClient.getBase64FromMediaMessage(instance, messageId);
+                mediaUrl = await evolutionClient.getBase64FromMediaMessage(instance, externalMsgId);
                 if (mediaUrl) {
                     logger.info(`✅ [WEBHOOK_IMAGE] Decrypted image fetched successfully (size: ${mediaUrl.length})`);
                 } else {
-                    logger.warn(`⚠️ [WEBHOOK_IMAGE] Failed to fetch decrypted image for ${messageId}`);
+                    logger.warn(`⚠️ [WEBHOOK_IMAGE] Failed to fetch decrypted image for ${externalMsgId}`);
                     mediaUrl = message.imageMessage.url; // Fallback to raw URL
                 }
             }

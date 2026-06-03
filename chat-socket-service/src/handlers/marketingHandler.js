@@ -136,6 +136,95 @@ const handleUnsubscribeMarketing = (socket, io) => (data) => {
 };
 
 /**
+ * Handles the 'request-marketing-status' event.
+ * Retrieves the cached marketing batch snapshot from Redis and emits it
+ * back to the requesting client.
+ */
+const handleRequestMarketingStatus = (socket, io) => async (data) => {
+    try {
+        const { tenantId: dataTenantId, companyId: dataCompanyId } = data || {};
+        const tenantId = dataTenantId || socket.tenantId;
+        const companyId = dataCompanyId || socket.companyId;
+
+        if (!tenantId) {
+            return;
+        }
+
+        const redisKey = companyId
+            ? `marketing_status:tenant_${tenantId}_company_${companyId}`
+            : `marketing_status:tenant_${tenantId}`;
+
+        const { getRedisClient } = require('../utils/redisClient');
+        const redisClient = getRedisClient();
+
+        if (redisClient) {
+            const cached = await redisClient.get(redisKey);
+            if (cached) {
+                const payload = JSON.parse(cached);
+                socket.emit('marketing-batch-update', payload);
+                logger.info(`[MARKETING-SOCKET] Sent cached status for ${redisKey} to socket ${socket.id}`);
+                return;
+            }
+        }
+        logger.info(`[MARKETING-SOCKET] No cached status found for key ${redisKey}`);
+    } catch (error) {
+        logger.error(`[MARKETING-SOCKET] Error in request-marketing-status: ${error.message}`);
+    }
+};
+
+/**
+ * Utility: Cache marketing event payload to Redis to keep the current state fresh.
+ */
+const cacheMarketingEvent = async (eventName, tenantId, companyId, payload) => {
+    try {
+        const { getRedisClient } = require('../utils/redisClient');
+        const redisClient = getRedisClient();
+        if (!redisClient) return;
+
+        const redisKey = companyId
+            ? `marketing_status:tenant_${tenantId}_company_${companyId}`
+            : `marketing_status:tenant_${tenantId}`;
+
+        if (eventName === 'marketing-batch-update') {
+            await redisClient.set(redisKey, JSON.stringify(payload), 'EX', 86400); // 1 day expiration
+            logger.info(`[MARKETING-CACHE] Cached full batch update for ${redisKey}`);
+        } else if (eventName === 'marketing-agent-status-update' || eventName === 'marketing-agent-task-update') {
+            const cached = await redisClient.get(redisKey);
+            if (cached) {
+                const batch = JSON.parse(cached);
+                if (batch && Array.isArray(batch.agents)) {
+                    batch.agents = batch.agents.map(agent => {
+                        if (agent.id === payload.agentId || agent.name === payload.agentId) {
+                            if (eventName === 'marketing-agent-status-update') {
+                                return {
+                                    ...agent,
+                                    status: payload.status,
+                                    currentTask: payload.currentTask || agent.currentTask,
+                                    taskStartedAt: payload.taskStartedAt || agent.taskStartedAt,
+                                    lastActivity: payload.lastActivity || agent.lastActivity
+                                };
+                            } else {
+                                return {
+                                    ...agent,
+                                    currentTask: payload.taskName,
+                                    taskStartedAt: payload.status === 'started' ? payload.timestamp : agent.taskStartedAt,
+                                    lastActivity: payload.timestamp
+                                };
+                            }
+                        }
+                        return agent;
+                    });
+                    await redisClient.set(redisKey, JSON.stringify(batch), 'EX', 86400);
+                    logger.info(`[MARKETING-CACHE] Updated cached agent ${payload.agentId} status in ${redisKey}`);
+                }
+            }
+        }
+    } catch (error) {
+        logger.error(`[MARKETING-CACHE] Error caching marketing event: ${error.message}`);
+    }
+};
+
+/**
  * Utility: Get the marketing room name for a given tenant/company.
  * Used by backend services to emit events to the correct room.
  *
@@ -160,11 +249,14 @@ const getMarketingRoomName = (tenantId, companyId) => {
  * @param {number} [companyId] - Optional company identifier
  * @param {object} payload   - The event payload
  */
-const emitToMarketingRoom = (io, eventName, tenantId, companyId, payload) => {
+const emitToMarketingRoom = async (io, eventName, tenantId, companyId, payload) => {
     try {
         const roomName = getMarketingRoomName(tenantId, companyId);
         io.to(roomName).emit(eventName, payload);
         logger.info(`[MARKETING-SOCKET] Emitted ${eventName} to room ${roomName}`);
+        
+        // Cache the event asynchronously to Redis
+        await cacheMarketingEvent(eventName, tenantId, companyId, payload);
     } catch (error) {
         logger.error(`[MARKETING-SOCKET] Error emitting ${eventName}: ${error.message}`);
     }
@@ -173,6 +265,7 @@ const emitToMarketingRoom = (io, eventName, tenantId, companyId, payload) => {
 module.exports = {
     handleSubscribeMarketing,
     handleUnsubscribeMarketing,
+    handleRequestMarketingStatus,
     getMarketingRoomName,
     emitToMarketingRoom
 };

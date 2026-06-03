@@ -9,6 +9,8 @@ from kafka.topics import GROUP_MARKETING, TOPIC_ERRORS, TOPIC_REQUESTS, TOPIC_RE
 logger = logging.getLogger("marketing_team_ai.kafka")
 
 
+from confluent_kafka.admin import AdminClient, NewTopic
+
 def bootstrap_servers() -> str:
     host = os.getenv("KAFKA_BOOTSTRAP_SERVERS") or os.getenv("KAFKA_HOST", "kafka")
     if ":" not in host:
@@ -16,7 +18,25 @@ def bootstrap_servers() -> str:
     return host
 
 
+def ensure_topics() -> None:
+    try:
+        admin = AdminClient({"bootstrap.servers": bootstrap_servers()})
+        topics = [TOPIC_REQUESTS, TOPIC_RESULTS, TOPIC_ERRORS]
+        new_topics = [NewTopic(t, num_partitions=1, replication_factor=1) for t in topics]
+        fs = admin.create_topics(new_topics)
+        for topic, f in fs.items():
+            try:
+                f.result() # Wait for topic to be created
+                logger.info("Topic %s created successfully", topic)
+            except Exception as e:
+                # Log warning/info as it's common if topics already exist
+                logger.debug("Topic %s already exists or failed: %s", topic, e)
+    except Exception as e:
+        logger.warning("Could not auto-ensure Kafka topics: %s", e)
+
+
 def create_producer() -> Producer:
+    ensure_topics()
     return Producer(
         {
             "bootstrap.servers": bootstrap_servers(),
@@ -28,6 +48,7 @@ def create_producer() -> Producer:
 
 
 def create_results_consumer() -> Consumer:
+    ensure_topics()
     return Consumer(
         {
             "bootstrap.servers": bootstrap_servers(),

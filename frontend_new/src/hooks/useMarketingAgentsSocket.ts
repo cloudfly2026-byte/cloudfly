@@ -67,6 +67,8 @@ export interface UseMarketingAgentsSocketReturn {
   subscriptionError: string | null;
   /** Manually reconnect (useful after network issues) */
   reconnect: () => void;
+  /** Request the current status of all marketing agents via socket */
+  requestStatus: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -383,6 +385,14 @@ export const useMarketingAgentsSocket = (
     socket.connect()
   }, [socket])
 
+  const requestStatus = useCallback(() => {
+    if (!socket) return
+    socket.emit('request-marketing-status', {
+      tenantId: options.tenantId,
+      companyId: options.companyId
+    })
+  }, [socket, options.tenantId, options.companyId])
+
   return {
     agents,
     connections,
@@ -392,6 +402,7 @@ export const useMarketingAgentsSocket = (
     lastUpdate,
     roomName,
     subscriptionError,
-    reconnect
+    reconnect,
+    requestStatus
   }
 }

@@ -360,6 +360,11 @@ io.on('connection', (socket) => {
     socket.on('subscribe-marketing', marketingHandler.handleSubscribeMarketing(socket, io));
 
     /**
+     * Solicitar el estado actual del equipo de marketing.
+     */
+    socket.on('request-marketing-status', marketingHandler.handleRequestMarketingStatus(socket, io));
+
+    /**
      * Desuscribirse de las actualizaciones de marketing.
      * Se emite al desmontar el componente o al cambiar de tenant/company.
      */

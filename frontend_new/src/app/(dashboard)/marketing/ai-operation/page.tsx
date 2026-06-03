@@ -134,7 +134,8 @@ const MarketingLiveDashboardPage: React.FC = () => {
     lastUpdate,
     roomName,
     subscriptionError,
-    reconnect
+    reconnect,
+    requestStatus
   } = useMarketingAgentsSocket({ tenantId, companyId })
 
   const [loading, setLoading] = useState(true)
@@ -155,6 +156,13 @@ const MarketingLiveDashboardPage: React.FC = () => {
       setShowSubError(true)
     }
   }, [subscriptionError])
+
+  // Request current status from the marketing team via socket on connection/mount
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      requestStatus()
+    }
+  }, [connectionStatus, requestStatus])
 
   // -----------------------------------------------------------------------
   // Initial data load via REST with AbortController cleanup
