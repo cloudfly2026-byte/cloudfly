@@ -10,6 +10,7 @@ import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
+import Button from '@mui/material/Button';
 import { Icon } from '@iconify/react';
 
 import CustomTextField from '@core/components/mui/TextField';
