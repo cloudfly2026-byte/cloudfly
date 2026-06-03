@@ -14,11 +14,20 @@ import type {
 export const contactsApi = createApi({
   reducerPath: 'contactsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: '/api/v2/contacts',
+    baseUrl: `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v2/contacts`,
     prepareHeaders: (headers) => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('jwt');
+      const activeTenantId = localStorage.getItem('activeTenantId');
+      const activeCompanyId = localStorage.getItem('activeCompanyId');
+
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
+      }
+      if (activeTenantId) {
+        headers.set('X-Tenant-Id', activeTenantId);
+      }
+      if (activeCompanyId) {
+        headers.set('X-Company-Id', activeCompanyId);
       }
       return headers;
     },
