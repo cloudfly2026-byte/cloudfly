@@ -179,7 +179,6 @@ public class ContactService {
                         })
                 .doOnError(err -> log.error("FALTA AL GUARDAR CONTACTO ID: {}. Error: {}", existing.getId(),
                         err.getMessage(), err));
-    }sage(), err));
     }
 
     private void sendWebNotification(Long tenantId, Long companyId, Long userId, String title, String description) {
