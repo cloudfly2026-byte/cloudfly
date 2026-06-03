@@ -372,6 +372,8 @@ Formato de respuesta:
             for lead in leads:
                 name = lead.get("name", "Cliente Frío")
                 phone = ''.join(filter(str.isdigit, lead.get("phone", "")))
+                if len(phone) == 10 and phone.startswith('3'):
+                    phone = '57' + phone
                 
                 if not phone:
                     continue

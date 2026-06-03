@@ -117,6 +117,8 @@ class AutonomousMarketingFlow:
                 name = lead.get("name", "Cliente Frío")
                 raw_phone = lead.get("phone", "")
                 phone = ''.join(filter(str.isdigit, raw_phone))
+                if len(phone) == 10 and phone.startswith('3'):
+                    phone = '57' + phone
                 if not phone:
                     continue
 
