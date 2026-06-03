@@ -7,7 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environmental variables from the local .env
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"))
 
 # Force UTF-8 encoding for Windows terminals to support emojis
 if hasattr(sys.stdout, 'reconfigure'):
@@ -43,7 +43,7 @@ elif _provider == "groq":
 else:
     # OpenRouter (default)
     HEALTH_API_BASE = "https://openrouter.ai/api/v1"
-    HEALTH_API_KEY = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
+    HEALTH_API_KEY = os.getenv("SCRUM_TEAM_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
     CANDIDATE_MODELS = [MODEL_DEFAULT]
     DEFAULT_MODEL = MODEL_DEFAULT
 

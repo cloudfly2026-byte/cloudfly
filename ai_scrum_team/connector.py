@@ -9,6 +9,11 @@ import redis
 class ScrumConnector:
     def __init__(self, instance_id=None):
         self.host = os.getenv("REDIS_HOST", "localhost")
+        if self.host == "redis_server":
+            try:
+                socket.gethostbyname("redis_server")
+            except socket.gaierror:
+                self.host = "localhost"
         self.port = int(os.getenv("REDIS_PORT", 6379))
         self.password = os.getenv("REDIS_PASSWORD", "Elian2020#")
         
