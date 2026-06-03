@@ -13,7 +13,7 @@ const config = {
 conn.on('ready', () => {
   console.log('✅ Connected to VPS. Fetching backend-api logs...');
   
-  const cmd = 'docker logs --tail 200 backend-api | grep -i "evolution\\|chat\\|webhook\\|error\\|kafka"';
+  const cmd = 'docker logs --tail 3000 backend-api | grep -i "Exception" -B 2 -A 5';
 
   conn.exec(cmd, (err, stream) => {
     if (err) {

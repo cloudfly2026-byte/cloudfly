@@ -3,13 +3,17 @@ import json
 
 import os
 
+headers = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'Antigravity'
+}
+pat = os.getenv('GITHUB_PAT', '')
+if pat:
+    headers['Authorization'] = f"token {pat}"
+
 req = urllib.request.Request(
     'https://api.github.com/repos/cloudfly2026-byte/cloudfly/actions/runs',
-    headers={
-        'Authorization': f"token {os.getenv('GITHUB_PAT', '')}",
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'Antigravity'
-    }
+    headers=headers
 )
 
 try:
