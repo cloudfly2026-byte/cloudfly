@@ -65,6 +65,12 @@ public class ContactService {
                 : null;
         contact.setEmail(cleanEmail);
 
+        // Normalize documentNumber: set to null if empty/whitespace to prevent unique constraint conflicts on index 'contacts.idx_unique_document_tenant'
+        String cleanDocNumber = (contact.getDocumentNumber() != null && !contact.getDocumentNumber().trim().isEmpty())
+                ? contact.getDocumentNumber().trim()
+                : null;
+        contact.setDocumentNumber(cleanDocNumber);
+
         contact.setTenantId(tenantId);
         contact.setCompanyId(companyId);
         contact.setUuid(java.util.UUID.randomUUID().toString());
@@ -113,6 +119,11 @@ public class ContactService {
                 ? contact.getEmail().trim().toLowerCase()
                 : null;
 
+        // Normalize documentNumber: set to null if empty/whitespace to prevent unique constraint conflicts on index 'contacts.idx_unique_document_tenant'
+        String cleanDocNumber = (contact.getDocumentNumber() != null && !contact.getDocumentNumber().trim().isEmpty())
+                ? contact.getDocumentNumber().trim()
+                : null;
+
         return contactRepository.findById(id)
                 .filter(existing -> existing.getTenantId().equals(tenantId)
                         && existing.getCompanyId().equals(companyId))
@@ -146,12 +157,12 @@ public class ContactService {
                                     return Mono.error(new RuntimeException(
                                             "El correo electrónico ya está registrado en esta compañía"));
                                 }
-                                return performUpdate(existing, contact, cleanPhone, cleanEmail);
+                                return performUpdate(existing, contact, cleanPhone, cleanEmail, cleanDocNumber);
                             });
                 });
     }
 
-    private Mono<ContactEntity> performUpdate(ContactEntity existing, ContactEntity contact, String cleanPhone, String cleanEmail) {
+    private Mono<ContactEntity> performUpdate(ContactEntity existing, ContactEntity contact, String cleanPhone, String cleanEmail, String cleanDocNumber) {
         log.info("Updating Contact ID: {}. Name: {}, PipelineID: {}, StageID: {}, StageName: {}",
                 existing.getId(), contact.getName(), contact.getPipelineId(), contact.getStageId(), contact.getStage());
 
@@ -165,7 +176,7 @@ public class ContactService {
         existing.setPipelineId(contact.getPipelineId());
         existing.setStageId(contact.getStageId());
         existing.setDocumentType(contact.getDocumentType());
-        existing.setDocumentNumber(contact.getDocumentNumber());
+        existing.setDocumentNumber(cleanDocNumber);
         existing.setIsActive(contact.getIsActive());
         existing.setAssignedUserIds(contact.getAssignedUserIds());
         existing.setUpdatedAt(LocalDateTime.now());
