@@ -31,7 +31,7 @@ export const contactsApi = createApi({
     getContacts: builder.query<
       PaginatedResponse<Contact>,
       ContactFilters & { page: number; size: number }
-    >{
+    >({
       query: (params) => ({
         url: '/paginated',
         params: {
@@ -50,7 +50,7 @@ export const contactsApi = createApi({
               { type: 'Contact', id: 'LIST' },
             ]
           : [{ type: 'Contact', id: 'LIST' }],
-    },
+    }),
 
     /**
      * Get a single contact by ID.
