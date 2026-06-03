@@ -563,7 +563,8 @@ def execute_vps_ssh_command(command: str) -> str:
             capture_output=True,
             encoding='utf-8',
             errors='replace',
-            shell=True # Required on Windows for built-in command parsing
+            shell=True, # Required on Windows for built-in command parsing
+            timeout=90
         )
         output = result.stdout + "\n" + result.stderr
         return f"SSH command executed on VPS. Exit code: {result.returncode}\nOutput:\n{output.strip()}"

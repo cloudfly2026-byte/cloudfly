@@ -11,9 +11,9 @@ headers = {"Accept": "application/json", "Content-Type": "application/json"}
 # 1. Get CLOUD-191 details
 print("=== CLOUD-191 ===")
 r = requests.get(f"{base_url}/rest/api/3/issue/CLOUD-191", auth=auth, headers=headers, timeout=15)
-if r.status_code == 200:
+if r.status_code == 200: 
     d = r.json()
-    f = d.get('fields', {})
+    f = d.get('fields', {}) 
     print(f"Summary: {f.get('summary')}")
     print(f"Status: {f.get('status', {}).get('name')}")
     print(f"Type: {f.get('issuetype', {}).get('name')}")
