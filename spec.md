@@ -121,6 +121,7 @@ C:\apps\cloudfly\
 ├── package.json                  # Paquete raíz (utilidades Node.js)
 ├── docker-compose.yml            # Compose mínimo (scraper)
 ├── docker-compose-full.yml       # Compose completo de producción
+├── docker-compose-full-vps.yml   # Compose completo para VPS (informativo)
 ├── docker-compose-local.yml      # Compose para desarrollo local
 ├── docker-compose-monitoring.yml # Compose para stack de monitoreo
 ├── Dockerfile                    # Dockerfile raíz
@@ -161,7 +162,7 @@ C:\apps\cloudfly\
 │   │   └── types/                # Tipos de TypeScript
 │   └── public/                   # Assets estáticos
 │
-├── frontend_new/                 # FRONTEND NUEVO/ACTUAL (Next.js 14)
+├── frontend_new/                 # FRONTEND NUEVO/ACTUAL (Next.js 14) - Ruta al frontend de la aplicación basado en docker-compose-full-vps.yml (solo informativo)
 │   ├── package.json
 │   └── src/
 │       ├── views/                # Organizado por módulo:
