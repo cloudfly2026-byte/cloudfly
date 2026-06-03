@@ -53,7 +53,7 @@ export const contactsApi = createApi({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Contact' as const, id })),
               { type: 'Contact', id: 'LIST' },
