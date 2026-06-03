@@ -26,9 +26,9 @@ def normalize_phone(raw: str, country_code: str = "57") -> str:
     if digits.startswith("00" + country_code):
         digits = digits[2 + len(country_code) :]
     elif digits.startswith(country_code) and len(digits) > len(country_code) + 6:
-        digits = digits[len(country_code) :]
-    if len(digits) == 10:
-        return f"{digits[:3]} {digits[3:6]} {digits[6:]}"
+        pass  # Mantener con indicativo
+    elif len(digits) == 10 and digits.startswith("3"):
+        digits = country_code + digits
     return digits
 
 
@@ -67,12 +67,18 @@ def extract_whatsapp(html: str, phones: list[str], country_code: str) -> str:
         m = pat.search(html)
         if m:
             d = m.group(1)
-            return f"+{d}" if not d.startswith("+") else d
+            # Normalizar whatsapp extraído directamente del link
+            if len(d) == 10 and d.startswith("3"):
+                d = country_code + d
+            return d
     if phones:
         first = phone_digits(phones[0])
         if len(first) == 10 and first.startswith("3"):
-            return f"+{country_code}{first}"
+            return f"{country_code}{first}"
+        elif len(first) == 12 and first.startswith(country_code):
+            return first
     return ""
+
 
 
 def extract_emails(text: str) -> list[str]:
