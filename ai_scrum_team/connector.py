@@ -335,7 +335,7 @@ class ScrumConnector:
                 
         # Fallback al string de variables de entorno si no hay keys en el JSON
         if not keys:
-            pool_str = os.getenv("OPENROUTER_KEYS_POOL") or os.getenv("OPENROUTER_API_KEY")
+            pool_str = os.getenv("SCRUM_TEAM_OPENROUTER_KEY") or os.getenv("OPENROUTER_KEYS_POOL") or os.getenv("OPENROUTER_API_KEY")
             if pool_str:
                 keys = [k.strip() for k in pool_str.split(",") if k.strip()]
                 

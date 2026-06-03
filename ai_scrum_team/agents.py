@@ -17,7 +17,7 @@ from tools import get_jira_tools
 # Formato: proveedor/modelo (ej: openrouter/owl-alpha, openai/gpt-4o, groq/llama-3.1-70b-versatile)
 
 OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or "sk-or-placeholder"
+OPENROUTER_KEY = os.getenv("SCRUM_TEAM_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or "sk-or-placeholder"
 
 # Leer modelo por defecto del .env
 MODEL_DEFAULT = os.getenv("MODEL_DEFAULT", "openrouter/owl-alpha")
