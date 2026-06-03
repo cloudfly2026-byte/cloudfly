@@ -58,6 +58,13 @@ public class ContactService {
     public Mono<ContactEntity> create(ContactEntity contact, Long tenantId, Long companyId) {
         String cleanPhone = contact.getPhone() != null ? contact.getPhone().replaceAll("[^0-9]", "") : "";
         contact.setPhone(cleanPhone);
+        
+        // Normalize email: set to null if empty/whitespace to prevent unique constraint conflicts on index 'contacts.idx_unique_email_tenant'
+        String cleanEmail = (contact.getEmail() != null && !contact.getEmail().trim().isEmpty())
+                ? contact.getEmail().trim().toLowerCase()
+                : null;
+        contact.setEmail(cleanEmail);
+
         contact.setTenantId(tenantId);
         contact.setCompanyId(companyId);
         contact.setUuid(java.util.UUID.randomUUID().toString());
@@ -71,7 +78,7 @@ public class ContactService {
                     log.info("Creating new contact: {} for tenant: {}", contact.getName(), tenantId);
                     return contactRepository.save(contact)
                             .doOnSuccess(saved -> sendWebNotification(tenantId, companyId, null,
-                                    "👤 Nuevo Contacto", "Se ha registrado a " + saved.getName()));
+                                     "👤 Nuevo Contacto", "Se ha registrado a " + saved.getName()));
                 }));
     }
 
@@ -100,7 +107,11 @@ public class ContactService {
 
     public Mono<ContactEntity> update(Long id, ContactEntity contact, Long tenantId, Long companyId) {
         String cleanPhone = contact.getPhone() != null ? contact.getPhone().replaceAll("\\D", "") : "";
-        String cleanEmail = contact.getEmail() != null ? contact.getEmail().trim().toLowerCase() : null;
+        
+        // Normalize email: set to null if empty/whitespace to prevent unique constraint conflicts on index 'contacts.idx_unique_email_tenant'
+        String cleanEmail = (contact.getEmail() != null && !contact.getEmail().trim().isEmpty())
+                ? contact.getEmail().trim().toLowerCase()
+                : null;
 
         return contactRepository.findById(id)
                 .filter(existing -> existing.getTenantId().equals(tenantId)
@@ -108,18 +119,19 @@ public class ContactService {
                 .flatMap(existing -> {
                     String existingCleanPhone = existing.getPhone() != null ? existing.getPhone().replaceAll("\\D", "")
                             : "";
-                    String existingCleanEmail = existing.getEmail() != null ? existing.getEmail().trim().toLowerCase()
+                    String existingCleanEmail = (existing.getEmail() != null && !existing.getEmail().trim().isEmpty())
+                            ? existing.getEmail().trim().toLowerCase()
                             : null;
 
                     boolean phoneChanged = !cleanPhone.equals(existingCleanPhone);
-                    boolean emailChanged = (cleanEmail != null && !cleanEmail.equals(existingCleanEmail));
+                    boolean emailChanged = (cleanEmail != null && !cleanEmail.equals(existingCleanEmail)) || (cleanEmail == null && existingCleanEmail != null);
 
                     Mono<Boolean> phoneExists = (phoneChanged && !cleanPhone.isEmpty())
                             ? contactRepository.existsByPhoneAndCompanyIdAndIdNot(cleanPhone, companyId, id, tenantId)
                                     .map(count -> count > 0)
                             : Mono.just(false);
 
-                    Mono<Boolean> emailExists = (emailChanged && !cleanEmail.isEmpty())
+                    Mono<Boolean> emailExists = (emailChanged && cleanEmail != null && !cleanEmail.isEmpty())
                             ? contactRepository.existsByEmailAndCompanyIdAndIdNot(cleanEmail, companyId, id, tenantId)
                                     .map(count -> count > 0)
                             : Mono.just(false);
@@ -134,17 +146,17 @@ public class ContactService {
                                     return Mono.error(new RuntimeException(
                                             "El correo electrónico ya está registrado en esta compañía"));
                                 }
-                                return performUpdate(existing, contact, cleanPhone);
+                                return performUpdate(existing, contact, cleanPhone, cleanEmail);
                             });
                 });
     }
 
-    private Mono<ContactEntity> performUpdate(ContactEntity existing, ContactEntity contact, String cleanPhone) {
+    private Mono<ContactEntity> performUpdate(ContactEntity existing, ContactEntity contact, String cleanPhone, String cleanEmail) {
         log.info("Updating Contact ID: {}. Name: {}, PipelineID: {}, StageID: {}, StageName: {}",
                 existing.getId(), contact.getName(), contact.getPipelineId(), contact.getStageId(), contact.getStage());
 
         existing.setName(contact.getName());
-        existing.setEmail(contact.getEmail());
+        existing.setEmail(cleanEmail);
         existing.setPhone(cleanPhone);
         existing.setAddress(contact.getAddress());
         existing.setTaxId(contact.getTaxId());
@@ -167,6 +179,7 @@ public class ContactService {
                         })
                 .doOnError(err -> log.error("FALTA AL GUARDAR CONTACTO ID: {}. Error: {}", existing.getId(),
                         err.getMessage(), err));
+    }sage(), err));
     }
 
     private void sendWebNotification(Long tenantId, Long companyId, Long userId, String title, String description) {
