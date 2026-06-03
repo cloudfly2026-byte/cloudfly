@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Card,
@@ -19,138 +19,147 @@ import {
   Avatar,
   Tooltip,
   Paper,
-  TablePagination
-} from '@mui/material'
-import { Icon } from '@iconify/react'
-import { format } from 'date-fns'
-import { contactService } from '@/services/marketing/contactService'
-import { tagService } from '@/services/marketing/tagService'
-import { pipelineService } from '@/services/marketing/pipelineService'
-import { Contact } from '@/types/marketing/contactTypes'
-import { Pipeline } from '@/types/marketing/pipelineTypes'
-import { userMethods } from '@/utils/userMethods'
+  TablePagination,
+  alpha,
+} from '@mui/material';
+import { Icon } from '@iconify/react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import {
+  useGetContactsQuery,
+  useDeleteContactMutation,
+} from '@/redux/api/contactsApi';
+import { tagService } from '@/services/marketing/tagService';
+import { pipelineService } from '@/services/marketing/pipelineService';
+import type { Contact, ContactFilters } from '@/types/marketing/contactTypes';
+import type { Pipeline } from '@/types/marketing/pipelineTypes';
+import CRMStatsCards from './CRMStatsCards';
+import TableFilters from './TableFilters';
 
-import CRMStatsCards from './CRMStatsCards'
-import TableFilters from './TableFilters'
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
+const DEFAULT_PAGE_SIZE = 10;
 
 export default function ContactListTable() {
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([])
-  const [pipelines, setPipelines] = useState<Pipeline[]>([])
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const router = useRouter();
 
-  // Pagination states - "de 10 en 10 inicialmente"
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  // Server-side pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
-  useEffect(() => {
-    loadData()
+  // Server-side filter state
+  const [filters, setFilters] = useState<ContactFilters>({});
 
-    // Listen to storage events (e.g. from other tabs or if changed in this window)
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'activeCompanyId' || e.key === 'activeTenantId' || e.key === 'userData') {
-        loadData()
+  // Pipelines for display names
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+
+  // RTK Query: fetch contacts from backend_new with server-side pagination & filters
+  const {
+    data: paginatedData,
+    isLoading,
+    isFetching,
+    error,
+  } = useGetContactsQuery(
+    { page, size: rowsPerPage, ...filters },
+    {
+      // Refetch on arg change (page/filters)
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  // RTK Query: delete mutation with automatic cache invalidation
+  const [deleteContact] = useDeleteContactMutation();
+
+  // Load pipelines on mount (for display names only)
+  React.useEffect(() => {
+    pipelineService.getAllPipelines().then((data) => setPipelines(data || [])).catch(() => {});
+  }, []);
+
+  // Enrich contacts with tags (fetched in parallel for current page)
+  const [enrichedContacts, setEnrichedContacts] = useState<Contact[]>([]);
+
+  React.useEffect(() => {
+    const contacts = paginatedData?.data ?? [];
+    if (contacts.length === 0) {
+      setEnrichedContacts([]);
+      return;
+    }
+
+    Promise.all(
+      contacts.map(async (c: Contact) => {
+        try {
+          const tags = await tagService.getContactTags(c.id);
+          return { ...c, tags };
+        } catch {
+          return { ...c, tags: [] };
+        }
+      })
+    ).then(setEnrichedContacts);
+  }, [paginatedData?.data]);
+
+  // Handlers
+  const handleEdit = useCallback(
+    (contact: Contact) => {
+      router.push(`/marketing/contacts/${contact.id}`);
+    },
+    [router]
+  );
+
+  const handleAdd = useCallback(() => {
+    router.push(`/marketing/contacts/new`);
+  }, [router]);
+
+  const handleDelete = useCallback(
+    async (id: number) => {
+      if (!window.confirm('¿Seguro de eliminar este contacto?')) return;
+      try {
+        await deleteContact(id).unwrap();
+        // Cache invalidation happens automatically via RTK Query tags
+      } catch (err) {
+        console.error('Error al eliminar contacto:', err);
       }
-    }
-    
-    // Listen to custom window storage/context updates
-    window.addEventListener('storage', handleStorage)
-    window.addEventListener('companyChanged', loadData)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorage)
-      window.removeEventListener('companyChanged', loadData)
-    }
-  }, [])
+    },
+    [deleteContact]
+  );
 
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      
-      const user = userMethods.getUserLogin()
-      const isManager = user?.roles?.some((r: any) => (r.name || r.role || '').includes('MANAGER'))
-      const isAdmin = user?.roles?.some((r: any) => (r.name || r.role || '').includes('ADMIN'))
-      
-      const localTenantId = typeof window !== 'undefined' ? localStorage.getItem('activeTenantId') : null
-      const localCompanyId = typeof window !== 'undefined' ? localStorage.getItem('activeCompanyId') : null
-      
-      const tenantId = localTenantId ? parseInt(localTenantId, 10) : ((isManager || isAdmin) ? (user?.customerId || user?.tenant_id) : undefined)
-      const companyId = localCompanyId ? parseInt(localCompanyId, 10) : ((isManager || isAdmin) ? (user?.activeCompanyId || user?.company_id) : undefined)
-      
-      // Load contacts and pipelines in parallel
-      const [contactsData, pipelinesData] = await Promise.all([
-        contactService.getAllContacts(),
-        pipelineService.getAllPipelines(tenantId, companyId)
-      ])
-      
-      // Sort contacts by id descending initially (newest first)
-      const sortedContacts = (contactsData || []).sort((a: any, b: any) => b.id - a.id)
+  // Server-side filter handler (resets to page 0)
+  const handleFiltersChange = useCallback((newFilters: ContactFilters) => {
+    setFilters(newFilters);
+    setPage(0);
+  }, []);
 
-      // Fetch tags for each contact concurrently
-      const enrichedContacts = await Promise.all(
-        sortedContacts.map(async (c: Contact) => {
-          try {
-            const tags = await tagService.getContactTags(c.id)
-            return { ...c, tags }
-          } catch (err) {
-            console.error(`Error loading tags for contact ${c.id}:`, err)
-            return { ...c, tags: [] }
-          }
-        })
-      )
-      
-      setContacts(enrichedContacts)
-      setFilteredContacts(enrichedContacts)
-      setPipelines(pipelinesData || [])
-    } catch (e) {
-      console.error('Error al cargar datos:', e)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Pagination handlers
+  const handlePageChange = useCallback((_event: unknown, newPage: number) => {
+    setPage(newPage);
+  }, []);
 
-  const handleEdit = (contact: Contact) => {
-    router.push(`/marketing/contacts/${contact.id}`)
-  }
+  const handleRowsPerPageChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setRowsPerPage(parseInt(event.target.value, 10));
+      setPage(0);
+    },
+    []
+  );
 
-  const handleAdd = () => {
-    router.push(`/marketing/contacts/new`)
-  }
+  // Display helpers
+  const getPipelineName = useCallback(
+    (id?: number) => {
+      if (!id) return 'N/A';
+      const p = pipelines.find((item) => item.id === id);
+      return p ? p.name : 'Desconocido';
+    },
+    [pipelines]
+  );
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Seguro de eliminar este contacto?')) return
-    try {
-      await contactService.deleteContact(id)
-      await loadData()
-    } catch (e) {
-      console.error('Error al eliminar contacto:', e)
-    }
-  }
-
-  const getPipelineName = (id?: number) => {
-    if (!id) return 'N/A'
-    const p = pipelines.find(item => item.id === id)
-    return p ? p.name : 'Desconocido'
-  }
-
-  const getStageName = (pipelineId?: number, stageId?: number) => {
-    if (!pipelineId || !stageId) return 'Buzón de Entrada'
-    const p = pipelines.find(item => item.id === pipelineId)
-    if (!p || !p.stages) return 'Desconocido'
-    const s = p.stages.find(item => item.id === stageId)
-    return s ? s.name : 'Desconocido'
-  }
-
-  const handleSetFilteredContacts = useCallback((newFiltered: Contact[]) => {
-    setFilteredContacts(newFiltered)
-    setPage(0) // Reset to first page on filter change
-  }, [])
-
-  // Paginated and sliced contacts for performance
-  const paginatedContacts = useMemo(() => {
-    return filteredContacts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-  }, [filteredContacts, page, rowsPerPage])
+  const getStageName = useCallback(
+    (pipelineId?: number, stageId?: number) => {
+      if (!pipelineId || !stageId) return 'Buzón de Entrada';
+      const p = pipelines.find((item) => item.id === pipelineId);
+      if (!p || !p.stages) return 'Desconocido';
+      const s = p.stages.find((item) => item.id === stageId);
+      return s ? s.name : 'Desconocido';
+    },
+    [pipelines]
+  );
 
   const getTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -159,10 +168,10 @@ export default function ContactListTable() {
       CUSTOMER: 'Cliente',
       CLIENT: 'Cliente',
       SUPPLIER: 'Proveedor',
-      OTHER: 'Otro'
-    }
-    return types[type] || type
-  }
+      OTHER: 'Otro',
+    };
+    return types[type] || type;
+  };
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, any> = {
@@ -171,42 +180,75 @@ export default function ContactListTable() {
       CUSTOMER: 'success',
       CLIENT: 'success',
       SUPPLIER: 'info',
-      OTHER: 'secondary'
-    }
-    return colors[type] || 'secondary'
-  }
+      OTHER: 'secondary',
+    };
+    return colors[type] || 'secondary';
+  };
+
+  // Stats data: use enriched contacts for current page + total from server
+  const totalElements = paginatedData?.totalElements ?? 0;
+  const totalPages = paginatedData?.totalPages ?? 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {/* 4 Premium CRM Stats Cards with dynamic live data */}
-      <CRMStatsCards contactsData={contacts} />
+      {/* 4 Premium CRM Stats Cards — uses RTK Query data for total count */}
+      <CRMStatsCards contactsData={enrichedContacts} totalContacts={totalElements} />
 
       <Card>
-        <Box sx={{ p: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+        {/* Header */}
+        <Box
+          sx={{
+            p: 5,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Box>
             <Typography variant="h5">Gestión de Contactos</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Total: {filteredContacts.length} contactos filtrados (de {contacts.length} en total)
+              Total: {totalElements} contactos
+              {isFetching && !isLoading && (
+                <Typography
+                  component="span"
+                  variant="caption"
+                  color="primary"
+                  sx={{ ml: 1, fontStyle: 'italic' }}
+                >
+                  (actualizando...)
+                </Typography>
+              )}
             </Typography>
           </Box>
-          <Button 
-            variant="contained" 
-            onClick={handleAdd} 
+          <Button
+            variant="contained"
+            onClick={handleAdd}
             startIcon={<Icon icon="tabler:plus" />}
           >
             Nuevo Contacto
           </Button>
         </Box>
-        
-        {/* Dynamic, live searching and filtering bar */}
-        <TableFilters 
-          setData={handleSetFilteredContacts} 
-          tableData={contacts} 
-          pipelines={pipelines} 
+
+        {/* Server-side filters */}
+        <TableFilters
+          onFiltersChange={handleFiltersChange}
+          pipelines={pipelines}
         />
 
-        {loading && <LinearProgress />}
-        
+        {isLoading && <LinearProgress />}
+
+        {/* Error state */}
+        {error && (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography color="error">
+              Error al cargar los contactos. Por favor intente nuevamente.
+            </Typography>
+          </Box>
+        )}
+
+        {/* Table */}
         <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
@@ -222,48 +264,63 @@ export default function ContactListTable() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {!loading && filteredContacts.length === 0 ? (
+              {!isLoading && enrichedContacts.length === 0 && !error ? (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
                     <Typography variant="body1" color="text.secondary">
-                      No hay contactos que coincidan con la búsqueda
+                      No se encontraron contactos
                     </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedContacts.map((contact) => (
-                  <TableRow 
-                    key={contact.id} 
-                    hover 
-                    onClick={() => handleEdit(contact)} 
+                enrichedContacts.map((contact: Contact) => (
+                  <TableRow
+                    key={contact.id}
+                    hover
+                    onClick={() => handleEdit(contact)}
                     sx={{ cursor: 'pointer' }}
                   >
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Avatar 
-                          src={contact.avatarUrl} 
-                          sx={{ width: 32, height: 32, bgcolor: contact.isActive ? 'primary.main' : 'divider' }}
+                        <Avatar
+                          src={contact.avatarUrl}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: contact.isActive
+                              ? 'primary.main'
+                              : 'divider',
+                          }}
                         >
-                          {contact.name ? contact.name.charAt(0).toUpperCase() : 'C'}
+                          {contact.name
+                            ? contact.name.charAt(0).toUpperCase()
+                            : 'C'}
                         </Avatar>
                         <Box>
                           <Typography variant="body1" sx={{ fontWeight: 500 }}>
                             {contact.name}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {contact.email || contact.phone || 'Sin datos de contacto'}
+                            {contact.email ||
+                              contact.phone ||
+                              'Sin datos de contacto'}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {contact.documentType || 'NIT'}: {contact.documentNumber || contact.taxId || 'N/A'}
+                        {contact.documentType || 'NIT'}:{' '}
+                        {contact.documentNumber || contact.taxId || 'N/A'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Box>
-                        <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
+                        <Typography
+                          variant="body2"
+                          color="primary"
+                          sx={{ fontWeight: 500 }}
+                        >
                           {getPipelineName(contact.pipelineId)}
                         </Typography>
                         <Typography variant="caption" color="text.disabled">
@@ -272,7 +329,15 @@ export default function ContactListTable() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, maxWidth: 200 }} onClick={(e) => e.stopPropagation()}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 1,
+                          maxWidth: 200,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {contact.tags && contact.tags.length > 0 ? (
                           contact.tags.map((tag) => (
                             <Chip
@@ -280,12 +345,18 @@ export default function ContactListTable() {
                               label={tag.name}
                               size="small"
                               sx={{
-                                backgroundColor: `${tag.color || '#7367F0'}1e`,
+                                backgroundColor: alpha(
+                                  tag.color || '#7367F0',
+                                  0.12
+                                ),
                                 color: tag.color || '#7367F0',
-                                borderColor: `${tag.color || '#7367F0'}3f`,
+                                borderColor: alpha(
+                                  tag.color || '#7367F0',
+                                  0.25
+                                ),
                                 borderWidth: '1px',
                                 borderStyle: 'solid',
-                                fontWeight: 500
+                                fontWeight: 500,
                               }}
                             />
                           ))
@@ -297,41 +368,44 @@ export default function ContactListTable() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={getTypeLabel(contact.type)} 
-                        size="small" 
-                        variant="tonal" 
+                      <Chip
+                        label={getTypeLabel(contact.type)}
+                        size="small"
+                        variant="tonal"
                         color={getTypeColor(contact.type)}
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={contact.isActive ? 'Activo' : 'Inactivo'} 
-                        color={contact.isActive ? 'success' : 'secondary'} 
-                        size="small" 
+                      <Chip
+                        label={contact.isActive ? 'Activo' : 'Inactivo'}
+                        color={contact.isActive ? 'success' : 'secondary'}
+                        size="small"
                         variant="tonal"
                       />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {contact.updatedAt || contact.createdAt 
-                          ? format(new Date(contact.updatedAt || contact.createdAt), 'dd/MM/yyyy') 
-                          : 'N/A'
-                        }
+                        {contact.updatedAt || contact.createdAt
+                          ? format(
+                              new Date(contact.updatedAt || contact.createdAt),
+                              'dd/MM/yyyy',
+                              { locale: es }
+                            )
+                          : 'N/A'}
                       </Typography>
                     </TableCell>
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Tooltip title="Editar">
-                        <IconButton 
-                          onClick={() => handleEdit(contact)} 
+                        <IconButton
+                          onClick={() => handleEdit(contact)}
                           color="info"
                         >
                           <Icon icon="tabler:edit" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Eliminar">
-                        <IconButton 
-                          onClick={() => handleDelete(contact.id)} 
+                        <IconButton
+                          onClick={() => handleDelete(contact.id)}
                           color="error"
                         >
                           <Icon icon="tabler:trash" />
@@ -345,22 +419,21 @@ export default function ContactListTable() {
           </Table>
         </TableContainer>
 
-        {/* Premium MUI Pagination component matching exactly "de 10 en 10 inicialmente" */}
+        {/* Premium MUI Pagination — server-side */}
         <TablePagination
-          rowsPerPageOptions={[10, 25, 50]}
+          rowsPerPageOptions={PAGE_SIZE_OPTIONS}
           component="div"
-          count={filteredContacts.length}
+          count={totalElements}
           rowsPerPage={rowsPerPage}
           page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10))
-            setPage(0)
-          }}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
           labelRowsPerPage="Contactos por página:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+          }
         />
       </Card>
     </Box>
-  )
+  );
 }

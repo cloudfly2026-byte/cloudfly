@@ -31,6 +31,7 @@ export interface Contact {
   tags?: Tag[];
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
 }
 
 export interface ContactCreateRequest {
@@ -50,4 +51,19 @@ export interface ContactCreateRequest {
   tenantId?: number;
   companyId?: number;
   tagIds?: number[];
+}
+
+export interface ContactFilters {
+  name?: string;
+  email?: string;
+  phone?: string;
+  identification?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
 }

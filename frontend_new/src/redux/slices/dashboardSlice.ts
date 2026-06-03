@@ -24,11 +24,13 @@ export const fetchDashboardData = createAsyncThunk(
     try {
       const [stats, pipelineStats] = await Promise.all([
         dashboardService.getStats(companyId),
-        dashboardService.getPipelineStats(companyId)
+        dashboardService.getPipelineStats(companyId),
       ]);
       return { stats, pipelineStats };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Error al cargar datos del dashboard');
+      return rejectWithValue(
+        error.response?.data?.message || 'Error al cargar datos del dashboard'
+      );
     }
   }
 );
@@ -39,7 +41,7 @@ const dashboardSlice = createSlice({
   reducers: {
     clearDashboardError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -62,3 +64,15 @@ const dashboardSlice = createSlice({
 
 export const { clearDashboardError } = dashboardSlice.actions;
 export default dashboardSlice.reducer;
+
+// Selectors
+export const selectDashboardStats = (state: { dashboard: DashboardState }) =>
+  state.dashboard.stats;
+export const selectPipelineStats = (state: { dashboard: DashboardState }) =>
+  state.dashboard.pipelineStats;
+export const selectDashboardLoading = (state: { dashboard: DashboardState }) =>
+  state.dashboard.loading;
+export const selectDashboardError = (state: { dashboard: DashboardState }) =>
+  state.dashboard.error;
+export const selectDashboardLastUpdated = (state: { dashboard: DashboardState }) =>
+  state.dashboard.lastUpdated;

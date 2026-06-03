@@ -92,6 +92,49 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=8080"
       - "traefik.docker.network=cloudfly_app-net"
 
+  # ============================================================
+  # CLOUD-271: backend-new service for /api/v2/* endpoints
+  # Routes to backend_new Spring Boot application with
+  # R2DBC reactive stack, JWT auth, and Kafka integration.
+  # ============================================================
+  backend-new:
+    build:
+      context: ./backend_new
+      dockerfile: Dockerfile
+    container_name: backend-new
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./uploads:/uploads
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Bogota
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=cloud_master
+      - DB_USERNAME=root
+      - DB_PASSWORD=widowmaker
+      - KAFKA_HOST=kafka
+      - SPRING_PROFILES_ACTIVE=production
+      - JWT_SECRET=${JWT_SECRET:-cloudfly-backend-new-secret-change-in-production}
+      - EVOLUTION_API_URL=http://evolution-api:8080
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-CAMBIA_ESTA_LLAVE_LARGA_Y_UNICA}
+    networks:
+      - app-net
+      - kafka-net
+    depends_on:
+      - db
+      - kafka
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-new.rule=Host(`api.cloudfly.com.co`) && PathPrefix(`/api/v2`)"
+      - "traefik.http.routers.backend-new.entrypoints=websecure"
+      - "traefik.http.routers.backend-new.tls=true"
+      - "traefik.http.routers.backend-new.tls.certresolver=le"
+      - "traefik.http.services.backend-new.loadbalancer.server.port=8080"
+      - "traefik.docker.network=cloudfly_app-net"
+
   billing-service:
     image: ghcr.io/cloudfly2026-byte/cloudfly/billing-service:latest
     container_name: billing-service
@@ -185,12 +228,6 @@ services:
     depends_on:
       - kafka
 
-  # ============================================================
-  # CLOUD-248 FIX: frontend-react needs access to chat_socket
-  # which resides on developmentai_app-net (created by a
-  # different compose project). We add the external network
-  # reference so the frontend can resolve chat_socket hostname.
-  # ============================================================
   frontend-react:
     image: ghcr.io/cloudfly2026-byte/cloudfly/frontend-react:latest
     build:
@@ -221,34 +258,6 @@ services:
     networks:
       - app-net
       - developmentai_app-net
-
-#  frontend-dev:
-#    image: node:18-alpine
-#    container_name: frontend-dev
-#    restart: always
-#    working_dir: /app
-#    volumes:
-#      - ./frontend_new:/app
-#    ports:
-#      - "5420:3000"
-#    environment:
-#      - NEXT_PUBLIC_API_URL=https://api.cloudfly.com.co
-#      - NEXT_PUBLIC_BASE_URL=https://devdashboard.cloudfly.com.co
-#      - NEXT_PUBLIC_FRONTEND_URL=https://devdashboard.cloudfly.com.co
-#      - NEXTAUTH_URL=https://devdashboard.cloudfly.com.co
-#      - NEXTAUTH_SECRET=cloudfly-dev-secret
-#      - NODE_ENV=development
-#      - PORT=3000
-#    command: sh -c "npm install && npm run dev"
-#    networks:
-#      - app-net
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.http.routers.frontdev.rule=Host(`devdashboard.cloudfly.com.co`)"
-#      - "traefik.http.routers.frontdev.entrypoints=websecure"
-#      - "traefik.http.routers.frontdev.tls.certresolver=le"
-#      - "traefik.http.services.frontdev.loadbalancer.server.port=3000"
-#      - "traefik.docker.network=cloudfly_app-net"
 
   redis:
     image: redis:latest
@@ -536,50 +545,6 @@ services:
     depends_on:
       - kafka
       - db
-
-  # ============================================
-  # IA MARKETING OPERATION MODULE (CLOUD-199)
-  # ============================================
-  # CLOUD-219 FIX: depends_on references "mysql" but service is named "db".
-  # Since this service is NOT needed for CLOUD-219 QA verification,
-  # it is commented out to allow docker-compose to start cleanly.
-  # ============================================
-  # ia-marketing-operation:
-  #   build:
-  #     context: ./ia_marketing_operation
-  #     dockerfile: Dockerfile
-  #   container_name: ia-marketing-operation
-  #   restart: always
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - TZ=America/Bogota
-  #     - DB_HOST=mysql
-  #     - DB_PORT=3306
-  #     - DB_DATABASE=cloud_master
-  #     - DB_USERNAME=root
-  #     - DB_PASSWORD=widowmaker
-  #     - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-  #     - REDIS_HOST=redis_server
-  #     - REDIS_PASSWORD=Elian2020#
-  #     - QDRANT_HOST=qdrant
-  #     - QDRANT_PORT=6333
-  #     - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
-  #     - BACKEND_API_URL=http://backend-api:8080
-  #     - EVOLUTION_API_URL=http://evolution-api:8080
-  #     - SSH_HOST=89.117.147.134
-  #     - SSH_PORT=10622
-  #     - SSH_USER=root
-  #   networks:
-  #     - app-net
-  #     - kafka-net
-  #   depends_on:
-  #     - db        # FIXED: was "mysql", actual service name is "db"
-  #     - kafka
-  #     - redis
-  #   volumes:
-  #     - ./ia_marketing_operation/outputs:/app/outputs
 
   traefik:
     image: traefik:v3.6.7

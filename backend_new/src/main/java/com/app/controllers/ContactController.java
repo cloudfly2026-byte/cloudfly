@@ -1,7 +1,8 @@
 package com.app.controllers;
 
+import com.app.dto.ContactResponseDTO;
+import com.app.dto.PageResponse;
 import com.app.persistence.entity.ContactEntity;
-import com.app.persistence.repository.CompanyRepository;
 import com.app.persistence.services.ContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 public class ContactController {
 
     private final ContactService contactService;
-    private final CompanyRepository companyRepository;
+    private final com.app.persistence.repository.CompanyRepository companyRepository;
 
     private record UserContext(Long tenantId, Long companyId, Set<String> roles) {
     }
@@ -73,6 +74,9 @@ public class ContactController {
                 });
     }
 
+    /**
+     * Get all contacts (legacy endpoint - non-paginated).
+     */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPERADMIN', 'USER')")
     public Flux<ContactEntity> getAllContacts(@RequestHeader Map<String, String> headers) {
@@ -81,8 +85,6 @@ public class ContactController {
                     if (ctx.companyId() != null) {
                         return contactService.findAll(ctx.tenantId(), ctx.companyId());
                     } else {
-                        // Si no hay compañía definida (o es global), podemos buscar por principal o por
-                        // tenant solo
                         return companyRepository.findFirstByTenantIdAndIsPrincipalTrue(ctx.tenantId())
                                 .flatMapMany(primary -> contactService.findAll(ctx.tenantId(), primary.getId()))
                                 .switchIfEmpty(contactService.findAll(ctx.tenantId(), null));
@@ -90,20 +92,39 @@ public class ContactController {
                 });
     }
 
+    /**
+     * Get paginated contacts with optional server-side filters.
+     * This is the primary endpoint for the CRM contacts list.
+     *
+     * @param page           Page number (0-indexed)
+     * @param size           Page size (default 20)
+     * @param name           Optional filter by name (partial match)
+     * @param email          Optional filter by email (partial match)
+     * @param phone          Optional filter by phone (partial match)
+     * @param identification Optional filter by document number (partial match)
+     * @param headers        Request headers for tenant/company resolution
+     */
     @GetMapping("/paginated")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'SUPERADMIN', 'USER')")
-    public Mono<com.app.dto.PageResponse<ContactEntity>> getPaginatedContacts(
+    public Mono<PageResponse<ContactEntity>> getPaginatedContacts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String identification,
             @RequestHeader Map<String, String> headers) {
         return getCurrentUserContext(headers)
                 .flatMap(ctx -> {
                     if (ctx.companyId() != null) {
-                        return contactService.findPaginated(ctx.tenantId(), ctx.companyId(), page, size);
+                        return contactService.findFilteredPaginated(
+                                ctx.tenantId(), ctx.companyId(), name, email, phone, identification, page, size);
                     } else {
                         return companyRepository.findFirstByTenantIdAndIsPrincipalTrue(ctx.tenantId())
-                                .flatMap(primary -> contactService.findPaginated(ctx.tenantId(), primary.getId(), page, size))
-                                .switchIfEmpty(contactService.findPaginated(ctx.tenantId(), null, page, size));
+                                .flatMap(primary -> contactService.findFilteredPaginated(
+                                        ctx.tenantId(), primary.getId(), name, email, phone, identification, page, size))
+                                .switchIfEmpty(contactService.findFilteredPaginated(
+                                        ctx.tenantId(), null, name, email, phone, identification, page, size));
                     }
                 });
     }

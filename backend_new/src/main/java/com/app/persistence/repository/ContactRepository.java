@@ -18,6 +18,28 @@ public interface ContactRepository extends ReactiveCrudRepository<ContactEntity,
     @Query("SELECT * FROM contacts WHERE tenant_id = :tenantId AND (:companyId IS NULL OR company_id = :companyId) ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
     Flux<ContactEntity> findPaginated(Long tenantId, Long companyId, int limit, int offset);
 
+    /**
+     * Filtered paginated query with optional name, email, phone, and identification filters.
+     * All filters use LIKE with wildcards for partial matching.
+     */
+    @Query("SELECT * FROM contacts WHERE tenant_id = :tenantId AND (:companyId IS NULL OR company_id = :companyId) " +
+          "AND (:name IS NULL OR LOWER(name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+          "AND (:email IS NULL OR LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))) " +
+          "AND (:phone IS NULL OR phone LIKE CONCAT('%', :phone, '%')) " +
+          "AND (:identification IS NULL OR document_number LIKE CONCAT('%', :identification, '%')) " +
+          "ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
+    Flux<ContactEntity> findFilteredPaginated(Long tenantId, Long companyId, String name, String email, String phone, String identification, int limit, int offset);
+
+    /**
+     * Count total filtered contacts for pagination metadata.
+     */
+    @Query("SELECT COUNT(*) FROM contacts WHERE tenant_id = :tenantId AND (:companyId IS NULL OR company_id = :companyId) " +
+          "AND (:name IS NULL OR LOWER(name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+          "AND (:email IS NULL OR LOWER(email) LIKE LOWER(CONCAT('%', :email, '%'))) " +
+          "AND (:phone IS NULL OR phone LIKE CONCAT('%', :phone, '%')) " +
+          "AND (:identification IS NULL OR document_number LIKE CONCAT('%', :identification, '%'))")
+    Mono<Long> countFiltered(Long tenantId, Long companyId, String name, String email, String phone, String identification);
+
     @Query("SELECT * FROM contacts WHERE tenant_id = :tenantId AND (:companyId IS NULL OR company_id = :companyId) AND phone = :phone")
     Mono<ContactEntity> findByTenantIdAndCompanyIdAndPhone(Long tenantId, Long companyId, String phone);
 

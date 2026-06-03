@@ -4,6 +4,7 @@ import com.app.persistence.entity.ContactEntity;
 import com.app.persistence.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 public class ContactService {
 
     private final ContactRepository contactRepository;
-    private final org.springframework.kafka.core.KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public Flux<ContactEntity> findAll(Long tenantId, Long companyId) {
@@ -29,13 +30,21 @@ public class ContactService {
         }
     }
 
-    public Mono<com.app.dto.PageResponse<ContactEntity>> findPaginated(Long tenantId, Long companyId, int page, int size) {
+    /**
+     * Find contacts with server-side pagination and optional filters.
+     * All filter parameters are optional (pass null to skip).
+     */
+    public Mono<com.app.dto.PageResponse<ContactEntity>> findFilteredPaginated(
+            Long tenantId, Long companyId, String name, String email, String phone,
+            String identification, int page, int size) {
         int offset = page * size;
-        Mono<Integer> countMono = contactRepository.countTotalContacts(tenantId, companyId);
-        Mono<java.util.List<ContactEntity>> dataMono = contactRepository.findPaginated(tenantId, companyId, size, offset).collectList();
+        Mono<Long> countMono = contactRepository.countFiltered(tenantId, companyId, name, email, phone, identification);
+        Mono<java.util.List<ContactEntity>> dataMono = contactRepository
+                .findFilteredPaginated(tenantId, companyId, name, email, phone, identification, size, offset)
+                .collectList();
 
         return Mono.zip(countMono, dataMono).map(tuple -> {
-            int totalElements = tuple.getT1();
+            long totalElements = tuple.getT1();
             java.util.List<ContactEntity> data = tuple.getT2();
             int totalPages = (int) Math.ceil((double) totalElements / size);
             return com.app.dto.PageResponse.<ContactEntity>builder()
@@ -46,6 +55,10 @@ public class ContactService {
                     .pageSize(size)
                     .build();
         });
+    }
+
+    public Mono<com.app.dto.PageResponse<ContactEntity>> findPaginated(Long tenantId, Long companyId, int page, int size) {
+        return findFilteredPaginated(tenantId, companyId, null, null, null, null, page, size);
     }
 
     public Mono<ContactEntity> findById(Long id, Long tenantId, Long companyId) {
@@ -83,8 +96,11 @@ public class ContactService {
                 .then(Mono.defer(() -> {
                     log.info("Creating new contact: {} for tenant: {}", contact.getName(), tenantId);
                     return contactRepository.save(contact)
-                            .doOnSuccess(saved -> sendWebNotification(tenantId, companyId, null,
-                                     "👤 Nuevo Contacto", "Se ha registrado a " + saved.getName()));
+                            .doOnSuccess(saved -> {
+                                sendWebNotification(tenantId, companyId, null,
+                                        "👤 Nuevo Contacto", "Se ha registrado a " + saved.getName());
+                                publishContactEvent("CONTACT_CREATED", saved);
+                            });
                 }));
     }
 
@@ -182,12 +198,12 @@ public class ContactService {
         existing.setUpdatedAt(LocalDateTime.now());
 
         return contactRepository.save(existing)
-                .doOnSuccess(
-                        saved -> {
-                            log.info("Successfully saved Contact ID: {}. Persisted PipelineID: {}, StageID: {}",
-                                    saved.getId(), saved.getPipelineId(), saved.getStageId());
-                            sendWebNotification(saved.getTenantId(), saved.getCompanyId(), null, "👤 Contacto Actualizado", "Datos de " + saved.getName() + " actualizados");
-                        })
+                .doOnSuccess(saved -> {
+                    log.info("Successfully saved Contact ID: {}. Persisted PipelineID: {}, StageID: {}",
+                            saved.getId(), saved.getPipelineId(), saved.getStageId());
+                    sendWebNotification(saved.getTenantId(), saved.getCompanyId(), null, "👤 Contacto Actualizado", "Datos de " + saved.getName() + " actualizados");
+                    publishContactEvent("CONTACT_UPDATED", saved);
+                })
                 .doOnError(err -> log.error("FALTA AL GUARDAR CONTACTO ID: {}. Error: {}", existing.getId(),
                         err.getMessage(), err));
     }
@@ -209,11 +225,34 @@ public class ContactService {
         }
     }
 
+    /**
+     * Publish contact event to Kafka for cache invalidation and real-time sync.
+     */
+    private void publishContactEvent(String action, ContactEntity contact) {
+        try {
+            java.util.Map<String, Object> event = new java.util.HashMap<>();
+            event.put("action", action);
+            event.put("contactId", contact.getId());
+            event.put("tenantId", contact.getTenantId());
+            event.put("companyId", contact.getCompanyId());
+            event.put("timestamp", System.currentTimeMillis());
+            String json = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send("contact-events", json);
+            log.info("📨 Contact event published: {} for contact {} (tenant {})", action, contact.getId(), contact.getTenantId());
+        } catch (Exception e) {
+            log.error("❌ Error publishing contact event: {}", e.getMessage());
+        }
+    }
+
     public Mono<Void> delete(Long id, Long tenantId, Long companyId) {
         return contactRepository.findById(id)
                 .filter(existing -> existing.getTenantId().equals(tenantId)
                         && existing.getCompanyId().equals(companyId))
-                .flatMap(contactRepository::delete);
+                .flatMap(existing -> contactRepository.delete(existing)
+                        .doOnSuccess(v -> {
+                            sendWebNotification(tenantId, companyId, null, "👤 Contacto Eliminado", "Contacto eliminado del sistema");
+                            publishContactEvent("CONTACT_DELETED", existing);
+                        }));
     }
 
     public Mono<ContactEntity> getOrCreateContact(Long tenantId, Long companyId, String phone, String name) {
@@ -240,8 +279,11 @@ public class ContactService {
                             .updatedAt(LocalDateTime.now())
                             .build();
                     return contactRepository.save(newContact)
-                            .doOnSuccess(saved -> sendWebNotification(tenantId, companyId, null,
-                                    "👤 Nuevo Contacto", "Nuevo prospecto registrado: " + saved.getName()));
+                            .doOnSuccess(saved -> {
+                                sendWebNotification(tenantId, companyId, null,
+                                        "👤 Nuevo Contacto", "Nuevo prospecto registrado: " + saved.getName());
+                                publishContactEvent("CONTACT_CREATED", saved);
+                            });
                 }));
     }
 

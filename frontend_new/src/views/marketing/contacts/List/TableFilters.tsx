@@ -1,238 +1,155 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import CardContent from '@mui/material/CardContent'
-import Grid from '@mui/material/Grid'
-import MenuItem from '@mui/material/MenuItem'
-import Autocomplete from '@mui/material/Autocomplete'
-import Box from '@mui/material/Box'
-import Avatar from '@mui/material/Avatar'
-import Chip from '@mui/material/Chip'
-import Typography from '@mui/material/Typography'
-import InputAdornment from '@mui/material/InputAdornment'
-import { Icon } from '@iconify/react'
+import { useState, useEffect, useCallback } from 'react';
+import CardContent from '@mui/material/CardContent';
+import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
+import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+import { Icon } from '@iconify/react';
 
-import CustomTextField from '@core/components/mui/TextField'
-import type { Contact } from '@/types/marketing/contactTypes'
-import type { Pipeline, Stage } from '@/types/marketing/pipelineTypes'
+import CustomTextField from '@core/components/mui/TextField';
+import type { Contact, ContactFilters } from '@/types/marketing/contactTypes';
+import type { Pipeline, Stage } from '@/types/marketing/pipelineTypes';
 
 interface TableFiltersProps {
-  setData: (data: Contact[]) => void
-  tableData: Contact[]
-  pipelines: Pipeline[]
+  onFiltersChange: (filters: ContactFilters) => void;
+  pipelines: Pipeline[];
 }
 
-const TableFilters = ({ setData, tableData = [], pipelines = [] }: TableFiltersProps) => {
-  const [nameSearch, setNameSearch] = useState('')
-  const [docSearch, setDocSearch] = useState('')
-  const [status, setStatus] = useState<string>('')
-  const [pipelineId, setPipelineId] = useState<string>('')
-  const [stageId, setStageId] = useState<string>('')
-  const [stages, setStages] = useState<Stage[]>([])
+const TableFilters = ({ onFiltersChange, pipelines = [] }: TableFiltersProps) => {
+  const [nameSearch, setNameSearch] = useState('');
+  const [emailSearch, setEmailSearch] = useState('');
+  const [phoneSearch, setPhoneSearch] = useState('');
+  const [identificationSearch, setIdentificationSearch] = useState('');
+  const [status, setStatus] = useState<string>('');
+  const [pipelineId, setPipelineId] = useState<string>('');
+  const [stageId, setStageId] = useState<string>('');
+  const [stages, setStages] = useState<Stage[]>([]);
 
-  // Typeahead States
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
-  const [typeaheadInput, setTypeaheadInput] = useState('')
-
-  // Debounce for inputs
-  const [debouncedName, setDebouncedName] = useState('')
-  const [debouncedDoc, setDebouncedDoc] = useState('')
-
+  // Debounced filter emission
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedName(nameSearch), 300)
-    return () => clearTimeout(t)
-  }, [nameSearch])
+    const timer = setTimeout(() => {
+      const filters: ContactFilters = {};
+      if (nameSearch.trim()) filters.name = nameSearch.trim();
+      if (emailSearch.trim()) filters.email = emailSearch.trim();
+      if (phoneSearch.trim()) filters.phone = phoneSearch.trim();
+      if (identificationSearch.trim()) filters.identification = identificationSearch.trim();
+      onFiltersChange(filters);
+    }, 300);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedDoc(docSearch), 300)
-    return () => clearTimeout(t)
-  }, [docSearch])
+    return () => clearTimeout(timer);
+  }, [nameSearch, emailSearch, phoneSearch, identificationSearch, onFiltersChange]);
 
   // Load stages when selected pipeline changes
   useEffect(() => {
     if (pipelineId) {
-      const selected = pipelines.find((p) => String(p.id) === pipelineId)
-      setStages(selected?.stages || [])
+      const selected = pipelines.find((p) => String(p.id) === pipelineId);
+      setStages(selected?.stages || []);
     } else {
-      setStages([])
+      setStages([]);
     }
-    setStageId('')
-  }, [pipelineId, pipelines])
+    setStageId('');
+  }, [pipelineId, pipelines]);
 
-  // Reactive filtering
-  useEffect(() => {
-    const filtered = tableData.filter((c) => {
-      // Typeahead selection direct match
-      if (selectedContact && c.id !== selectedContact.id) return false
-
-      // Typeahead custom input check (Name, Document, Phone, Email)
-      if (typeaheadInput && !selectedContact) {
-        const query = typeaheadInput.toLowerCase()
-        const matchesName = (c.name || '').toLowerCase().includes(query)
-        const matchesDoc = (c.taxId || c.documentNumber || '').toLowerCase().includes(query)
-        const matchesPhone = (c.phone || '').toLowerCase().includes(query)
-        const matchesEmail = (c.email || '').toLowerCase().includes(query)
-        if (!matchesName && !matchesDoc && !matchesPhone && !matchesEmail) return false
-      }
-
-      // Secondary field filters
-      if (debouncedName && !(c.name || '').toLowerCase().includes(debouncedName.toLowerCase())) return false
-      
-      if (debouncedDoc) {
-        const doc = (c.taxId || c.documentNumber || '').toLowerCase()
-        if (!doc.includes(debouncedDoc.toLowerCase())) return false
-      }
-
-      if (status === 'true' && c.isActive !== true) return false
-      if (status === 'false' && c.isActive !== false) return false
-      if (pipelineId && String(c.pipelineId) !== pipelineId) return false
-      if (stageId && String(c.stageId) !== stageId) return false
-
-      return true
-    })
-    setData(filtered)
-  }, [selectedContact, typeaheadInput, debouncedName, debouncedDoc, status, pipelineId, stageId, tableData, setData])
+  const handleClearFilters = useCallback(() => {
+    setNameSearch('');
+    setEmailSearch('');
+    setPhoneSearch('');
+    setIdentificationSearch('');
+    setStatus('');
+    setPipelineId('');
+    setStageId('');
+    onFiltersChange({});
+  }, [onFiltersChange]);
 
   return (
     <CardContent>
       <Grid container spacing={4}>
-        {/* CRM Typeahead / Intelligent Search */}
-        <Grid item xs={12}>
-          <Autocomplete
+        {/* Primary search: Name */}
+        <Grid item xs={12} sm={6} md={3}>
+          <CustomTextField
             fullWidth
-            options={tableData}
-            value={selectedContact}
-            onChange={(_, newValue) => setSelectedContact(newValue)}
-            inputValue={typeaheadInput}
-            onInputChange={(_, newInputValue) => setTypeaheadInput(newInputValue)}
-            getOptionLabel={(option) => option.name || ''}
-            noOptionsText='No se encontraron contactos'
-            renderInput={(params) => (
-              <CustomTextField
-                {...params}
-                label='Búsqueda Inteligente CRM (Nombre, Identificación, Teléfono o Email)'
-                placeholder='Escribe para buscar predictivamente...'
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Icon icon='tabler:search' className='text-xl' />
-                    </InputAdornment>
-                  )
-                }}
-              />
-            )}
-            renderOption={(props, option) => {
-              const getTypeColor = (type: string) => {
-                const colors: Record<string, string> = {
-                  LEAD: '#2196f3',
-                  POTENTIAL_CUSTOMER: '#ff9800',
-                  CUSTOMER: '#4caf50',
-                  CLIENT: '#4caf50',
-                  SUPPLIER: '#9c27b0',
-                  OTHER: '#9e9e9e'
-                }
-                return colors[type] || '#9e9e9e'
-              }
-
-              const getTypeLabel = (type: string) => {
-                const labels: Record<string, string> = {
-                  LEAD: 'Lead',
-                  POTENTIAL_CUSTOMER: 'Potencial',
-                  CUSTOMER: 'Cliente',
-                  CLIENT: 'Cliente',
-                  SUPPLIER: 'Proveedor',
-                  OTHER: 'Otro'
-                }
-                return labels[type] || type
-              }
-
-              const typeColor = getTypeColor(option.type)
-
-              return (
-                <li {...props} key={option.id} style={{ padding: '8px 16px' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, width: '100%' }}>
-                    <Avatar sx={{ 
-                      bgcolor: typeColor + '15', 
-                      color: typeColor, 
-                      fontWeight: 600, 
-                      fontSize: '0.875rem',
-                      width: 32,
-                      height: 32
-                    }}>
-                      {(option.name || 'C').charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
-                          {option.name}
-                        </Typography>
-                        <Chip 
-                          label={getTypeLabel(option.type)} 
-                          size='small' 
-                          sx={{ 
-                            height: 18, 
-                            fontSize: '0.65rem', 
-                            fontWeight: 600,
-                            bgcolor: typeColor + '15',
-                            color: typeColor,
-                            border: `1px solid ${typeColor}25`
-                          }} 
-                        />
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mt: 0.5 }}>
-                        {(option.taxId || option.documentNumber) && (
-                          <Typography variant='caption' color='text.secondary'>
-                            ID: {option.taxId || option.documentNumber}
-                          </Typography>
-                        )}
-                        {(option.taxId || option.documentNumber) && (option.phone || option.email) && <span style={{ color: 'var(--mui-palette-text-disabled)', fontSize: '0.75rem' }}>•</span>}
-                        {option.phone && (
-                          <Typography variant='caption' color='text.secondary'>
-                            Tel: {option.phone}
-                          </Typography>
-                        )}
-                        {option.phone && option.email && <span style={{ color: 'var(--mui-palette-text-disabled)', fontSize: '0.75rem' }}>•</span>}
-                        {option.email && (
-                          <Typography variant='caption' color='text.secondary'>
-                            {option.email}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                </li>
-              )
+            label='Buscar por Nombre'
+            placeholder='Nombre del contacto...'
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Icon icon='tabler:search' className='text-xl' />
+                </InputAdornment>
+              ),
             }}
           />
         </Grid>
 
-        {/* Secondary filters row */}
-        <Grid item xs={12} sm={6} md={2.4}>
+        {/* Email filter */}
+        <Grid item xs={12} sm={6} md={3}>
           <CustomTextField
             fullWidth
-            label='Filtro por Nombre'
-            placeholder='Nombre...'
-            value={nameSearch}
-            onChange={e => setNameSearch(e.target.value)}
+            label='Buscar por Email'
+            placeholder='email@ejemplo.com'
+            value={emailSearch}
+            onChange={(e) => setEmailSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Icon icon='tabler:mail' className='text-xl' />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+
+        {/* Phone filter */}
+        <Grid item xs={12} sm={6} md={3}>
           <CustomTextField
             fullWidth
-            label='Filtro por Identificación'
-            placeholder='Identificación...'
-            value={docSearch}
-            onChange={e => setDocSearch(e.target.value)}
+            label='Buscar por Teléfono'
+            placeholder='Número de teléfono...'
+            value={phoneSearch}
+            onChange={(e) => setPhoneSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Icon icon='tabler:phone' className='text-xl' />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+
+        {/* Identification filter */}
+        <Grid item xs={12} sm={6} md={3}>
+          <CustomTextField
+            fullWidth
+            label='Buscar por Identificación'
+            placeholder='NIT, CC, CE...'
+            value={identificationSearch}
+            onChange={(e) => setIdentificationSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Icon icon='tabler:id' className='text-xl' />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Status filter */}
+        <Grid item xs={12} sm={6} md={3}>
           <CustomTextField
             select
             fullWidth
             label='Estado'
             value={status}
-            onChange={e => setStatus(e.target.value)}
+            onChange={(e) => setStatus(e.target.value)}
             SelectProps={{ displayEmpty: true }}
           >
             <MenuItem value=''>Todos</MenuItem>
@@ -240,40 +157,70 @@ const TableFilters = ({ setData, tableData = [], pipelines = [] }: TableFiltersP
             <MenuItem value='false'>Inactivo</MenuItem>
           </CustomTextField>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+
+        {/* Pipeline filter */}
+        <Grid item xs={12} sm={6} md={3}>
           <CustomTextField
             select
             fullWidth
             label='Embudo'
             value={pipelineId}
-            onChange={e => setPipelineId(e.target.value)}
+            onChange={(e) => setPipelineId(e.target.value)}
             SelectProps={{ displayEmpty: true }}
           >
             <MenuItem value=''>Todos</MenuItem>
-            {pipelines.map(p => (
-              <MenuItem key={p.id} value={String(p.id)}>{p.name}</MenuItem>
+            {pipelines.map((p) => (
+              <MenuItem key={p.id} value={String(p.id)}>
+                {p.name}
+              </MenuItem>
             ))}
           </CustomTextField>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+
+        {/* Stage filter */}
+        <Grid item xs={12} sm={6} md={3}>
           <CustomTextField
             select
             fullWidth
             label='Etapa'
             value={stageId}
-            onChange={e => setStageId(e.target.value)}
+            onChange={(e) => setStageId(e.target.value)}
             SelectProps={{ displayEmpty: true }}
             disabled={!pipelineId}
           >
             <MenuItem value=''>Todas</MenuItem>
-            {stages.map(s => (
-              <MenuItem key={s.id} value={String(s.id)}>{s.name}</MenuItem>
+            {stages.map((s) => (
+              <MenuItem key={s.id} value={String(s.id)}>
+                {s.name}
+              </MenuItem>
             ))}
           </CustomTextField>
         </Grid>
+
+        {/* Clear filters button */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
+              pt: { xs: 0, sm: 2.5 },
+            }}
+          >
+            <Button
+              variant='outlined'
+              color='secondary'
+              onClick={handleClearFilters}
+              startIcon={<Icon icon='tabler:x' />}
+              fullWidth
+            >
+              Limpiar Filtros
+            </Button>
+          </Box>
+        </Grid>
       </Grid>
     </CardContent>
-  )
-}
+  );
+};
 
-export default TableFilters
+export default TableFilters;
