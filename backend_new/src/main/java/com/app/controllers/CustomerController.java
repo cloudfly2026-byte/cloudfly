@@ -80,11 +80,22 @@ public class CustomerController {
     @GetMapping("/validate/whatsapp")
     public Mono<ResponseEntity<Map<String, Object>>> validateWhatsApp(@RequestParam String number) {
         log.info("🔍 Validating WhatsApp for number: {}", number);
-        // Usamos una instancia maestra o por defecto para validar
-        return evolutionService.isOnWhatsApp("cloudfly_t1_c1", number)
+        return tenantRepository.findFirstByIsMasterTenantTrue()
+                .flatMap(masterTenant -> channelConfigRepository.findByTenantId(masterTenant.getId())
+                        .filter(cc -> cc.getInstanceName() != null && !cc.getInstanceName().isBlank())
+                        .next()
+                        .map(ChannelConfig::getInstanceName)
+                        .defaultIfEmpty("cloudfly_t1_c1")
+                )
+                .defaultIfEmpty("cloudfly_t1_c1")
+                .flatMap(instanceName -> {
+                    log.info("📞 Using WhatsApp validation instance: {}", instanceName);
+                    return evolutionService.isOnWhatsApp(instanceName, number);
+                })
                 .map(exists -> ResponseEntity.ok(Map.of("exists", (Object)exists, "message", exists ? "WhatsApp válido" : "El número no tiene WhatsApp activo")))
                 .onErrorResume(e -> Mono.just(ResponseEntity.ok(Map.of("exists", false, "error", e.getMessage()))));
     }
+
 
     @GetMapping("/validate/email")
     public Mono<ResponseEntity<Map<String, Object>>> validateEmail(@RequestParam String email) {

@@ -17,4 +17,8 @@ public interface TenantRepository extends ReactiveCrudRepository<TenantEntity, L
 
     @Query("SELECT * FROM clientes WHERE email_cliente = :email")
     reactor.core.publisher.Flux<TenantEntity> findByEmail(String email);
+
+    @Query("SELECT * FROM clientes WHERE is_master_tenant = 1 LIMIT 1")
+    Mono<TenantEntity> findFirstByIsMasterTenantTrue();
+
 }
