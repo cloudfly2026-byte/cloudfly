@@ -171,6 +171,7 @@ export default function ChatInterface({ contact, isNew, isPopup = false }: Props
   useChatSocket({
     conversationId: contact?.uuid || '',
     phone: contact?.phone || '',
+    contactId: contact?.id,
     onNewMessage: onNewMessage
   })
 

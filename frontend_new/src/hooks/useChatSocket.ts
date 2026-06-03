@@ -8,10 +8,11 @@ interface UseChatSocketProps {
   conversationId?: string | number
   phone?: string
   tenantId?: number
+  contactId?: number | string
   onNewMessage?: (message: any) => void
 }
 
-export const useChatSocket = ({ conversationId, phone, tenantId, onNewMessage }: UseChatSocketProps) => {
+export const useChatSocket = ({ conversationId, phone, tenantId, contactId, onNewMessage }: UseChatSocketProps) => {
   const socketRef = useRef<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const onNewMessageRef = useRef(onNewMessage)
@@ -73,6 +74,56 @@ export const useChatSocket = ({ conversationId, phone, tenantId, onNewMessage }:
       console.log('📥 New real-time message received:', data)
       // Normalización: el socket a veces envía { message, contact } o solo el mensaje
       const msg = data.message || data;
+
+      // Extract identifying details from the incoming event payload
+      const incomingContactId = data.contact?.id || 
+                                data.message?.contactId || 
+                                data.contactId || 
+                                data.message?.contact?.id || 
+                                msg.contactId;
+
+      const incomingPhone = data.contact?.phone || 
+                            data.message?.contact?.phone || 
+                            data.phone || 
+                            data.message?.phone ||
+                            msg.phone;
+
+      const incomingConversationId = data.message?.conversationId || 
+                                     data.conversationId || 
+                                     msg.conversationId;
+
+      // Clean phone numbers for comparison
+      const cleanIncomingPhone = incomingPhone ? String(incomingPhone).replace(/\D/g, '') : null;
+      const cleanTargetPhone = phone ? String(phone).replace(/\D/g, '') : null;
+
+      // Check if this message belongs to our chat
+      let isForCurrentChat = false;
+
+      // 1. Try comparing by numeric contactId if both are available
+      if (contactId && incomingContactId) {
+        if (Number(contactId) === Number(incomingContactId)) {
+          isForCurrentChat = true;
+        }
+      }
+      // 2. Try comparing by cleaned phone number
+      else if (cleanTargetPhone && cleanIncomingPhone) {
+        if (cleanTargetPhone === cleanIncomingPhone) {
+          isForCurrentChat = true;
+        }
+      }
+      // 3. Try comparing by conversationId / contact UUID
+      else if (conversationId && incomingConversationId) {
+        if (String(conversationId) === String(incomingConversationId)) {
+          isForCurrentChat = true;
+        }
+      }
+
+      // If we could resolve identities but none of them matched, ignore this message for this hook instance
+      if (!isForCurrentChat && (contactId || phone || conversationId)) {
+        console.log(`⏭️ Ignoring message in useChatSocket: not for contactId: ${contactId}, phone: ${phone}`);
+        return;
+      }
+
       if (onNewMessageRef.current) {
         onNewMessageRef.current(msg)
       }
@@ -91,7 +142,7 @@ export const useChatSocket = ({ conversationId, phone, tenantId, onNewMessage }:
         socketRef.current = null
       }
     }
-  }, [phone, conversationId, SOCKET_URL])
+  }, [phone, conversationId, contactId, SOCKET_URL])
 
 
   // Método manual para enviar mensajes (opcional, ya que usamos API)
