@@ -185,12 +185,30 @@ def execute_crew_with_retry(crew_instance, task_label="Crew", max_retries=6):
                 retry_count += 1
                 if retry_count >= max_retries:
                     raise e
+                
+                # Intentar extraer dinámicamente el tiempo de espera recomendado (Retry-After)
+                # ej. "try again in 15s" o "Please retry after 4.2 seconds"
+                wait_time = 10  # Fallback por defecto
+                import re
+                match = re.search(r"(?:retry after|try again in|retry in|after)\s+([\d\.]+)\s*(?:s|second|seconds)", err_msg, re.IGNORECASE)
+                if match:
+                    try:
+                        wait_time = float(match.group(1))
+                        logger.info(f"⏳ [Retry Dynamic] Detectado tiempo de espera sugerido de {wait_time}s por el proveedor.")
+                    except ValueError:
+                        pass
+                else:
+                    # Aplicar exponential backoff si no viene indicado por la API
+                    wait_time = 5 * (2 ** (retry_count - 1))
+                
                 current_key = os.environ.get("OPENROUTER_API_KEY")
                 logger.warning(f"⚠️ [{task_label} - Intento {retry_count}/{max_retries}]: Error LLM: {err_msg[:120]}")
                 rotate_llm_config(current_key=current_key, mark_rate_limited=True)
-                logger.info("⏳ Esperando 10 segundos antes de reintentar...")
-                time.sleep(10)
+                
+                logger.info(f"⏳ Esperando {wait_time} segundos antes de reintentar...")
+                time.sleep(wait_time)
             else:
                 raise e
+
 
 
