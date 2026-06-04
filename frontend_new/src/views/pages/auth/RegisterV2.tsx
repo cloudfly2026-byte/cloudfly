@@ -126,7 +126,7 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
             const redirectUri = encodeURIComponent(window.location.origin + '/register')
             const scope = encodeURIComponent('openid email profile')
             const nonce = Math.random().toString(36).substring(2)
-            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}&include_granted_scopes=true`
+            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}`
           } else {
             setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
             setOauthLoading(null)
@@ -139,7 +139,7 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
         const redirectUri = encodeURIComponent(window.location.origin + '/register')
         const scope = encodeURIComponent('openid email profile')
         const nonce = Math.random().toString(36).substring(2)
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}&include_granted_scopes=true`
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}`
       } else {
         setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
         setOauthLoading(null)
