@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ficha de Producto: Cloudfly Agente Comercial IA. Automatiza tus ventas en WhatsApp, Facebook e Instagram.">
+    <title>Ficha de Producto | Agente Comercial IA Cloudfly</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="mesh-bg"></div>
+
+    <header id="main-header" class="scrolled">
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                </a>
+                <div class="nav-links">
+                    <a href="index.html#ventajas">Ventajas</a>
+                    <a href="index.html#ia">IA Agent</a>
+                    <div class="dropdown">
+                        <a href="#servicios" style="cursor: pointer;">Nuestros Servicios <i data-lucide="chevron-down"
+                                style="width: 16px; vertical-align: middle;"></i></a>
+                        <div class="dropdown-content">
+                            <a href="diseno-web.html">Diseño Web</a>
+                            <a href="desarrollo-aplicaciones.html">Desarrollo a la Medida</a>
+                            <a href="consultoria.html">Consultoría</a>
+                            <a href="hosting.html">Hosting (VPS, Compartido)</a>
+                            <a href="soporte-wordpress.html">Soporte WordPress</a>
+                            <a href="estrategia-digital.html">Estrategia Digital</a>
+                            <a href="desarrollo-movil.html">Desarrollo Móvil</a>
+                        </div>
+                    </div>
+                    <a href="index.html#pos">POS</a>
+                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta">Iniciar Sesión</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Product Detail Section -->
+    <section class="product-detail-hero">
+        <div class="container">
+            <div class="product-grid">
+                
+                <!-- Left Column: Image Gallery with Interactive Tabs -->
+                <div class="gallery-wrapper">
+                    <div class="gallery-tabs">
+                        <button class="gallery-tab-btn active" onclick="switchGalleryTab(0)">Vista del Sistema</button>
+                        <button class="gallery-tab-btn" onclick="switchGalleryTab(1)">Simulación IA</button>
+                    </div>
+                    <div class="gallery-content">
+                        <!-- Real dashboard captured under manager session -->
+                        <img id="gallery-img-0" src="dashboard.png" alt="Cloudfly Dashboard Real" class="active">
+                        <!-- AI Mockup representation -->
+                        <img id="gallery-img-1" src="C:/Users/Edwin/.gemini/antigravity/brain/6aa70220-0d6f-4b4c-b859-fa865056f754/chatbot_product_mockup_1780601833437.png" alt="Concepto Agente IA">
+                    </div>
+                </div>
+
+                <!-- Right Column: Product Sheet Card -->
+                <div class="product-info-card">
+                    <div class="rating-box">
+                        <i data-lucide="star" style="fill: #FFB400; stroke: none; width: 18px; height: 18px;"></i>
+                        <i data-lucide="star" style="fill: #FFB400; stroke: none; width: 18px; height: 18px;"></i>
+                        <i data-lucide="star" style="fill: #FFB400; stroke: none; width: 18px; height: 18px;"></i>
+                        <i data-lucide="star" style="fill: #FFB400; stroke: none; width: 18px; height: 18px;"></i>
+                        <i data-lucide="star" style="fill: #FFB400; stroke: none; width: 18px; height: 18px;"></i>
+                        <strong>4.9</strong>
+                        <span>(124 calificaciones comerciales)</span>
+                    </div>
+
+                    <h1>Agente Comercial IA</h1>
+                    <p class="tagline">Atención Omnicanal Inteligente 24/7</p>
+                    <p class="desc">
+                        Automatiza tus canales de venta y soporte con inteligencia artificial conversacional. Conectado directamente a tus sistemas, responde con contexto comercial, califica leads y agenda citas en piloto automático.
+                    </p>
+
+                    <!-- Plan Subscriptions -->
+                    <div class="plan-selectors">
+                        <div class="plan-option-card active" onclick="selectPlan(this, 'Emprendedor', '$190.000')">
+                            <div class="left-details">
+                                <h4>Plan Emprendedor</h4>
+                                <p>Hasta 1,500 conversaciones/mes • 1 Agente</p>
+                            </div>
+                            <div class="price">$190.000 <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+                        </div>
+                        <div class="plan-option-card" onclick="selectPlan(this, 'Crecimiento', '$390.000')">
+                            <div class="left-details">
+                                <h4>Plan Crecimiento</h4>
+                                <p>Hasta 5,000 conversaciones/mes • 3 Agentes</p>
+                            </div>
+                            <div class="price">$390.000 <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+                        </div>
+                        <div class="plan-option-card" onclick="selectPlan(this, 'Corporativo', 'Personalizado')">
+                            <div class="left-details">
+                                <h4>Plan Corporativo</h4>
+                                <p>Conversaciones ilimitadas • LLMs Dedicados</p>
+                            </div>
+                            <div class="price">Cotizar</div>
+                        </div>
+                    </div>
+
+                    <a href="https://dashboard.cloudfly.com.co/register" class="btn-cta" style="display: block; text-align: center; font-size: 1.1rem; padding: 1rem 2rem;">
+                        Iniciar Prueba Gratis de 7 Días
+                    </a>
+                    <p style="text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem;">
+                        <i data-lucide="shield-check" style="width: 14px; vertical-align: middle; color: var(--primary);"></i> Sin tarjeta de crédito. Cancela cuando quieras.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Calculator Section -->
+    <section class="calc-section">
+        <div class="container">
+            <div class="calc-wrapper">
+                <div class="calc-title">
+                    <h2>Calcula tu Retorno de Inversión (ROI)</h2>
+                    <p>Desliza para estimar tu volumen mensual de chats y ver el ahorro y plan recomendado.</p>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-labels">
+                        <span>Conversaciones Mensuales Estimadas</span>
+                        <span id="chats-display" class="value-display">2,000 chats</span>
+                    </div>
+                    <input type="range" min="500" max="15000" step="500" value="2000" id="chats-slider" class="slider-custom" oninput="updateCalculator(this.value)">
+                </div>
+
+                <div class="calc-results-grid">
+                    <div class="calc-result-card">
+                        <h4>Plan Recomendado</h4>
+                        <div id="result-plan" class="result-val highlight">Plan Emprendedor</div>
+                    </div>
+                    <div class="calc-result-card">
+                        <h4>Costo Promedio / Chat</h4>
+                        <div id="result-cost-per-chat" class="result-val">$126 COP</div>
+                    </div>
+                    <div class="calc-result-card">
+                        <h4>Tiempo de Soporte Ahorrado</h4>
+                        <div id="result-hours-saved" class="result-val highlight">100 Horas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specifications Section -->
+    <section class="specs-section">
+        <div class="container">
+            <div class="section-head" style="margin-bottom: 2rem;">
+                <h2>Ficha Técnica Comercial</h2>
+                <p>Especificaciones y capacidades de la infraestructura del Agente IA Cloudfly.</p>
+            </div>
+
+            <div class="specs-table-box">
+                <table class="specs-table">
+                    <thead>
+                        <tr>
+                            <th>Característica</th>
+                            <th>Especificación Técnica / Capacidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="spec-title">Arquitectura Cognitiva</td>
+                            <td>Motor RAG con base de datos vectorial Qdrant para respuestas precisas de la empresa.</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-title">Modelos LLM Integrados</td>
+                            <td>GPT-4o, GPT-4o-mini (OpenAI), Claude 3.5 Sonnet, Llama 3 (Meta).</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-title">Canales de Integración</td>
+                            <td>WhatsApp Business API, Facebook Messenger, Instagram DM.</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-title">Latencia de Respuesta</td>
+                            <td>Promedio menor a 1.5 segundos en responder consultas complejas.</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-title">Sincronización Externa</td>
+                            <td>Agendamiento nativo sincronizado con Google Calendar, Outlook y CRM interno.</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-title">Seguridad y Cumplimiento</td>
+                            <td>Encriptación SSL de grado bancario para almacenamiento de chats y cumplimiento DIAN.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-head">
+                <h2>Preguntas Frecuentes</h2>
+                <p>Todo lo que necesitas saber antes de contratar tu Agente IA.</p>
+            </div>
+
+            <div class="faq-accordion">
+                <div class="faq-item" id="faq-1">
+                    <button class="faq-header" onclick="toggleFaq('faq-1')">
+                        ¿Cómo aprende el Agente IA sobre mi negocio?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-body">
+                        <div class="faq-content">
+                            El Agente IA de Cloudfly aprende subiendo documentos (PDFs, Word), conectando URLs de tu sitio web o escribiendo directamente tus reglas de negocio en el panel. El sistema procesa esta información de forma privada y la utiliza para responder consultas.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="faq-item" id="faq-2">
+                    <button class="faq-header" onclick="toggleFaq('faq-2')">
+                        ¿Puedo usar mi propio número de WhatsApp?
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="faq-body">
+                        <div class="faq-content">
+                            Sí, puedes integrar tu número actual de WhatsApp Business. La plataforma se conecta de forma segura a través de los canales de API oficiales para que mantengas tu identidad de marca intacta.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item" id="faq-3">
+                    <button class="faq-header" onclick="toggleFaq('faq-3')">
+                        ¿Cómo funciona la prueba gratis de 7 días?
+                        <i data-lucide="faq-3"></i>
+                    </button>
+                    <div class="faq-body">
+                        <div class="faq-content">
+                            Obtienes acceso completo a todas las funciones del Agente IA por 7 días. Puedes configurar tu base de conocimiento, conectarlo a WhatsApp para pruebas y monitorear el rendimiento en tiempo real en tu dashboard. No se requiere tarjeta de crédito para iniciar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-info">
+                    <a href="index.html" class="logo">
+                        <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                    </a>
+                    <p>La plataforma líder en ERP, Desarrollo a la Medida e IA para el crecimiento empresarial en Latinoamérica.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Nuestros Servicios</h4>
+                    <ul>
+                        <li><a href="diseno-web.html">Diseño Web</a></li>
+                        <li><a href="desarrollo-aplicaciones.html">Desarrollo de Apps</a></li>
+                        <li><a href="consultoria.html">Consultoría IT</a></li>
+                        <li><a href="hosting.html">Hosting Cloud</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Soluciones</h4>
+                    <ul>
+                        <li><a href="soporte-wordpress.html">Soporte WordPress</a></li>
+                        <li><a href="estrategia-digital.html">Estrategia Digital</a></li>
+                        <li><a href="desarrollo-movil.html">Desarrollo Móvil</a></li>
+                        <li><a href="index.html#ia">Agentes de IA</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Contáctenos</h4>
+                    <ul>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="map-pin" style="width: 16px;"></i> Medellín - Colombia
+                        </li>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="mail" style="width: 16px;"></i> soporte@cloudfly.com.co
+                        </li>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="phone" style="width: 16px;"></i> Wsp: +57 3245640657
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>© 2026 CloudFly ERP Group. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Switch Gallery Tabs
+        function switchGalleryTab(index) {
+            document.querySelectorAll('.gallery-tab-btn').forEach((btn, idx) => {
+                if (idx === index) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            document.querySelectorAll('.gallery-content img').forEach((img, idx) => {
+                if (idx === index) img.classList.add('active');
+                else img.classList.remove('active');
+            });
+        }
+
+        // Select Plan Options
+        function selectPlan(element, name, price) {
+            document.querySelectorAll('.plan-option-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // Pricing Calculator Logic
+        function updateCalculator(val) {
+            const display = document.getElementById('chats-display');
+            const resultPlan = document.getElementById('result-plan');
+            const resultCostPerChat = document.getElementById('result-cost-per-chat');
+            const resultHoursSaved = document.getElementById('result-hours-saved');
+
+            display.innerText = Number(val).toLocaleString() + " chats";
+
+            let plan = "Plan Emprendedor";
+            let cost = 190000;
+            let hours = Math.round(val * 0.05); // 3 minutes saved per chat average
+
+            if (val > 5000) {
+                plan = "Plan Corporativo";
+                resultPlan.innerText = plan;
+                resultCostPerChat.innerText = "Cotización";
+                resultHoursSaved.innerText = hours + " Horas";
+                return;
+            } else if (val > 1500) {
+                plan = "Plan Crecimiento";
+                cost = 390000;
+            }
+
+            const costPerChat = Math.round(cost / val);
+
+            resultPlan.innerText = plan;
+            resultCostPerChat.innerText = "$" + costPerChat.toLocaleString() + " COP";
+            resultHoursSaved.innerText = hours + " Horas";
+        }
+
+        // Toggle Accordion FAQ
+        function toggleFaq(id) {
+            const item = document.getElementById(id);
+            const isActive = item.classList.contains('active');
+            
+            document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+            
+            if (!isActive) {
+                item.classList.add('active');
+            }
+        }
+
+        // Initialize calculator with default value
+        updateCalculator(2000);
+    </script>
+</body>
+
+</html>

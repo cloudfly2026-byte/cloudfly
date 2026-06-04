@@ -424,3 +424,389 @@ footer {
     .bento-grid { grid-template-columns: 1fr; height: auto; }
     .bento-item { min-height: 300px; }
 }
+
+/* ============================================================
+   Ficha de Producto & Calculadora Interactiva - CloudFly
+   ============================================================ */
+
+.product-detail-hero {
+    padding: 10rem 0 4rem;
+    position: relative;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+/* Gallery & Tabs */
+.gallery-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.gallery-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+}
+
+.gallery-tab-btn {
+    background: none;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.gallery-tab-btn.active {
+    background: rgba(0, 163, 255, 0.1);
+    color: var(--primary);
+}
+
+.gallery-content img {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    display: none;
+}
+
+.gallery-content img.active {
+    display: block;
+}
+
+/* Product Info */
+.product-info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.rating-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #FFB400;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.rating-box span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.product-info-card h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--text-main);
+}
+
+.product-info-card .tagline {
+    font-size: 1.1rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.product-info-card .desc {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* Plan Options */
+.plan-selectors {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.plan-option-card {
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.plan-option-card:hover {
+    border-color: var(--primary-light);
+    background: rgba(0, 163, 255, 0.02);
+}
+
+.plan-option-card.active {
+    border-color: var(--primary);
+    background: rgba(0, 163, 255, 0.05);
+}
+
+.plan-option-card .left-details h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+
+.plan-option-card .left-details p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.plan-option-card .price {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Interactive Pricing Calculator */
+.calc-section {
+    background: white;
+    padding: 6rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.calc-wrapper {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+    box-shadow: var(--shadow-soft);
+}
+
+.calc-title {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.calc-title h2 {
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.slider-container {
+    margin-bottom: 3rem;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.slider-labels .value-display {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-family: 'Outfit', sans-serif;
+}
+
+.slider-custom {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--border);
+    outline: none;
+    transition: background 0.3s ease;
+}
+
+.slider-custom::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 163, 255, 0.4);
+    transition: transform 0.1s ease;
+}
+
+.slider-custom::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.calc-results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.calc-result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.calc-result-card h4 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.calc-result-card .result-val {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.calc-result-card .result-val.highlight {
+    color: var(--primary);
+}
+
+/* Specs Table */
+.specs-section {
+    padding: 6rem 0;
+}
+
+.specs-table-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    margin-top: 3rem;
+}
+
+.specs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.specs-table th, .specs-table td {
+    padding: 1.25rem 2rem;
+    text-align: left;
+}
+
+.specs-table th {
+    background: rgba(0, 163, 255, 0.05);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border);
+}
+
+.specs-table td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-main);
+}
+
+.specs-table tr:last-child td {
+    border-bottom: none;
+}
+
+.specs-table td.spec-title {
+    font-weight: 600;
+    color: var(--text-main);
+    width: 30%;
+}
+
+/* Accordion FAQ */
+.faq-section {
+    padding: 6rem 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.faq-accordion {
+    max-width: 800px;
+    margin: 3rem auto 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.faq-item {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    border-color: var(--primary-light);
+}
+
+.faq-header {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-align: left;
+}
+
+.faq-header i {
+    transition: transform 0.3s ease;
+    color: var(--primary);
+}
+
+.faq-item.active .faq-header i {
+    transform: rotate(180deg);
+}
+
+.faq-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    background: var(--bg);
+}
+
+.faq-content {
+    padding: 1.5rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.faq-item.active .faq-body {
+    max-height: 1000px;
+    transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
+}
+
+@media (max-width: 992px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    .calc-results-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
