@@ -124,8 +124,9 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
           console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed:', notification.getNotDisplayedReason())
           if (googleClientId) {
             const redirectUri = encodeURIComponent(window.location.origin + '/register')
-            const scope = encodeURIComponent('email profile')
-            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+            const scope = encodeURIComponent('openid email profile')
+            const nonce = Math.random().toString(36).substring(2)
+            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}&include_granted_scopes=true`
           } else {
             setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
             setOauthLoading(null)
@@ -136,8 +137,9 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
       console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
       if (googleClientId) {
         const redirectUri = encodeURIComponent(window.location.origin + '/register')
-        const scope = encodeURIComponent('email profile')
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+        const scope = encodeURIComponent('openid email profile')
+        const nonce = Math.random().toString(36).substring(2)
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}&include_granted_scopes=true`
       } else {
         setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
         setOauthLoading(null)
@@ -223,35 +225,33 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
     // @ts-ignore
     window.handleGoogleCredentialResponse = handleGoogleCredentialResponse
 
-    // Check for OAuth redirect response (access_token in URL hash)
+    // Check for OAuth redirect response (id_token in URL hash)
     const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
+    if (hash && hash.includes('id_token')) {
       const params = new URLSearchParams(hash.substring(1))
-      const accessToken = params.get('access_token')
-      if (accessToken) {
-        // This is a redirect-based Google OAuth response
-        // We need to exchange it for user info
-        fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`)
-          .then(res => res.json())
-          .then(async (userInfo) => {
-            if (userInfo.sub && userInfo.email) {
-              // Create a pseudo-credential from the user info
-              // In production, you'd verify this properly
-              const response = await AuthManager.loginWithGoogle(accessToken)
-              if (response.status) {
-                setSuccess(true)
-                const user = response.user
-                if (user && !user.onboardingCompleted) {
-                  router.push('/account-setup')
-                } else {
-                  router.push('/home')
-                }
+      const idToken = params.get('id_token')
+      if (idToken) {
+        setOauthLoading('google')
+        AuthManager.loginWithGoogle(idToken)
+          .then((response) => {
+            if (response.status) {
+              setSuccess(true)
+              const user = response.user
+              if (user && !user.onboardingCompleted) {
+                router.push('/account-setup')
+              } else {
+                router.push('/home')
               }
+            } else {
+              setError(response.message || 'Error al registrarse con Google')
             }
           })
           .catch(err => {
             console.error('❌ [GOOGLE-OAUTH] Redirect flow error:', err)
             setError('Error procesando respuesta de Google')
+          })
+          .finally(() => {
+            setOauthLoading(null)
           })
         // Clear the hash
         window.location.hash = ''
