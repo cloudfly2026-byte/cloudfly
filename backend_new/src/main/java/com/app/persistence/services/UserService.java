@@ -36,6 +36,7 @@ public class UserService {
         private final SubscriptionRepository subscriptionRepository;
         private final SubscriptionModuleRepository subscriptionModuleRepository;
         private final CompanyRepository companyRepository;
+        private final ContactRepository contactRepository;
 
         public UserService(UserRepository userRepository, 
                            RoleRepository roleRepository, 
@@ -48,7 +49,8 @@ public class UserService {
                            PlanModuleRepository planModuleRepository, 
                            SubscriptionRepository subscriptionRepository, 
                            SubscriptionModuleRepository subscriptionModuleRepository, 
-                           CompanyRepository companyRepository) {
+                           CompanyRepository companyRepository,
+                           ContactRepository contactRepository) {
                 this.userRepository = userRepository;
                 this.roleRepository = roleRepository;
                 this.userRoleRepository = userRoleRepository;
@@ -61,6 +63,7 @@ public class UserService {
                 this.subscriptionRepository = subscriptionRepository;
                 this.subscriptionModuleRepository = subscriptionModuleRepository;
                 this.companyRepository = companyRepository;
+                this.contactRepository = contactRepository;
         }
 
         @Transactional
@@ -113,6 +116,7 @@ public class UserService {
                                                                 .then(handleAutomaticSubscription(finalCustId))
                                                                 .then(Mono.defer(() -> {
                                                                         sendRegistrationEmail(savedUser);
+                                                                        sendWhatsAppNotificationToManager(savedUser);
                                                                         return Mono.just(savedUser);
                                                                 }));
                                         });
@@ -160,6 +164,59 @@ public class UserService {
                                                 result -> {
                                                 },
                                                 error -> log.error("Error enviando a Kafka: {}", error.getMessage()));
+        }
+
+        private void sendWhatsAppNotificationToManager(UserEntity savedUser) {
+                tenantRepository.findFirstByIsMasterTenantTrue()
+                        .flatMap(masterTenant -> {
+                                if (masterTenant.getAdminUserId() == null) {
+                                        log.warn("⚠️ Master tenant has no adminUserId");
+                                        return Mono.empty();
+                                }
+                                return userRepository.findById(masterTenant.getAdminUserId())
+                                        .flatMap(managerUser -> {
+                                                if (managerUser.getContactId() == null) {
+                                                        log.warn("⚠️ Manager user has no contactId");
+                                                        return Mono.empty();
+                                                }
+                                                return contactRepository.findById(managerUser.getContactId())
+                                                        .flatMap(contact -> {
+                                                                String managerPhone = contact.getPhone();
+                                                                if (managerPhone == null || managerPhone.isEmpty()) {
+                                                                        log.warn("⚠️ Manager contact has no phone number");
+                                                                        return Mono.empty();
+                                                                }
+                                                                
+                                                                String bodyMessage = String.format(
+                                                                        "🔔 *Nuevo Registro de Usuario* 🔔\n\n" +
+                                                                        "Hola *%s*,\n\n" +
+                                                                        "Te informamos que un nuevo usuario se ha registrado en la plataforma:\n\n" +
+                                                                        "👤 *Nombre:* %s %s\n" +
+                                                                        "📧 *Correo:* %s\n" +
+                                                                        "📅 *Fecha:* %s\n\n" +
+                                                                        "_Mensaje automático de CloudFly_",
+                                                                        contact.getName(),
+                                                                        savedUser.getNombres(),
+                                                                        savedUser.getApellidos(),
+                                                                        savedUser.getEmail(),
+                                                                        java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                                                                );
+                                                                
+                                                                return kafkaTemplate.send("whatsapp-notifications", Map.of(
+                                                                        "to", managerPhone,
+                                                                        "notifyVia", "whatsapp",
+                                                                        "type", "whatsapp",
+                                                                        "body", bodyMessage,
+                                                                        "tenantId", 1L,
+                                                                        "companyId", 1L
+                                                                )).then();
+                                                        });
+                                        });
+                        })
+                        .subscribe(
+                                result -> log.info("✅ [KAFKA-WHATSAPP] WhatsApp alert sent to manager"),
+                                error -> log.error("❌ [KAFKA-WHATSAPP] Error sending WhatsApp alert: {}", error.getMessage())
+                        );
         }
 
         public Mono<UserDto> convertToDto(UserEntity user) {
