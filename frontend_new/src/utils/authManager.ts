@@ -217,6 +217,32 @@ export const AuthManager = {
   },
 
   /**
+   * Fetch Google Client ID dynamically from the backend config endpoint.
+   */
+  async getGoogleClientId(): Promise<string> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/v2/auth/oauth/google/config`)
+      return response.data.clientId || ''
+    } catch (error) {
+      console.error('❌ [OAUTH] Error fetching Google Client ID:', error)
+      return ''
+    }
+  },
+
+  /**
+   * Fetch Facebook App ID dynamically from the backend config endpoint.
+   */
+  async getFacebookAppId(): Promise<string> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/v2/auth/oauth/facebook/config`)
+      return response.data.appId || ''
+    } catch (error) {
+      console.error('❌ [OAUTH] Error fetching Facebook App ID:', error)
+      return ''
+    }
+  },
+
+  /**
    * CLOUD-281: Login with Google OAuth.
    * Sends the Google ID token credential to the backend.
    */

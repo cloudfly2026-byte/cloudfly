@@ -91,9 +91,14 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   // ============================================================
   // CLOUD-281: Google OAuth Handler for Login
   // ============================================================
-  const handleGoogleOAuth = useCallback(() => {
+  const handleGoogleOAuth = useCallback(async () => {
     setOauthLoading('google')
     setError(null)
+
+    let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+    if (!googleClientId || googleClientId.includes('your-google-client-id')) {
+      googleClientId = await AuthManager.getGoogleClientId()
+    }
 
     // @ts-ignore
     if (window.google?.accounts?.id) {
@@ -101,17 +106,18 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed, using redirect flow')
-          const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
           if (googleClientId) {
             const redirectUri = encodeURIComponent(window.location.origin + '/login')
             const scope = encodeURIComponent('email profile')
             window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+          } else {
+            setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
+            setOauthLoading(null)
           }
         }
       })
     } else {
       console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
       if (googleClientId) {
         const redirectUri = encodeURIComponent(window.location.origin + '/login')
         const scope = encodeURIComponent('email profile')

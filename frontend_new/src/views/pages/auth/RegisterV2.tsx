@@ -107,9 +107,14 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
   // ============================================================
   // CLOUD-281: Google OAuth Handler
   // ============================================================
-  const handleGoogleOAuth = useCallback(() => {
+  const handleGoogleOAuth = useCallback(async () => {
     setOauthLoading('google')
     setError(null)
+
+    let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+    if (!googleClientId || googleClientId.includes('your-google-client-id')) {
+      googleClientId = await AuthManager.getGoogleClientId()
+    }
 
     // @ts-ignore - Google Identity Services global
     if (window.google?.accounts?.id) {
@@ -117,19 +122,18 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed:', notification.getNotDisplayedReason())
-          setOauthLoading(null)
-          // Fallback: redirect to Google OAuth page flow
-          const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
           if (googleClientId) {
             const redirectUri = encodeURIComponent(window.location.origin + '/register')
             const scope = encodeURIComponent('email profile')
             window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&include_granted_scopes=true`
+          } else {
+            setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
+            setOauthLoading(null)
           }
         }
       })
     } else {
       console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
       if (googleClientId) {
         const redirectUri = encodeURIComponent(window.location.origin + '/register')
         const scope = encodeURIComponent('email profile')
