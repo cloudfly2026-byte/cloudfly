@@ -44,7 +44,7 @@ public class AppConfig {
                             }
                             return org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult.notMatch();
                         }).permitAll()
-                        .pathMatchers("/media/**", "/auth/**", "/login", "/register", "/verify", "/forgot-password", "/reset-password", "/api/webhooks/evolution", "/api/chatbotEnable", "/actuator/**", "/public/invoices/**", "/internal/**", "/api/billing/**").permitAll()
+                        .pathMatchers("/media/**", "/auth/**", "/login", "/register", "/verify", "/forgot-password", "/reset-password", "/api/webhooks/evolution", "/api/chatbotEnable", "/actuator/**", "/public/invoices/**", "/internal/**", "/api/billing/**", "/api/v2/auth/oauth/**").permitAll()
                         .pathMatchers(org.springframework.http.HttpMethod.OPTIONS).permitAll() // Allow preflight
                         .anyExchange().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION)
