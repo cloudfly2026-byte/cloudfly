@@ -723,19 +723,6 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
-                startIcon={<i className='tabler-brand-facebook' />}
-                onClick={handleFacebookOAuth}
-                disabled={oauthLoading !== null}
-              >
-                {oauthLoading === 'facebook' ? (
-                  <i className='tabler-loader-2 animate-spin' />
-                ) : (
-                  'Facebook'
-                )}
-              </Button>
-              <Button
-                variant='outlined'
-                className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
                 startIcon={<i className='tabler-brand-google' />}
                 onClick={handleGoogleOAuth}
                 disabled={oauthLoading !== null}
@@ -744,6 +731,19 @@ const RegisterV2 = ({ mode }: { mode: any }) => {
                   <i className='tabler-loader-2 animate-spin' />
                 ) : (
                   'Google'
+                )}
+              </Button>
+              <Button
+                variant='outlined'
+                className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
+                startIcon={<i className='tabler-brand-meta' />}
+                onClick={handleFacebookOAuth}
+                disabled={oauthLoading !== null}
+              >
+                {oauthLoading === 'facebook' ? (
+                  <i className='tabler-loader-2 animate-spin' />
+                ) : (
+                  'Meta'
                 )}
               </Button>
             </div>

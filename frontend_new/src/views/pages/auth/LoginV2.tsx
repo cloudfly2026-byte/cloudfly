@@ -600,14 +600,14 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               <Button
                 variant='outlined'
                 className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
-                startIcon={<i className='tabler-brand-microsoft' />}
+                startIcon={<i className='tabler-brand-meta' />}
                 onClick={handleFacebookOAuth}
                 disabled={oauthLoading !== null}
               >
                 {oauthLoading === 'facebook' ? (
                   <i className='tabler-loader-2 animate-spin' />
                 ) : (
-                  'Facebook'
+                  'Meta'
                 )}
               </Button>
             </div>
