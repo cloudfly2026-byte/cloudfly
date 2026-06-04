@@ -21,6 +21,34 @@
     --glass-blur: blur(12px);
 }
 
+/* Dark Theme Overrides */
+body.dark-theme {
+    --bg: #090D1A;
+    --surface: rgba(15, 22, 42, 0.65);
+    --text-main: #F8F7FA;
+    --text-muted: #A3AED0;
+    --border: rgba(0, 163, 255, 0.15);
+    --shadow-soft: 0 10px 40px rgba(0, 163, 255, 0.15);
+    --shadow-deep: 0 20px 60px rgba(0, 0, 0, 0.6);
+    --glass-bg: rgba(9, 13, 26, 0.8);
+    --glass-blur: blur(16px);
+}
+
+/* Scrollbar customization for modern dark look */
+body.dark-theme::-webkit-scrollbar {
+    width: 10px;
+}
+body.dark-theme::-webkit-scrollbar-track {
+    background: #090D1A;
+}
+body.dark-theme::-webkit-scrollbar-thumb {
+    background: rgba(0, 163, 255, 0.3);
+    border-radius: 5px;
+}
+body.dark-theme::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 163, 255, 0.5);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -95,6 +123,18 @@ nav {
     font-weight: 800;
     color: var(--primary);
     text-decoration: none;
+}
+
+header .logo img {
+    height: 100px !important;
+    width: auto;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    header .logo img {
+        height: 70px !important;
+    }
 }
 
 .nav-links {
@@ -580,14 +620,14 @@ footer {
 
 /* Interactive Pricing Calculator */
 .calc-section {
-    background: white;
+    background: var(--bg);
     padding: 6rem 0;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
 
 .calc-wrapper {
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 28px;
     padding: 3rem;
@@ -693,9 +733,10 @@ footer {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 24px;
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: var(--shadow-soft);
     margin-top: 3rem;
+    -webkit-overflow-scrolling: touch;
 }
 
 .specs-table {
@@ -800,13 +841,154 @@ footer {
     transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
 }
 
+/* Mobile Menu Toggle Button */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    z-index: 1100;
+}
+
+.menu-toggle:hover {
+    background: rgba(0, 163, 255, 0.1);
+    color: var(--primary);
+}
+
+.menu-toggle i {
+    width: 24px;
+    height: 24px;
+}
+
+/* Responsive Breakpoints */
 @media (max-width: 992px) {
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 300px;
+        height: 100vh;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+        padding: 7rem 2rem 2rem;
+        gap: 1.5rem;
+        transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1050;
+        align-items: stretch;
+        border-left: 1px solid var(--border);
+    }
+
+    .nav-links.active {
+        right: 0;
+    }
+
+    .nav-links a {
+        font-size: 1.1rem;
+        width: 100%;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-links .btn-cta {
+        margin-top: 1rem;
+        text-align: center;
+        border-bottom: none;
+    }
+
+    .nav-links .dropdown {
+        width: 100%;
+    }
+
+    .nav-links .dropdown-content {
+        position: static;
+        display: none;
+        opacity: 1;
+        transform: none;
+        box-shadow: none;
+        border: none;
+        border-left: 2px solid var(--primary);
+        padding-left: 1rem;
+        margin-top: 0.5rem;
+        background: transparent;
+    }
+
+    .nav-links .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    /* Product Grid and Calculator Adaptations */
     .product-grid {
         grid-template-columns: 1fr;
-        gap: 3rem;
+        gap: 2.5rem;
     }
+    
     .calc-results-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .gallery-wrapper, .product-info-card {
+        padding: 1.5rem;
+    }
+
+    .product-info-card h1 {
+        font-size: 2rem;
+    }
+
+    .calc-wrapper {
+        padding: 2rem 1.5rem;
+    }
+
+    .calc-title h2 {
+        font-size: 1.8rem;
+    }
+
+    .specs-table th, .specs-table td {
+        padding: 1rem;
+    }
+
+    .specs-table td.spec-title {
+        width: 40%;
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .product-detail-hero {
+        padding: 7rem 0 2rem;
+    }
+
+    .calc-section, .specs-section, .faq-section {
+        padding: 4rem 0;
+    }
+
+    .section-head h2 {
+        font-size: 1.8rem;
+    }
+
+    .plan-option-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .plan-option-card .price {
+        align-self: flex-end;
     }
 }

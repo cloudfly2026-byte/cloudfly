@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body>
+<body class="dark-theme">
     <div class="mesh-bg"></div>
 
     <header id="main-header" class="scrolled">
@@ -19,11 +19,14 @@
                 <a href="index.html" class="logo">
                     <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
                 </a>
-                <div class="nav-links">
-                    <a href="index.html#ventajas">Ventajas</a>
-                    <a href="index.html#ia">IA Agent</a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="nav-links" id="navLinks">
+                    <a href="index.html#ventajas" onclick="closeMobileMenu()">Ventajas</a>
+                    <a href="index.html#ia" onclick="closeMobileMenu()">IA Agent</a>
                     <div class="dropdown">
-                        <a href="#servicios" style="cursor: pointer;">Nuestros Servicios <i data-lucide="chevron-down"
+                        <a style="cursor: pointer;">Nuestros Servicios <i data-lucide="chevron-down"
                                 style="width: 16px; vertical-align: middle;"></i></a>
                         <div class="dropdown-content">
                             <a href="diseno-web.html">Diseño Web</a>
@@ -35,8 +38,8 @@
                             <a href="desarrollo-movil.html">Desarrollo Móvil</a>
                         </div>
                     </div>
-                    <a href="index.html#pos">POS</a>
-                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta">Iniciar Sesión</a>
+                    <a href="index.html#pos" onclick="closeMobileMenu()">POS</a>
+                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta" onclick="closeMobileMenu()">Iniciar Sesión</a>
                 </div>
             </nav>
         </div>
@@ -57,7 +60,7 @@
                         <!-- Real dashboard captured under manager session -->
                         <img id="gallery-img-0" src="dashboard.png" alt="Cloudfly Dashboard Real" class="active">
                         <!-- AI Mockup representation -->
-                        <img id="gallery-img-1" src="C:/Users/Edwin/.gemini/antigravity/brain/6aa70220-0d6f-4b4c-b859-fa865056f754/chatbot_product_mockup_1780601833437.png" alt="Concepto Agente IA">
+                        <img id="gallery-img-1" src="chatbot_product_mockup.png" alt="Concepto Agente IA">
                     </div>
                 </div>
 
@@ -297,6 +300,27 @@
 
     <script>
         lucide.createIcons();
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const nav = document.getElementById('navLinks');
+            const icon = document.querySelector('.menu-toggle i');
+            nav.classList.toggle('active');
+            if (nav.classList.contains('active')) {
+                icon.setAttribute('data-lucide', 'x');
+            } else {
+                icon.setAttribute('data-lucide', 'menu');
+            }
+            lucide.createIcons();
+        }
+
+        function closeMobileMenu() {
+            const nav = document.getElementById('navLinks');
+            const icon = document.querySelector('.menu-toggle i');
+            nav.classList.remove('active');
+            icon.setAttribute('data-lucide', 'menu');
+            lucide.createIcons();
+        }
 
         // Switch Gallery Tabs
         function switchGalleryTab(index) {
