@@ -10,6 +10,7 @@ import { SettingsProvider } from '@core/contexts/settingsContext'
 import ThemeProvider from '@components/theme'
 import { NextAuthProvider } from '@/contexts/nextAuthProvider'
 import { PermissionProvider } from '@/contexts/PermissionContext'
+import OAuthProvider from '@/components/OAuthProvider'
 
 // Redux Imports
 import { Provider } from 'react-redux'
@@ -30,19 +31,22 @@ const Providers = (props: Props) => {
   return (
     <Provider store={store}>
       <NextAuthProvider>
-        <VerticalNavProvider>
-          <PermissionProvider>
-            <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
-              <ThemeProvider direction={direction} systemMode={systemMode ?? 'light'}>
-                {children}
-                <Toaster position='bottom-right' reverseOrder={false} />
-              </ThemeProvider>
-            </SettingsProvider>
-          </PermissionProvider>
-        </VerticalNavProvider>
+        <OAuthProvider>
+          <VerticalNavProvider>
+            <PermissionProvider>
+              <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
+                <ThemeProvider direction={direction} systemMode={systemMode ?? 'light'}>
+                  {children}
+                  <Toaster position='bottom-right' reverseOrder={false} />
+                </ThemeProvider>
+              </SettingsProvider>
+            </PermissionProvider>
+          </VerticalNavProvider>
+        </OAuthProvider>
       </NextAuthProvider>
     </Provider>
   )
 }
+
 
 export default Providers
