@@ -26,6 +26,7 @@ import ProductCreationStep from './ProductCreationStep'
 import StepBillingPlan from './StepBillingPlan'
 import { userMethods } from '@/utils/userMethods'
 import { axiosInstance } from '@/utils/axiosInstance'
+import { AuthManager } from '@/utils/authManager'
 
 // Custom Step Icon Component extracted to avoid re-creation on each render
 const CustomStepIcon = (props: { active: boolean; completed: boolean; icon: string; index: number }) => {
@@ -92,6 +93,11 @@ const AccountSetup = () => {
   const [initialWhatsAppData, setInitialWhatsAppData] = useState<any>(null)
 
   const router = useRouter()
+
+  const handleUserLogout = () => {
+    AuthManager.logout()
+    router.push('/login')
+  }
 
   useEffect(() => {
     setIsMounted(true)
@@ -512,6 +518,20 @@ const AccountSetup = () => {
             </Box>
           </CardContent>
         </Card>
+
+        {/* Floating Logout Button */}
+        <Box sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000 }}>
+          <Button
+            variant='contained'
+            color='error'
+            size='medium'
+            startIcon={<i className='tabler-logout' />}
+            onClick={handleUserLogout}
+            sx={{ boxShadow: '0 4px 14px 0 rgba(255, 76, 81, 0.4)' }}
+          >
+            Salir
+          </Button>
+        </Box>
       </Box>
     </AuthIllustrationWrapperCustomer>
   )
