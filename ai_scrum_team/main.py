@@ -43,6 +43,46 @@ class ThreadAwareWriter:
     def flush(self):
         self.original_stream.flush()
 
+    def isatty(self):
+        """Required by tqdm, CLIP, rich and other libs that probe stdout."""
+        try:
+            return self.original_stream.isatty()
+        except Exception:
+            return False
+
+    def fileno(self):
+        try:
+            return self.original_stream.fileno()
+        except Exception:
+            raise AttributeError("fileno not available")
+
+    def readable(self):
+        return False
+
+    def writable(self):
+        return True
+
+    def seekable(self):
+        return False
+
+    @property
+    def encoding(self):
+        try:
+            return self.original_stream.encoding
+        except Exception:
+            return 'utf-8'
+
+    @property
+    def name(self):
+        try:
+            return self.original_stream.name
+        except Exception:
+            return '<ThreadAwareWriter>'
+
+    def reconfigure(self, **kwargs):
+        """Stub — called by Python internals on some platforms."""
+        pass
+
 # Redirect stdout and stderr globally
 sys.stdout = ThreadAwareWriter(sys.stdout)
 sys.stderr = ThreadAwareWriter(sys.stderr)
