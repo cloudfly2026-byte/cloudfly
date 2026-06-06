@@ -93,7 +93,8 @@ deployment_prep = Task(
     CRITICAL 2: Local development setup sequence:
        - For 'frontend_new', do NOT containerize it or run it in Docker (not even locally). It must ONLY be run locally using the command `npm run dev` in the background (using 'Execute Console Command' tool with background=True if not already running) and tested/debugged directly through the browser.
        - For all other services, containerize and start them in the local Docker environment using the 'Docker Management Tool' to run 'up' or command-line.
-       - Do NOT deploy or execute anything on the VPS during this development phase.
+       - Do NOT deploy or execute anything on the VPS. The Scrum team does not perform VPS deployments.
+       - CRITICAL: Do NOT use or configure any container registries (like ghcr.io). The development team does not push or build images to registries.
     CRITICAL 3: You MUST use the 'Comment on Jira Issue' tool to post an update to the Jira Issue Keys stating that local services/containers are running.
     CRITICAL 4: You MUST start your comment with "🤖 **DevOps Engineer**: " to identify yourself.
     CRITICAL 5: You have access to the 'Execute Console Command' tool. Use it to run 'docker-compose logs' to verify the containers are actually healthy and fixing any errors before passing to QA.
@@ -146,8 +147,7 @@ quality_assurance = Task(
     CRITICAL INSTRUCTIONS based on the verification result:
     
     SCENARIO A - SUCCESS (The entire project behaves perfectly, all tests pass, and all specs are met):
-    1. DEPLOYMENT ON CLOSURE: When each task is closed/transitioned, you MUST deploy it to the VPS using 'Execute VPS SSH Command' (or similar commands on the VPS) to pull and start the updated container.
-       - EXCEPTION: If the task/service is `frontend_new` (which runs via `npm run dev` in local), you MUST NOT deploy it to the VPS. Skip VPS deployment completely for `frontend_new` (it is never deployed as a container on VPS or locally; it only runs via npm run dev locally and is tested and debugged in the browser).
+    1. NO VPS DEPLOYMENT: The Scrum team does NOT deploy to the VPS. Omit any VPS deployment actions or SSH commands. Ensure all services run and are validated locally (other services via local Docker, frontend_new via npm run dev).
     2. You MUST use the 'Transition Jira Issue' tool to change the status of ALL the original Jira Issue Keys to 'Done'.
     3. AFTER transitioning the original issues, you MUST check if any of the original issues have a parent issue (Epic/Historia). For each parent found, use the 'Read Jira Issue' tool to check if ALL of its subtasks are in 'Done' or 'Finalizada' status. If ALL subtasks are done, you MUST also transition the parent issue to 'Done'.
     4. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend CDP tests run, including the screenshot filenames captured. If you also closed the parent issue, mention this in the comment.
