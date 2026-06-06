@@ -24,7 +24,7 @@ sprint_planning = Task(
        - When calling the tool, the 'description' MUST be extremely detailed. Include Acceptance Criteria, technical context, and what exactly the developer needs to do.
        - Start the issue description with "🤖 **Product Owner**: ".
     4. If it is to complete EXISTING pending tasks:
-       - DO NOT create a new primary task. If you decide to break down the existing pending task (e.g., CLOUD-178) into sub-tasks for the sprint, you MUST use the 'Create Jira Issue' tool setting issue_type to 'Sub-task' and ALWAYS pass that existing ticket's key (e.g. CLOUD-178) as the `parent_key`.
+       - DO NOT create a new primary task. If you decide to break down the existing pending task (e.g., CLOUD-178) into sub-tasks for the sprint, you MUST check if it is already a sub-task. If it is already a sub-task (subtarea), you MUST NOT attempt to create new sub-tasks under it, as Jira does not support nesting sub-tasks under sub-tasks. In this case, simply plan its execution without creating Jira sub-tasks. Otherwise, if it is a regular Task/Story, you MUST use the 'Create Jira Issue' tool setting issue_type to 'Sub-task' and ALWAYS pass that existing ticket's key (e.g. CLOUD-178) as the `parent_key`.
        - CRITICAL: Never call 'Create Jira Issue' with an empty `parent_key` or `""` when breaking down or creating tasks. Link them to the parent issue key.
        - Summarize what needs to be done for each of them based on the CURRENT CODEBASE CONTEXT.
     5. In BOTH cases, record and output the list of ALL Jira Issue Keys (e.g., CLOUD-123, CLOUD-124) that must be processed in this sprint.

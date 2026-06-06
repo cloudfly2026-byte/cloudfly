@@ -1,5 +1,9 @@
 import os
+import sys
 from dotenv import load_dotenv
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Load environment variables BEFORE creating LLM instances
 _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
