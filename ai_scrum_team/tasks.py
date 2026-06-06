@@ -28,7 +28,7 @@ sprint_planning = Task(
        - CRITICAL: Never call 'Create Jira Issue' with an empty `parent_key` or `""` when breaking down or creating tasks. Link them to the parent issue key.
        - Summarize what needs to be done for each of them based on the CURRENT CODEBASE CONTEXT.
     5. In BOTH cases, record and output the list of ALL Jira Issue Keys (e.g., CLOUD-123, CLOUD-124) that must be processed in this sprint.
-    6. ESTIMATION & SPRINT INITIATION: After creating/identifying all sprint tasks and before any development starts, you MUST estimate the time required for each task (adding the time estimate in the description or comments of each Jira issue). Then, create a new Sprint in Jira (or simulate/manage it in Jira), place all the sprint tasks into it, and mark the Sprint as started (iniciada).
+    6. ESTIMATION & SPRINT INITIATION: After creating/identifying all sprint tasks and before any development starts, you MUST collaboratively estimate the time required for each task. Consult with the other agents (Software Developer, System Architect, Frontend Developer, DevOps) and leverage historical data from past_stories_db.json and lessons_learned.md to propose realistic time estimates based on technical complexity and role expertise. Add the final time estimates clearly in the description or comments of each Jira issue, then create a new Sprint in Jira (or simulate/manage it), place all the sprint tasks into it, and mark the Sprint as started (iniciada).
     
     CRITICAL: If you are confused about the feature or lack details, you MUST use the 'Ask Human Clarification' tool to ask Edwin.
     
