@@ -150,23 +150,24 @@ class VisionWorker:
                 lf.write(entry)
             print(f"🧠 [Vision Worker]: Análisis de '{filename}' guardado en memoria Scrum.")
 
-            # 4. Indexar en memoria visual (CLIP + Qdrant)
-            try:
-                scrum_dir = os.path.dirname(os.path.abspath(__file__))
-                if scrum_dir not in sys.path:
-                    sys.path.insert(0, scrum_dir)
-                from visual_memory import index_image
-                index_image(
-                    image_source=local_path,
-                    issue_key=issue_key,
-                    summary=filename,
-                    description=description[:500],
-                    bug_type="asset" if is_asset else "ui",
-                    resolved=False,
-                )
-                print(f"📌 [Vision Worker]: {filename} indexado en Qdrant visual memory.")
-            except Exception as ve:
-                print(f"⚠️  [Vision Worker]: No se pudo indexar en Qdrant: {ve}")
+            # 4. Indexar en memoria visual (CLIP + Qdrant) - Solo si es un ASSET de la aplicación
+            if is_asset:
+                try:
+                    scrum_dir = os.path.dirname(os.path.abspath(__file__))
+                    if scrum_dir not in sys.path:
+                        sys.path.insert(0, scrum_dir)
+                    from visual_memory import index_image
+                    index_image(
+                        image_source=local_path,
+                        issue_key=issue_key,
+                        summary=filename,
+                        description=description[:500],
+                        bug_type="asset",
+                        resolved=False,
+                    )
+                    print(f"📌 [Vision Worker]: {filename} indexado en Qdrant visual memory.")
+                except Exception as ve:
+                    print(f"⚠️  [Vision Worker]: No se pudo indexar en Qdrant: {ve}")
 
             # Limpiar tmp
             try:

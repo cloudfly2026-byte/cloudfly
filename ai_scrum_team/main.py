@@ -12,6 +12,41 @@ from typing import Optional
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+class ThreadAwareWriter:
+    def __init__(self, original_stream):
+        self.original_stream = original_stream
+        self.log_files = {} # thread_name_prefix -> file path
+        self.lock = threading.Lock()
+
+    def register_thread_logger(self, thread_name_prefix, filepath):
+        with self.lock:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            self.log_files[thread_name_prefix] = filepath
+
+    def write(self, message):
+        current_name = threading.current_thread().name
+        filepath = None
+        with self.lock:
+            for prefix, path in self.log_files.items():
+                if current_name.startswith(prefix) or prefix in current_name:
+                    filepath = path
+                    break
+        if filepath:
+            try:
+                with open(filepath, "a", encoding="utf-8") as f:
+                    f.write(message)
+                return
+            except Exception:
+                pass
+        self.original_stream.write(message)
+
+    def flush(self):
+        self.original_stream.flush()
+
+# Redirect stdout and stderr globally
+sys.stdout = ThreadAwareWriter(sys.stdout)
+sys.stderr = ThreadAwareWriter(sys.stderr)
+
 from dotenv import load_dotenv
 from crewai import Crew, Process
 
@@ -610,13 +645,20 @@ def run_sprint():
                     print(f"\n⚠️ [{task_label} - Intento {retry_count}/{max_retries}]: Error LLM: {err_msg[:120]}")
                     new_key = connector.get_healthy_api_key(current_key=current_key, mark_rate_limited=True)
                     if new_key and new_key != current_key:
-                        print(f"🔄 [{task_label}]: Rotando API key: ...{new_key[-8:]}")
                         os.environ["OPENROUTER_API_KEY"] = new_key
                         os.environ["OPENAI_API_KEY"] = new_key
+                        active_key = new_key
                         current_model = get_healthiest_model()
+                        print(f"🔄 [{task_label}]: Rotando API key: ...{active_key[-8:]} y reconfigurando con modelo: {current_model}")
                         for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
-                            configure_agent_llm(agent, new_key, current_model)
+                            configure_agent_llm(agent, active_key, current_model)
                     else:
+                        # Reconfigure with healthiest model anyway even if key remains same
+                        current_model = get_healthiest_model()
+                        print(f"🔄 [{task_label}]: Reconfigurando agentes con modelo saludable: {current_model}")
+                        for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
+                            configure_agent_llm(agent, current_key, current_model)
+                        
                         # Extraer dinámicamente Retry-After si existe, o usar backoff exponencial
                         wait_time = 10
                         import re
@@ -673,6 +715,7 @@ def run_sprint():
         
         This reduces total sprint time by ~60% compared to fully sequential execution.
         """
+        logs_dir = r"C:\apps\cloudfly\ai_scrum_team\logs"
         os.environ["OPENAI_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "sk-or-...")
         os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
         os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
@@ -727,6 +770,9 @@ def run_sprint():
 
         def run_research():
             """Phase 2a: System Architect researches and creates blueprint."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_architect.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_architect.log"))
             print("   🔍 [Architect Thread]: Iniciando investigación técnica...")
             crew = Crew(
                 agents=[system_architect],
@@ -752,6 +798,9 @@ def run_sprint():
 
         def run_backend_dev():
             """Phase 2b: Backend Developer writes code."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_backend_dev.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_backend_dev.log"))
             print("   💻 [Backend Dev Thread]: Iniciando desarrollo backend...")
             crew = Crew(
                 agents=[software_developer],
@@ -777,6 +826,9 @@ def run_sprint():
 
         def run_frontend_dev():
             """Phase 2c: Frontend Developer builds UI."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_frontend_dev.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_frontend_dev.log"))
             print("   🎨 [Frontend Dev Thread]: Iniciando desarrollo frontend...")
             crew = Crew(
                 agents=[frontend_developer],
@@ -835,6 +887,9 @@ def run_sprint():
                 print("   🚫 [DevOps Thread]: Saltado (excluido).")
                 _store_result("devops", "DevOps excluido del sprint.")
                 return "DevOps excluido"
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_devops.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_devops.log"))
             print("   🐳 [DevOps Thread]: Iniciando despliegue...")
             crew = Crew(
                 agents=[devops_engineer],
@@ -860,6 +915,9 @@ def run_sprint():
 
         def run_documentation():
             """Phase 3b: Technical Writer creates docs."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_technical_writer.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_technical_writer.log"))
             print("   📝 [Docs Thread]: Iniciando documentación...")
             crew = Crew(
                 agents=[technical_writer],
@@ -885,6 +943,9 @@ def run_sprint():
 
         def run_qa():
             """Phase 3c: QA Engineer tests everything."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_qa.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_qa.log"))
             print("   🧪 [QA Thread]: Iniciando pruebas E2E...")
             crew = Crew(
                 agents=[qa_engineer],
@@ -910,6 +971,9 @@ def run_sprint():
 
         def run_marketing():
             """Phase 3d: Marketing Specialist creates campaigns and content."""
+            tname = threading.current_thread().name
+            sys.stdout.register_thread_logger(tname, os.path.join(logs_dir, "agent_marketing.log"))
+            sys.stderr.register_thread_logger(tname, os.path.join(logs_dir, "agent_marketing.log"))
             print("   📣 [Marketing Thread]: Iniciando estrategia de marketing...")
             crew = Crew(
                 agents=[marketing_specialist],

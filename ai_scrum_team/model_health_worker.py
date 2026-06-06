@@ -33,18 +33,23 @@ else:
 if _provider == "openai":
     HEALTH_API_BASE = "https://api.openai.com/v1"
     HEALTH_API_KEY = os.getenv("OPENAI_API_KEY") or ""
-    CANDIDATE_MODELS = [MODEL_DEFAULT]
+    CANDIDATE_MODELS = [MODEL_DEFAULT, "gpt-4o-mini", "gpt-4o"]
     DEFAULT_MODEL = MODEL_DEFAULT
 elif _provider == "groq":
-    HEALTH_API_BASE = "https://openrouter.ai/api/v1"
-    HEALTH_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
-    CANDIDATE_MODELS = [MODEL_DEFAULT]
+    HEALTH_API_BASE = "https://api.groq.com/openai/v1"
+    HEALTH_API_KEY = os.getenv("GROQ_API_KEY") or ""
+    CANDIDATE_MODELS = [MODEL_DEFAULT, "llama3-70b-8192", "mixtral-8x7b-32768"]
     DEFAULT_MODEL = MODEL_DEFAULT
 else:
     # OpenRouter (default)
     HEALTH_API_BASE = "https://openrouter.ai/api/v1"
     HEALTH_API_KEY = os.getenv("SCRUM_TEAM_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
-    CANDIDATE_MODELS = [MODEL_DEFAULT]
+    CANDIDATE_MODELS = [
+        MODEL_DEFAULT,
+        "meta-llama/llama-3-70b-instruct",
+        "google/gemini-2.5-flash",
+        "anthropic/claude-3-haiku"
+    ]
     DEFAULT_MODEL = MODEL_DEFAULT
 
 print(f"🤖 [Health Worker]: Modelo configurado: {DEFAULT_MODEL} via {_provider}")
