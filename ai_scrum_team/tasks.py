@@ -75,7 +75,7 @@ development_task = Task(
     CRITICAL 5: You have access to the 'Execute Console Command' tool. Use it to install dependencies, run scripts, or compile code to verify your work before finishing.
     CRITICAL 5b: If 'Execute Console Command' returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix (e.g. search the exact error message or key parts of it). Then apply the fix and retry.
     CRITICAL 6: STRICT TDD.You MUST write an automated unit test script (e.g. test_*.py or *.test.js) for your code and use 'Execute Console Command' to run it. Do not finish until tests pass.
-    CRITICAL 7: Before passing the code to QA, you MUST use the 'Commit Code' tool to save your changes to Git.
+    CRITICAL 7: Omit any action on the VPS at this stage. Keep all development local.
     CRITICAL 8: If the sprint goal contains a LATEST COMMENT from the user, your Jira comment MUST explicitly address the user's feedback and explain how you fixed their specific concern.
     CRITICAL 9: If you are stuck or need a password/key, use the 'Ask Human Clarification' tool.
     ''',
@@ -88,18 +88,20 @@ deployment_prep = Task(
     Take the generated code/configs and the CURRENT CODEBASE CONTEXT:
     {codebase_context}
     
-    Write a Dockerfile and docker-compose.yml to containerize the solution if they don't already exist or need updating.
-    Ensure any necessary ports (like 5060 for SIP or 8000 for web) are exposed based on the application type.
-    CRITICAL 1: You must use the 'Write Code To File' tool to save the Dockerfile and docker-compose.yml files into the correct directory. If the user specified a folder, work there.
-    CRITICAL 2: You MUST use the 'Docker Management Tool' to run 'up' and start the containers.
-    CRITICAL 3: You MUST use the 'Comment on Jira Issue' tool to post an update to the Jira Issue Keys stating that containers are running.
+    Ensure local execution configurations are ready.
+    CRITICAL 1: Save any configuration files to the correct directory inside C:\\apps\\cloudfly.
+    CRITICAL 2: Local development setup sequence:
+       - For 'frontend_new', do NOT containerize it or run it in Docker. You MUST run it in local using the command `npm run dev` in the background (using 'Execute Console Command' tool with background=True if not already running).
+       - For all other services, containerize and start them in the local Docker environment using the 'Docker Management Tool' to run 'up' or command-line.
+       - Do NOT deploy or execute anything on the VPS during this development phase.
+    CRITICAL 3: You MUST use the 'Comment on Jira Issue' tool to post an update to the Jira Issue Keys stating that local services/containers are running.
     CRITICAL 4: You MUST start your comment with "🤖 **DevOps Engineer**: " to identify yourself.
     CRITICAL 5: You have access to the 'Execute Console Command' tool. Use it to run 'docker-compose logs' to verify the containers are actually healthy and fixing any errors before passing to QA.
     CRITICAL 5b: If 'Execute Console Command' returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix. Then apply the fix and retry.
-    CRITICAL 6: After verifying the containers are running, you MUST use the 'Transition Jira Issue' tool to change the status of the Jira Issue Keys to 'pruebas'.
+    CRITICAL 6: After verifying the local services/containers are running, you MUST use the 'Transition Jira Issue' tool to change the status of the Jira Issue Keys to 'pruebas'.
     CRITICAL 7: If the sprint goal contains a LATEST COMMENT from the user, your Jira comment MUST acknowledge their feedback.
     ''',
-    expected_output='Dockerfile and docker-compose.yml saved. Containers running. A Jira comment must be added.',
+    expected_output='Local services running (frontend_new via npm run dev, others via local Docker). A Jira comment must be added.',
     agent=devops_engineer
 )
 
@@ -108,7 +110,8 @@ quality_assurance = Task(
     Verify that the deployment was successful and that all changes comply with the specifications.
     CRITICAL MANDATE: You MUST perform comprehensive E2E Integration testing across the ENTIRE PROJECT ECOSYSTEM. You are responsible for verifying the complete system health, including the Backend APIs, Databases, Messaging layers (Evolution API/FreeSWITCH), and Frontend UIs.
     
-    CRITICAL STORY RULE: As the QA Engineer, you MUST create/write the automated tests for this story and leave a detailed comment in the Jira ticket describing exactly how to execute them step-by-step. Since the DevOps engineer is not working on this story, you do not need to wait for Docker deployments or VPS deploys; you must perform verification against the locally written code and verify it works, then add the execution instructions comment.
+    CRITICAL STORY RULE: As the QA Engineer, you MUST create/write the automated tests for this story and leave a detailed comment in the Jira ticket describing exactly how to execute them step-by-step.
+    - Local testing: Perform verification against local running services (frontend_new running locally via npm run dev, other services running locally via Docker).
     
     Here is the CURRENT JIRA BACKLOG AND ISSUE HISTORY CONTEXT:
     {jira_backlog_context}
@@ -122,7 +125,7 @@ quality_assurance = Task(
        - Verify messaging and telephony integrations (Evolution API, FreeSWITCH configurations, Kafka brokers). Ensure queues are active and telephony registrars are registered.
        - Use the 'Execute Console Command' tool to run backend tests (e.g. pytest scripts, JUnit tests, or curl commands) to assert endpoint success and correct JSON response formats.
        - If any command returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix. Then apply the fix and retry.
-
+ 
     2. FRONTEND E2E TESTING WITH CHROME DEVTOOLS (CDP):
        - If the sprint feature involves frontend changes in the active Next.js/React workspace (frontend_new), you MUST perform browser-based E2E tests using the Chrome DevTools Protocol (CDP) tools.
        - WORKFLOW for each frontend test scenario:
@@ -135,7 +138,7 @@ quality_assurance = Task(
          g. Use 'Chrome DevTools: Network Requests' again to verify all API calls returned 2xx status codes.
        - CRITICAL: Chrome MUST be running with --remote-debugging-port=9222. If the CDP tools return "No Chrome page targets found", use 'Execute Console Command' to launch Chrome: `Start-Process "chrome.exe" --ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check http://localhost:3000"`
        - Write a Python test script (e.g. test_frontend_cdp.py) that documents the test steps and assertions, save it using 'Write Code To File' to the path 'tests/AGENTE_DEV_<feature_name>_cdp.py'. This script should use the websocket-client library to connect to CDP directly and run the same assertions you performed manually.
-
+ 
     3. E2E INTEGRATION & SPEC COMPLIANCE:
        - You must verify that the full, multi-tiered data flow behaves perfectly (e.g., frontend action triggers backend api -> backend persists in DB -> pushes to Kafka -> worker processes campaign -> Evolution API sends message).
        - The task should ONLY be considered a SUCCESS if all E2E integration, backend, database, and frontend tests pass with 0 failures. If any test fails, it is a FAILURE.
@@ -143,9 +146,12 @@ quality_assurance = Task(
     CRITICAL INSTRUCTIONS based on the verification result:
     
     SCENARIO A - SUCCESS (The entire project behaves perfectly, all tests pass, and all specs are met):
-    1. You MUST use the 'Transition Jira Issue' tool to change the status of ALL the original Jira Issue Keys to 'Done'.
-    2. AFTER transitioning the original issues, you MUST check if any of the original issues have a parent issue (Epic/Historia). For each parent found, use the 'Read Jira Issue' tool to check if ALL of its subtasks are in 'Done' or 'Finalizada' status. If ALL subtasks are done, you MUST also transition the parent issue to 'Done'.
-    3. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend CDP tests run, including the screenshot filenames captured. If you also closed the parent issue, mention this in the comment.
+    1. DEPLOYMENT ON CLOSURE: When each task is closed/transitioned, you MUST deploy it to the VPS using 'Execute VPS SSH Command' (or similar commands on the VPS) to pull and start the updated container.
+       - EXCEPTION: If the task/service is `frontend_new` (which runs via `npm run dev` in local), you MUST NOT deploy it to the VPS. Skip VPS deployment completely for `frontend_new`.
+    2. You MUST use the 'Transition Jira Issue' tool to change the status of ALL the original Jira Issue Keys to 'Done'.
+    3. AFTER transitioning the original issues, you MUST check if any of the original issues have a parent issue (Epic/Historia). For each parent found, use the 'Read Jira Issue' tool to check if ALL of its subtasks are in 'Done' or 'Finalizada' status. If ALL subtasks are done, you MUST also transition the parent issue to 'Done'.
+    4. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend CDP tests run, including the screenshot filenames captured. If you also closed the parent issue, mention this in the comment.
+    5. SPRINT CLOSURE GIT PUSH: Once ALL tasks in the sprint are finalized and transitioned to Done in Jira, you MUST run Git commands to commit and push all code changes to the remote repository ('git add .', 'git commit', and 'git push').
     
     SCENARIO B - FAILURE (Any endpoint failure, database inconsistency, CDP test failure, or bug detected):
     1. DO NOT transition the original issues to 'Done'. You MUST use the 'Transition Jira Issue' tool to change the original issue status back to 'To Do' (or keep it 'In Progress').
@@ -158,7 +164,7 @@ quality_assurance = Task(
     
     CRITICAL FOR SPEC-DRIVEN DEVELOPMENT: If a specification file is present in the codebase context (such as spec.md), you MUST validate the endpoints and configurations strictly against that specification. Any deviation from the spec MUST be reported as a BUG.
     ''',
-    expected_output='QA E2E sign-off report covering the entire project (Backend, Frontend CDP tests, DB, Messaging, screenshots), and Jira issues transitioned to Done (if success), OR a detailed failure comment mentioning Edwin Guevara on the active Jira issue (if failure).',
+    expected_output='QA E2E sign-off report covering the entire project. Jira issues transitioned to Done and deployed to VPS (except frontend_new). Git push executed on final sprint completion. Or failure details comment.',
     agent=qa_engineer
 )
 
@@ -202,7 +208,7 @@ frontend_development_task = Task(
        c. 'Chrome DevTools: Evaluate JS' to verify key elements exist (e.g. "document.querySelector('.my-component') !== null").
        If Chrome is not available, skip this step and note it in your Jira comment.
     7. Post a summary of your frontend changes in a Jira comment on the relevant Jira Issue Keys, starting with "🤖 **Frontend Developer**: " to identify yourself. Include screenshot filename if captured.
-    8. Before passing to DevOps/QA, use the 'Commit Code' tool to save your changes to Git.
+    8. Before passing to DevOps/QA, do NOT deploy or push yet. The global push will be done by QA at the end of the sprint.
     ''',
     expected_output='All React/Next.js files and UI components written to frontend_new. Optional CDP smoke test screenshot captured. A Jira comment must be added.',
     agent=frontend_developer
