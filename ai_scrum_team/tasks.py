@@ -137,7 +137,7 @@ quality_assurance = Task(
          e. Use 'Chrome DevTools: Screenshot' to capture a visual proof of the UI state. Save with descriptive names like 'login_success.png', 'dashboard_after_create.png'.
          f. Use 'Chrome DevTools: Get Console Logs' to detect any JS errors or warnings.
          g. Use 'Chrome DevTools: Network Requests' again to verify all API calls returned 2xx status codes.
-       - CRITICAL: Chrome MUST be running with --remote-debugging-port=9222. If the CDP tools return "No Chrome page targets found", use 'Execute Console Command' to launch Chrome: `Start-Process "chrome.exe" --ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check http://localhost:3000"`
+        - CRITICAL - PASO OBLIGATORIO ANTES DE CUALQUIER CDP: SIEMPRE lanza Chrome con debugging ANTES de usar cualquier herramienta CDP. Ejecuta este comando con 'Execute Console Command' PRIMERO: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\tmp\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`. Si el CDP devuelve error de conexión (puerto 9222 rechazado), es porque Chrome no está corriendo con debugging — ejecuta el mismo comando y espera 3 segundos antes de reintentar.
        - Write a Python test script (e.g. test_frontend_cdp.py) that documents the test steps and assertions, save it using 'Write Code To File' to the path 'tests/AGENTE_DEV_<feature_name>_cdp.py'. This script should use the websocket-client library to connect to CDP directly and run the same assertions you performed manually.
  
     3. E2E INTEGRATION & SPEC COMPLIANCE:
@@ -203,10 +203,11 @@ frontend_development_task = Task(
     4. You MUST use the 'Write Code To File' tool to save all your frontend files strictly inside the "C:\\apps\\cloudfly\\frontend_new" directory structure.
     5. CRITICAL: When exploring the frontend_new directory, you MUST exclude the "node_modules" folder from all reviews and file listings. Never read, list, or modify files inside node_modules. Use 'List Directory Files' with directory="frontend_new" and ignore any node_modules entries.
     6. QUICK VISUAL VERIFICATION: After writing the components, use the Chrome DevTools tools to do a quick smoke test:
+       PASO 0 OBLIGATORIO: Antes de cualquier herramienta CDP, lanza Chrome con debugging: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\tmp\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`
        a. 'Chrome DevTools: Navigate' to the relevant page (e.g. 'http://localhost:3000').
        b. 'Chrome DevTools: Screenshot' to capture the current render as 'frontend_dev_<feature>.png'.
        c. 'Chrome DevTools: Evaluate JS' to verify key elements exist (e.g. "document.querySelector('.my-component') !== null").
-       If Chrome is not available, skip this step and note it in your Jira comment.
+       Si el CDP devuelve error de conexion en puerto 9222, repite el comando del PASO 0 y espera 3 segundos.
     7. Post a summary of your frontend changes in a Jira comment on the relevant Jira Issue Keys, starting with "🤖 **Frontend Developer**: " to identify yourself. Include screenshot filename if captured.
     8. Before passing to DevOps/QA, do NOT deploy or push yet. The global push will be done by QA at the end of the sprint.
     ''',
