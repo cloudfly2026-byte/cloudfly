@@ -46,7 +46,8 @@ def _load_clip() -> bool:
             return True
         try:
             import torch
-            from transformers import CLIPModel, CLIPProcessor
+            from transformers import CLIPModel, CLIPProcessor, logging as transformers_logging
+            transformers_logging.set_verbosity_error()
 
             device = "cuda" if torch.cuda.is_available() else "cpu"
             dtype  = torch.float16 if device == "cuda" else torch.float32
