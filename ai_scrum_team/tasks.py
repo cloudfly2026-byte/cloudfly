@@ -91,7 +91,7 @@ deployment_prep = Task(
     Ensure local execution configurations are ready.
     CRITICAL 1: Save any configuration files to the correct directory inside C:\\apps\\cloudfly.
     CRITICAL 2: Local development setup sequence:
-       - For 'frontend_new', do NOT containerize it or run it in Docker. You MUST run it in local using the command `npm run dev` in the background (using 'Execute Console Command' tool with background=True if not already running).
+       - For 'frontend_new', do NOT containerize it or run it in Docker (not even locally). It must ONLY be run locally using the command `npm run dev` in the background (using 'Execute Console Command' tool with background=True if not already running) and tested/debugged directly through the browser.
        - For all other services, containerize and start them in the local Docker environment using the 'Docker Management Tool' to run 'up' or command-line.
        - Do NOT deploy or execute anything on the VPS during this development phase.
     CRITICAL 3: You MUST use the 'Comment on Jira Issue' tool to post an update to the Jira Issue Keys stating that local services/containers are running.
@@ -101,7 +101,7 @@ deployment_prep = Task(
     CRITICAL 6: After verifying the local services/containers are running, you MUST use the 'Transition Jira Issue' tool to change the status of the Jira Issue Keys to 'pruebas'.
     CRITICAL 7: If the sprint goal contains a LATEST COMMENT from the user, your Jira comment MUST acknowledge their feedback.
     ''',
-    expected_output='Local services running (frontend_new via npm run dev, others via local Docker). A Jira comment must be added.',
+    expected_output='Local services running (frontend_new via npm run dev locally, others via local Docker). A Jira comment must be added.',
     agent=devops_engineer
 )
 
@@ -111,7 +111,7 @@ quality_assurance = Task(
     CRITICAL MANDATE: You MUST perform comprehensive E2E Integration testing across the ENTIRE PROJECT ECOSYSTEM. You are responsible for verifying the complete system health, including the Backend APIs, Databases, Messaging layers (Evolution API/FreeSWITCH), and Frontend UIs.
     
     CRITICAL STORY RULE: As the QA Engineer, you MUST create/write the automated tests for this story and leave a detailed comment in the Jira ticket describing exactly how to execute them step-by-step.
-    - Local testing: Perform verification against local running services (frontend_new running locally via npm run dev, other services running locally via Docker).
+    - Local testing: Perform verification against local running services. `frontend_new` is NEVER containerized locally; it runs ONLY via `npm run dev` in local and is tested and debugged directly via the browser. Other services run locally via Docker.
     
     Here is the CURRENT JIRA BACKLOG AND ISSUE HISTORY CONTEXT:
     {jira_backlog_context}
@@ -147,7 +147,7 @@ quality_assurance = Task(
     
     SCENARIO A - SUCCESS (The entire project behaves perfectly, all tests pass, and all specs are met):
     1. DEPLOYMENT ON CLOSURE: When each task is closed/transitioned, you MUST deploy it to the VPS using 'Execute VPS SSH Command' (or similar commands on the VPS) to pull and start the updated container.
-       - EXCEPTION: If the task/service is `frontend_new` (which runs via `npm run dev` in local), you MUST NOT deploy it to the VPS. Skip VPS deployment completely for `frontend_new`.
+       - EXCEPTION: If the task/service is `frontend_new` (which runs via `npm run dev` in local), you MUST NOT deploy it to the VPS. Skip VPS deployment completely for `frontend_new` (it is never deployed as a container on VPS or locally; it only runs via npm run dev locally and is tested and debugged in the browser).
     2. You MUST use the 'Transition Jira Issue' tool to change the status of ALL the original Jira Issue Keys to 'Done'.
     3. AFTER transitioning the original issues, you MUST check if any of the original issues have a parent issue (Epic/Historia). For each parent found, use the 'Read Jira Issue' tool to check if ALL of its subtasks are in 'Done' or 'Finalizada' status. If ALL subtasks are done, you MUST also transition the parent issue to 'Done'.
     4. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend CDP tests run, including the screenshot filenames captured. If you also closed the parent issue, mention this in the comment.
