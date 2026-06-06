@@ -300,7 +300,7 @@ def generate_codebase_context(sprint_goal=""):
     exclude_dirs = {
         '.git', 'node_modules', '__pycache__', 'venv', '.env', 'db', '.gemini', 'tmp',
         '.cloudflared', '.vscode', 'chatwoot', 'apache2', 'debug_reports', 'vuexy', 'terraform',
-        'screenshots', 'docs'
+        'screenshots', 'docs', 'chat-socket-service', '.next', 'dist', 'build', 'coverage'
     }
     exclude_extensions = {'.log', '.txt', '.tar', '.zip', '.exe', '.png', '.jpg', '.jpeg', '.gif'}
     
@@ -351,6 +351,7 @@ def generate_codebase_context(sprint_goal=""):
     context.append("En su lugar, debes identificar qué carpetas o componentes específicos están relacionados con la historia o tarea del sprint (ej. frontend, backend, docker, etc.).")
     context.append("USA obligatoriamente la herramienta 'List Directory Files' únicamente sobre los directorios relevantes asociados al ticket actual para explorar sus archivos.")
     context.append("No intentes explorar el árbol de archivos completo manualmente ni adivinar las rutas; céntrate en listar solo lo relevante para esta historia.")
+    context.append("CRITICO - PROHIBIDO EJECUTAR Get-ChildItem -Recurse sobre directorios que contengan node_modules (chat-socket-service, frontend_new, etc). Usa SIEMPRE la herramienta 'List Directory Files' que ya filtra node_modules automaticamente. Ejecutar Get-ChildItem -Recurse sin filtro BLOQUEARÁ el agente con millones de lineas de output.")
     return "\n".join(context)
 
 def compact_with_owl_alpha(raw_context: str, label: str = "contexto") -> str:

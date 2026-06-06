@@ -213,6 +213,10 @@ def write_code_to_file(content: str, filepath: str = "generated_code.txt") -> st
     if not target_path.startswith(base_dir):
         return f"Error: {target_path} is outside CloudFly directory. Use relative paths."
         
+    # node_modules write guard — NEVER write inside node_modules
+    if 'node_modules' in filepath.replace('\\', '/'):
+        return "ERROR BLOQUEADO: Escritura dentro de node_modules esta PROHIBIDA. Nunca modifiques archivos dentro de node_modules."
+
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     with open(target_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -330,7 +334,11 @@ def read_code_file(filepath: str) -> str:
     
     if not target_path.startswith(base_dir):
         return f"Error: {target_path} is outside developmentAI directory. Use relative paths."
-        
+
+    # node_modules read guard — NEVER read files inside node_modules
+    if 'node_modules' in filepath.replace('\\', '/'):
+        return "ERROR BLOQUEADO: Lectura dentro de node_modules esta PROHIBIDA. Nunca leas archivos dentro de node_modules. Usa 'List Directory Files' para explorar el proyecto."
+
     if not os.path.exists(target_path):
         return f"Error: File '{filepath}' does not exist inside developmentAI directory."
         
@@ -376,15 +384,48 @@ def read_jira_issue(issue_key: str) -> str:
 def execute_console_command(command: str, background: bool = False, timeout_seconds: int = 120) -> str:
     """
     Execute a PowerShell command on the Windows development machine (C:\\apps\\cloudfly).
-    IMPORTANT: This is a Windows environment — use ONLY PowerShell commands (Get-ChildItem, not dir; docker-compose, not docker compose).
+    IMPORTANT: This is a Windows environment - use ONLY PowerShell commands (Get-ChildItem, not dir; docker-compose, not docker compose).
     Use this to run tests, inspect logs (Get-Content), install dependencies (pip install, npm install), manage Docker (docker-compose), or run Python scripts.
-    If you get an error you don't understand, use the 'Web Search' tool to search for the error message and find a fix (e.g. search: "npm error EPERM Windows", "docker-compose port already in use", "pip install access denied Windows", etc.).
+    If you get an error you don't understand, use the 'Web Search' tool to search for the error message and find a fix.
+    
+    CRITICO - PROHIBIDO: NUNCA uses 'Get-ChildItem -Recurse' sobre directorios con node_modules
+    (chat-socket-service, frontend_new, landing, etc.). Esto genera millones de lineas y BLOQUEA el agente.
+    En su lugar, usa SIEMPRE la herramienta 'List Directory Files' que excluye node_modules automaticamente.
+    Si necesitas buscar un archivo especifico, usa: Get-ChildItem -Path <dir> -Filter <nombre> -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
     
     :param command: The exact PowerShell command to run.
-    :param background: If True, runs the command asynchronously in a background thread and returns immediately with a process ID. Use 'Check Background Task' tool to retrieve results later. Default False.
-    :param timeout_seconds: Maximum time to wait for the command to complete (default 120s). For long-running commands like builds or npm install, increase this.
+    :param background: If True, runs the command asynchronously in a background thread. Default False.
+    :param timeout_seconds: Maximum time to wait (default 120s). For builds or npm install, increase this.
     """
     workspace_dir = r"C:\apps\cloudfly"
+
+    # ── node_modules guardrail ───────────────────────────────────────────
+    # Block ANY command that references node_modules to prevent LLM context flooding.
+    _cmd_lower = command.lower()
+    _nm_triggers = [
+        "node_modules",
+        "get-childitem -recurse" ,
+        "gci -recurse",
+        "ls -r ",
+        "dir /s",
+    ]
+    _safe_dirs = ["frontend_new", "chat-socket-service", "landing", "node_modules"]
+    _has_nm = any(t in _cmd_lower for t in _nm_triggers)
+    _targets_large_dir = any(d in _cmd_lower for d in _safe_dirs)
+    if _has_nm and _targets_large_dir:
+        return (
+            "ERROR BLOQUEADO: Este comando fue bloqueado porque intentaba acceder a node_modules "
+            "o ejecutar una busqueda recursiva sobre un directorio con node_modules.\n"
+            "SOLUCION: Usa la herramienta 'List Directory Files' para explorar directorios. "
+            "Nunca uses Get-ChildItem -Recurse sobre directorios con node_modules."
+        )
+    # Also block if command literally contains 'node_modules' as a path target
+    if "node_modules" in command and ("get-content" in _cmd_lower or "set-content" in _cmd_lower or "copy" in _cmd_lower or "remove" in _cmd_lower):
+        return (
+            "ERROR BLOQUEADO: Operacion sobre node_modules bloqueada. "
+            "NUNCA leas, escribas, copies ni elimines archivos dentro de node_modules."
+        )
+
     ps_command = f"Set-Location -Path '{workspace_dir}'; {command}"
 
     # ── Background mode: launch and return immediately ──────────────────
@@ -462,10 +503,21 @@ def execute_console_command(command: str, background: bool = False, timeout_seco
         exit_code = process.returncode
         complete_output = "".join(output_accumulated).strip()
 
+        # Truncate large outputs to prevent LLM context flooding
+        MAX_OUTPUT_CHARS = 5000
+        truncation_note = ""
+        if len(complete_output) > MAX_OUTPUT_CHARS:
+            truncation_note = (
+                f"\n\n[SALIDA TRUNCADA: {len(complete_output)} chars -> {MAX_OUTPUT_CHARS} chars mostrados. "
+                "Si necesitas explorar archivos usa 'List Directory Files'. "
+                "Nunca uses Get-ChildItem -Recurse sobre directorios con node_modules.]"
+            )
+            complete_output = complete_output[:MAX_OUTPUT_CHARS]
+
         if exit_code == 0:
-            return f"✅ Command completed successfully (exit code 0).\nOutput:\n{complete_output}"
+            return f"\u2705 Command completed successfully (exit code 0).\nOutput:\n{complete_output}{truncation_note}"
         else:
-            return f"❌ Command completed with exit code {exit_code}.\nOutput:\n{complete_output}"
+            return f"\u274c Command completed with exit code {exit_code}.\nOutput:\n{complete_output}{truncation_note}"
 
     except Exception as e:
         return f"Failed to execute command: {str(e)}"
