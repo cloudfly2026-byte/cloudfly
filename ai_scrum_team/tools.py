@@ -229,11 +229,11 @@ def docker_manage(action: str = "up") -> str:
     base_dir = r"C:\apps\cloudfly"
     
     if action == "up":
-        cmd = ["docker-compose", "up", "--build", "-d"]
+        cmd = ["docker-compose", "-f", "docker-compose-local.yml", "up", "--build", "-d"]
     elif action == "down":
-        cmd = ["docker-compose", "down"]
+        cmd = ["docker-compose", "-f", "docker-compose-local.yml", "down"]
     elif action == "status":
-        cmd = ["docker-compose", "ps"]
+        cmd = ["docker-compose", "-f", "docker-compose-local.yml", "ps"]
     else:
         return "Invalid action. Use 'up', 'down', or 'status'."
         

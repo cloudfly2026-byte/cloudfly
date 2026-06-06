@@ -46,13 +46,13 @@ research_task = Task(
     and the CURRENT CODEBASE CONTEXT:
     {codebase_context}
     
-    1. CRITICAL STARTING REFERENCE: You MUST begin your architectural research by reading and analyzing the master docker-compose configuration file `C:\\apps\\cloudfly\\docker-compose-full-vps.yml` using the 'Read Code File' tool. This file is the absolute blueprint of the system's microservices, networks, ports, databases, and dependencies. Use it as your primary reference to understand how the new feature's services and variables are wired into the existing stack.
+    1. CRITICAL STARTING REFERENCE: You MUST begin your architectural research by reading and analyzing the local docker-compose configuration file `C:\\apps\\cloudfly\\docker-compose-local.yml` using the 'Read Code File' tool. This file is the absolute blueprint of the system's microservices, networks, ports, databases, and dependencies in the local development environment (without Traefik, which is only used on the VPS). Use it as your primary reference to understand how the new feature's services and variables are wired into the existing stack.
     2. Use the 'Web Search' tool to investigate tutorials, official documentation, or best practices for this specific technology (e.g., FreeSWITCH PBX, React, etc).
     3. Write a clear Architecture and Implementation Plan for the Developers.
     CRITICAL: You MUST use the 'Comment on Jira Issue' tool to post a summary of your research findings to the relevant Jira Issue Keys. 
     CRITICAL 2: You MUST start your comment with "🤖 **System Architect**: " to identify yourself.
     ''',
-    expected_output='A technical architecture and implementation blueprint starting with docker-compose-full-vps.yml analysis. A Jira comment must be added.',
+    expected_output='A technical architecture and implementation blueprint starting with docker-compose-local.yml analysis. A Jira comment must be added.',
     agent=system_architect
 )
 
