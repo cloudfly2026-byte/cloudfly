@@ -157,13 +157,47 @@ def check_pending_jira_tasks():
 
 def get_relevant_past_stories(sprint_goal, limit=2):
     """
-    Performs a lightweight keyword/token overlap search against past_stories_db.json
-    to retrieve the top matching past stories dynamically, preventing token bloat.
+    Queries Qdrant dynamically for the top matching past stories using CLIP embeddings.
+    Falls back to a lightweight keyword/token overlap search against past_stories_db.json
+    if Qdrant is offline or query fails.
     """
     import os
     import json
     import re
     
+    # 1. Intentar búsqueda semántica en Qdrant
+    try:
+        scrum_dir = os.path.dirname(os.path.abspath(__file__))
+        if scrum_dir not in sys.path:
+            sys.path.insert(0, scrum_dir)
+        import visual_memory
+        
+        client = visual_memory._get_qdrant()
+        if client:
+            # Generar embedding del sprint_goal
+            vector = visual_memory.embed_text(sprint_goal)
+            if vector:
+                results = client.query_points(
+                    collection_name="past_stories",
+                    query=vector,
+                    limit=limit,
+                    with_payload=True
+                )
+                if results and results.points:
+                    ctx = []
+                    ctx.append("### (Búsqueda Semántica Qdrant)")
+                    for r in results.points:
+                        p = r.payload or {}
+                        ctx.append(f"### 📌 [{p.get('key')}] {p.get('summary')} (Similitud: {r.score:.2%})")
+                        ctx.append(f"*   **Descripción**: {p.get('description')}")
+                        ctx.append(f"*   **Solución Aplicada**: {p.get('solution')}")
+                        ctx.append(f"*   **Lección Histórica**: {p.get('lessons')}")
+                        ctx.append("")
+                    return "\n".join(ctx)
+    except Exception as qe:
+        print(f"[⚠️ Alerta Qdrant]: Fallo al buscar en Qdrant, usando fallback local... — {qe}")
+
+    # 2. Fallback local (Token Overlap)
     db_path = r"C:\apps\cloudfly\ai_scrum_team\past_stories_db.json"
     if not os.path.exists(db_path):
         return ""
@@ -208,6 +242,7 @@ def get_relevant_past_stories(sprint_goal, limit=2):
             
         # Format as Markdown
         ctx = []
+        ctx.append("### (Fallback Local - Coincidencia de Palabras Clave)")
         for s in top_matches:
             ctx.append(f"### 📌 [{s.get('key')}] {s.get('summary')}")
             ctx.append(f"*   **Descripción**: {s.get('description')}")
