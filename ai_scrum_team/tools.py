@@ -680,12 +680,256 @@ def execute_command_and_wait(command: str, is_vps: bool = False, expected_output
     except Exception as e:
         return f"Failed to execute command: {str(e)}"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Chrome DevTools Protocol (CDP) Tools — E2E Browser Testing
+# Requires Chrome running with: --remote-debugging-port=9222
+# Set env var CHROME_CDP_URL to override (default: http://localhost:9222)
+# Install dependency: pip install websocket-client requests
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _cdp_get_ws_url() -> str:
+    """Helper: get the WebSocket debugger URL of the first active Chrome page tab."""
+    import requests as _req
+    cdp_url = os.getenv("CHROME_CDP_URL", "http://localhost:9222")
+    targets = _req.get(f"{cdp_url}/json", timeout=5).json()
+    page_targets = [t for t in targets if t.get("type") == "page"]
+    if not page_targets:
+        raise RuntimeError("No Chrome page targets found. Is Chrome running with --remote-debugging-port=9222?")
+    return page_targets[0]["webSocketDebuggerUrl"]
+
+
+@tool("Chrome DevTools: Navigate")
+def chrome_navigate(url: str) -> str:
+    """
+    Opens a URL in the currently active Chrome tab via the Chrome DevTools Protocol (CDP).
+    Use this as the first step of any browser-based E2E test to load the target page.
+    Requires Chrome launched with --remote-debugging-port=9222.
+    :param url: The full URL to navigate to (e.g. 'http://localhost:3000/login').
+    """
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        ws.send(_json.dumps({"id": 1, "method": "Page.navigate", "params": {"url": url}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        frame_id = resp.get("result", {}).get("frameId", "unknown")
+        return f"✅ Chrome navegó a '{url}'. frameId: {frame_id}"
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Navigate: {str(e)}\nVerifica que Chrome esté corriendo con --remote-debugging-port=9222"
+
+
+@tool("Chrome DevTools: Screenshot")
+def chrome_screenshot(filename: str = "screenshot.png") -> str:
+    """
+    Takes a full-page screenshot of the current Chrome tab via CDP and saves it to C:\\apps\\cloudfly\\screenshots.
+    Use this after navigating to a page to visually verify the UI rendered correctly.
+    :param filename: Output filename (e.g. 'login_page.png'). Saved to C:\\apps\\cloudfly\\screenshots\\<filename>.
+    """
+    import base64
+    out_dir = r"C:\apps\cloudfly\screenshots"
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, filename)
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        ws.send(_json.dumps({"id": 1, "method": "Page.captureScreenshot", "params": {"format": "png", "captureBeyondViewport": True}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        data = resp.get("result", {}).get("data", "")
+        if not data:
+            return f"❌ CDP no devolvió datos de imagen. Respuesta: {resp}"
+        with open(out_path, "wb") as f:
+            f.write(base64.b64decode(data))
+        return f"✅ Screenshot guardado en {out_path}"
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Screenshot: {str(e)}"
+
+
+@tool("Chrome DevTools: Evaluate JS")
+def chrome_evaluate(expression: str) -> str:
+    """
+    Executes a JavaScript expression in the current Chrome tab via CDP and returns the result.
+    This is the primary tool for all browser interactions: reading DOM, filling forms,
+    clicking buttons, verifying content, and checking application state.
+
+    Common usage patterns:
+    - Verify element exists:   "document.querySelector('#login-btn') !== null"
+    - Get element text:        "document.querySelector('h1').innerText"
+    - Get page title:          "document.title"
+    - Read localStorage:       "localStorage.getItem('activeTenantId')"
+    - Click a button:          "document.querySelector('#submit').click(); 'clicked'"
+    - Fill a form field:       "document.querySelector('#email').value = 'test@test.com'; 'done'"
+    - Submit a form:           "document.querySelector('form').submit(); 'submitted'"
+    - Count list items:        "document.querySelectorAll('li').length"
+    - Check for error message: "document.querySelector('.error-msg')?.innerText || 'no error'"
+
+    :param expression: Any valid JavaScript expression or statement (single or multi-line).
+    """
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        ws.send(_json.dumps({
+            "id": 1,
+            "method": "Runtime.evaluate",
+            "params": {"expression": expression, "returnByValue": True, "awaitPromise": True}
+        }))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        result = resp.get("result", {}).get("result", {})
+        exc = resp.get("result", {}).get("exceptionDetails")
+        if exc:
+            return f"❌ JS Exception: {exc.get('text', '')} — {exc.get('exception', {}).get('description', '')}"
+        val = result.get("value")
+        rtype = result.get("type", "")
+        return f"✅ JS Result ({rtype}): {val}"
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Evaluate JS: {str(e)}"
+
+
+@tool("Chrome DevTools: Get Console Logs")
+def chrome_get_console_logs() -> str:
+    """
+    Retrieves browser console logs captured by the __cdp_logs__ interceptor in the current Chrome tab.
+    Use this to detect JavaScript errors, failed API calls, or unexpected warnings after page interactions.
+    
+    NOTE: The interceptor is injected automatically by 'Chrome DevTools: Inject Log Interceptor'.
+    Call that tool first on page load, then interact with the page, then call this tool.
+    Returns up to the last 50 console entries.
+    """
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        js = "(function() { var logs = window.__cdp_logs__ || []; return logs.slice(-50).join('\\n'); })()"
+        ws.send(_json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js, "returnByValue": True}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        val = resp.get("result", {}).get("result", {}).get("value", "")
+        if not val:
+            return "ℹ️ No hay logs en window.__cdp_logs__. Usa 'Chrome DevTools: Inject Log Interceptor' primero, luego interactúa con la página."
+        return f"📋 Console Logs (últimos 50):\n{val}"
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Get Console Logs: {str(e)}"
+
+
+@tool("Chrome DevTools: Inject Log Interceptor")
+def chrome_inject_log_interceptor() -> str:
+    """
+    Injects a console log interceptor into the current Chrome tab via CDP.
+    This must be called ONCE after navigating to a page to start capturing console.log,
+    console.error, and console.warn output into window.__cdp_logs__ for later retrieval
+    with 'Chrome DevTools: Get Console Logs'.
+    """
+    interceptor_js = """
+    (function() {
+        if (window.__cdp_logs_injected__) return 'already_injected';
+        window.__cdp_logs__ = [];
+        window.__cdp_logs_injected__ = true;
+        ['log', 'warn', 'error', 'info'].forEach(function(level) {
+            var orig = console[level];
+            console[level] = function() {
+                var msg = Array.from(arguments).map(function(a) {
+                    try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch(e) { return String(a); }
+                }).join(' ');
+                window.__cdp_logs__.push('[' + level.toUpperCase() + '] ' + msg);
+                orig.apply(console, arguments);
+            };
+        });
+        return 'interceptor_injected';
+    })()
+    """
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        ws.send(_json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": interceptor_js, "returnByValue": True}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        val = resp.get("result", {}).get("result", {}).get("value", "unknown")
+        return f"✅ Log interceptor: {val}. Ahora puedes usar 'Chrome DevTools: Get Console Logs' después de interactuar con la página."
+    except Exception as e:
+        return f"❌ Error inyectando log interceptor: {str(e)}"
+
+
+@tool("Chrome DevTools: Network Requests")
+def chrome_network_requests() -> str:
+    """
+    Injects a network interceptor (XHR + fetch) into the current Chrome tab and returns all
+    captured HTTP requests so far. Use this to verify API calls are being made, check HTTP
+    status codes, or detect failed requests (4xx/5xx errors).
+
+    WORKFLOW:
+    1. Call this tool BEFORE interacting with the page to inject the interceptor.
+    2. Perform your UI interactions using 'Chrome DevTools: Evaluate JS'.
+    3. Call this tool AGAIN to read the captured requests.
+    """
+    try:
+        import websocket, json as _json
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+
+        # Inject XHR/fetch interceptor
+        interceptor_js = """
+        (function() {
+            if (window.__cdp_network_log__) {
+                return JSON.stringify(window.__cdp_network_log__.slice(-30));
+            }
+            window.__cdp_network_log__ = [];
+            var _open = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                this.__url = url; this.__method = method;
+                this.addEventListener('loadend', function() {
+                    window.__cdp_network_log__.push({method: this.__method, url: this.__url, status: this.status});
+                });
+                return _open.apply(this, arguments);
+            };
+            var _fetch = window.fetch;
+            window.fetch = function(url, opts) {
+                return _fetch(url, opts).then(function(r) {
+                    window.__cdp_network_log__.push({method: (opts&&opts.method)||'GET', url: url.toString(), status: r.status});
+                    return r;
+                });
+            };
+            return '"interceptor_injected_no_requests_yet"';
+        })()
+        """
+        ws.send(_json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": interceptor_js, "returnByValue": True}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+
+        raw = resp.get("result", {}).get("result", {}).get("value", "[]")
+        # raw can be a string (JSON) or already parsed
+        if isinstance(raw, str):
+            entries = _json.loads(raw)
+        else:
+            entries = raw if isinstance(raw, list) else []
+
+        if not entries:
+            return "ℹ️ Interceptor inyectado. Aún no hay requests capturados — interactúa con la página y llama a esta herramienta nuevamente."
+        lines = [f"  [{e.get('status','?')}] {e.get('method','?')} {e.get('url','?')}" for e in entries]
+        return f"🌐 Network Requests capturados ({len(entries)}):\n" + "\n".join(lines)
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Network Requests: {str(e)}"
+
+
 def get_jira_tools():
     """
     Returns native CrewAI tools for Jira to avoid Pydantic validation errors 
     with LangChain community tools. Also disables tool caching globally.
     """
-    all_tools = [jql_query, create_issue, get_projects, write_code_to_file, docker_manage, test_endpoint, comment_issue, transition_issue, web_search, list_directory_files, read_code_file, read_jira_issue, execute_console_command, check_background_task, commit_code, ask_human_clarification, execute_vps_ssh_command, wait_seconds, execute_command_and_wait]
+    all_tools = [
+        jql_query, create_issue, get_projects, write_code_to_file, docker_manage,
+        test_endpoint, comment_issue, transition_issue, web_search, list_directory_files,
+        read_code_file, read_jira_issue, execute_console_command, check_background_task,
+        commit_code, ask_human_clarification, execute_vps_ssh_command, wait_seconds,
+        execute_command_and_wait,
+        # ── Chrome DevTools Protocol (CDP) — E2E Browser Testing ──────
+        chrome_navigate, chrome_screenshot, chrome_evaluate,
+        chrome_inject_log_interceptor, chrome_get_console_logs, chrome_network_requests
+    ]
     
     # Force disable caching on every tool to avoid 'from cache' ghost results
     for t in all_tools:

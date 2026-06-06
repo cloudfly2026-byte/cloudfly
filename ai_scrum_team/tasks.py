@@ -122,27 +122,34 @@ quality_assurance = Task(
        - Use the 'Execute Console Command' tool to run backend tests (e.g. pytest scripts, JUnit tests, or curl commands) to assert endpoint success and correct JSON response formats.
        - If any command returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix. Then apply the fix and retry.
 
-    2. FRONTEND TESTING:
-       - If the sprint feature involves frontend changes in the active Next.js/React workspace (frontend_new), you MUST write automated E2E tests using Playwright or Cypress to verify UI layouts, interactive flows, forms, and client-side multi-tenant session storage.
-       - Use the 'Write Code To File' tool to save the new automated test script strictly inside the active "frontend_new/tests" or "frontend_new/e2e" directory, ending in ".spec.js" or ".spec.ts", and starting with the prefix "AGENTE_DEV_" (e.g. "C:\\apps\\cloudfly\\frontend_new\\tests\\AGENTE_DEV_login.spec.js").
-       - Use the 'Execute Console Command' tool to run the newly created frontend tests (e.g. "cd frontend_new && npx playwright test").
-       - If any command returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix. Then apply the fix and retry.
+    2. FRONTEND E2E TESTING WITH CHROME DEVTOOLS (CDP):
+       - If the sprint feature involves frontend changes in the active Next.js/React workspace (frontend_new), you MUST perform browser-based E2E tests using the Chrome DevTools Protocol (CDP) tools.
+       - WORKFLOW for each frontend test scenario:
+         a. Use 'Chrome DevTools: Navigate' to open the target page (e.g. 'http://localhost:3000/dashboard').
+         b. Use 'Chrome DevTools: Inject Log Interceptor' to start capturing console output.
+         c. Use 'Chrome DevTools: Network Requests' to inject the network interceptor before interacting.
+         d. Use 'Chrome DevTools: Evaluate JS' to interact with the UI: fill forms, click buttons, verify DOM elements, check localStorage values (e.g. 'activeTenantId', 'activeCompanyId').
+         e. Use 'Chrome DevTools: Screenshot' to capture a visual proof of the UI state. Save with descriptive names like 'login_success.png', 'dashboard_after_create.png'.
+         f. Use 'Chrome DevTools: Get Console Logs' to detect any JS errors or warnings.
+         g. Use 'Chrome DevTools: Network Requests' again to verify all API calls returned 2xx status codes.
+       - CRITICAL: Chrome MUST be running with --remote-debugging-port=9222. If the CDP tools return "No Chrome page targets found", use 'Execute Console Command' to launch Chrome: `Start-Process "chrome.exe" --ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check http://localhost:3000"`
+       - Write a Python test script (e.g. test_frontend_cdp.py) that documents the test steps and assertions, save it using 'Write Code To File' to the path 'tests/AGENTE_DEV_<feature_name>_cdp.py'. This script should use the websocket-client library to connect to CDP directly and run the same assertions you performed manually.
 
     3. E2E INTEGRATION & SPEC COMPLIANCE:
        - You must verify that the full, multi-tiered data flow behaves perfectly (e.g., frontend action triggers backend api -> backend persists in DB -> pushes to Kafka -> worker processes campaign -> Evolution API sends message).
-       - The task should ONLY be considered a SUCCESS if all E2E integration, backend, database, and frontend tests run successfully with 0 failures. If any test fails, it is a FAILURE.
+       - The task should ONLY be considered a SUCCESS if all E2E integration, backend, database, and frontend tests pass with 0 failures. If any test fails, it is a FAILURE.
        
     CRITICAL INSTRUCTIONS based on the verification result:
     
     SCENARIO A - SUCCESS (The entire project behaves perfectly, all tests pass, and all specs are met):
     1. You MUST use the 'Transition Jira Issue' tool to change the status of ALL the original Jira Issue Keys to 'Done'.
     2. AFTER transitioning the original issues, you MUST check if any of the original issues have a parent issue (Epic/Historia). For each parent found, use the 'Read Jira Issue' tool to check if ALL of its subtasks are in 'Done' or 'Finalizada' status. If ALL subtasks are done, you MUST also transition the parent issue to 'Done'.
-    3. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend tests run. If you also closed the parent issue, mention this in the comment.
+    3. You MUST use the 'Comment on Jira Issue' tool to post the final QA sign-off report summarizing all backend, database, messaging, and frontend CDP tests run, including the screenshot filenames captured. If you also closed the parent issue, mention this in the comment.
     
-    SCENARIO B - FAILURE (Any endpoint failure, database inconsistency, automated test failure, or bug detected):
+    SCENARIO B - FAILURE (Any endpoint failure, database inconsistency, CDP test failure, or bug detected):
     1. DO NOT transition the original issues to 'Done'. You MUST use the 'Transition Jira Issue' tool to change the original issue status back to 'To Do' (or keep it 'In Progress').
     2. DO NOT transition any parent issues to 'Done' either.
-    3. DO NOT CREATE ANY NEW JIRA TICKETS. Instead, you MUST use the 'Comment on Jira Issue' tool to post a detailed failure report on the active Jira issue detailing the exact failure, the specific automated test that failed, and relevant logs.
+    3. DO NOT CREATE ANY NEW JIRA TICKETS. Instead, you MUST use the 'Comment on Jira Issue' tool to post a detailed failure report on the active Jira issue detailing the exact failure, the CDP assertion that failed, relevant console logs, and network request errors.
     4. You MUST explicitly mention the Product Owner Edwin Guevara (`@edwin guevara` or `@Edwin`) in the comment to notify him about the failed validation/tests so he can review the blockers.
     
     In BOTH scenarios, ALWAYS start your comments with "🤖 **QA Engineer**: " to identify yourself.
@@ -150,7 +157,7 @@ quality_assurance = Task(
     
     CRITICAL FOR SPEC-DRIVEN DEVELOPMENT: If a specification file is present in the codebase context (such as spec.md), you MUST validate the endpoints and configurations strictly against that specification. Any deviation from the spec MUST be reported as a BUG.
     ''',
-    expected_output='QA E2E sign-off report covering the entire project (Backend, Frontend, DB, Messaging), and Jira issues transitioned to Done (if success), OR a detailed failure comment mentioning Edwin Guevara on the active Jira issue (if failure).',
+    expected_output='QA E2E sign-off report covering the entire project (Backend, Frontend CDP tests, DB, Messaging, screenshots), and Jira issues transitioned to Done (if success), OR a detailed failure comment mentioning Edwin Guevara on the active Jira issue (if failure).',
     agent=qa_engineer
 )
 
@@ -188,11 +195,15 @@ frontend_development_task = Task(
     3. Ensure proper multi-tenant isolation by persistency and retrieval of \'activeTenantId\' and \'activeCompanyId\' from localStorage or routing.
     4. You MUST use the 'Write Code To File' tool to save all your frontend files strictly inside the "C:\\apps\\cloudfly\\frontend_new" directory structure.
     5. CRITICAL: When exploring the frontend_new directory, you MUST exclude the "node_modules" folder from all reviews and file listings. Never read, list, or modify files inside node_modules. Use 'List Directory Files' with directory="frontend_new" and ignore any node_modules entries.
-    6. Write an automated unit or integration test script for your UI files if required.
-    7. Post a summary of your frontend changes in a Jira comment on the relevant Jira Issue Keys, starting with "🤖 **Frontend Developer**: " to identify yourself.
+    6. QUICK VISUAL VERIFICATION: After writing the components, use the Chrome DevTools tools to do a quick smoke test:
+       a. 'Chrome DevTools: Navigate' to the relevant page (e.g. 'http://localhost:3000').
+       b. 'Chrome DevTools: Screenshot' to capture the current render as 'frontend_dev_<feature>.png'.
+       c. 'Chrome DevTools: Evaluate JS' to verify key elements exist (e.g. "document.querySelector('.my-component') !== null").
+       If Chrome is not available, skip this step and note it in your Jira comment.
+    7. Post a summary of your frontend changes in a Jira comment on the relevant Jira Issue Keys, starting with "🤖 **Frontend Developer**: " to identify yourself. Include screenshot filename if captured.
     8. Before passing to DevOps/QA, use the 'Commit Code' tool to save your changes to Git.
     ''',
-    expected_output='All React/Next.js files and UI components written to frontend_new. A Jira comment must be added.',
+    expected_output='All React/Next.js files and UI components written to frontend_new. Optional CDP smoke test screenshot captured. A Jira comment must be added.',
     agent=frontend_developer
 )
 
