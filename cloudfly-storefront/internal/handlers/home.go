@@ -52,14 +52,35 @@ type Product struct {
 	Available   bool    `json:"available"`
 }
 
+type Page struct {
+	ID              int64     `json:"id"`
+	CompanyID       int64     `json:"company_id"`
+	Type            string    `json:"type"`
+	Title           string    `json:"title"`
+	Slug            string    `json:"slug"`
+	Content         string    `json:"content"`
+	Excerpt         string    `json:"excerpt"`
+	FeaturedImage   string    `json:"featured_image"`
+	Status          string    `json:"status"`
+	MetaTitle       string    `json:"meta_title"`
+	MetaDescription string    `json:"meta_description"`
+	AuthorID        int64     `json:"author_id"`
+	IaUpdate        bool      `json:"ia_update"`
+	PublishedAt     time.Time `json:"published_at"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
 type StorefrontData struct {
-	Company     Company
-	Theme       Theme
-	Categories  []Category
-	Products    []Product
-	CurrentPath string   // e.g. "/" "/chatbots" "/chatbots/producto-name"
-	ActiveCat   string   // active category slug
-	ActiveProduct *Product // set when viewing a single product
+	Company       Company
+	Theme         Theme
+	Categories    []Category
+	Products      []Product
+	Pages         []Page
+	CurrentPath   string    // e.g. "/" "/chatbots" "/chatbots/producto-name"
+	ActiveCat     string    // active category slug
+	ActiveProduct *Product  // set when viewing a single product
+	ActivePage    *Page     // set when viewing a single page or post
 }
 
 // stripMarkdown removes common markdown syntax for plain-text rendering

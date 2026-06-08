@@ -12,9 +12,9 @@ import (
 )
 
 // resolveTenant resolves tenant/company IDs from the request hostname.
-// Returns (tenantID, companyID, company, theme, categories, products, ok).
+// Returns (tenantID, companyID, company, theme, categories, products, pages, ok).
 // If ok=false the caller should redirect or 403.
-func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Product, bool) {
+func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Product, []Page, bool) {
 	host := c.Hostname()
 	isLocal := host == "localhost" || host == "127.0.0.1" ||
 		strings.HasPrefix(host, "192.168.") || strings.HasPrefix(host, "10.")
@@ -40,7 +40,7 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 
 	if !resolved && !isLocal {
 		_ = c.Redirect("https://www.cloudfly.com.co", 302)
-		return 0, 0, Company{}, Theme{}, nil, nil, false
+		return 0, 0, Company{}, Theme{}, nil, nil, nil, false
 	}
 
 	if resolved {
@@ -50,7 +50,7 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 		}
 		if !isActive {
 			_ = c.Status(403).SendString("<h1>403</h1><p>Suscripción inactiva.</p>")
-			return 0, 0, Company{}, Theme{}, nil, nil, false
+			return 0, 0, Company{}, Theme{}, nil, nil, nil, false
 		}
 		if database.DB != nil {
 			var subStatus string
@@ -61,7 +61,7 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 			).Scan(&subStatus, &subEnd)
 			if err != nil {
 				_ = c.Status(403).SendString("<h1>403</h1><p>Sin suscripción activa.</p>")
-				return 0, 0, Company{}, Theme{}, nil, nil, false
+				return 0, 0, Company{}, Theme{}, nil, nil, nil, false
 			}
 		}
 	}
@@ -70,6 +70,7 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 	theme := Theme{PrimaryColor: "#6366f1", SecondaryColor: "#10b981"}
 	var categories []Category
 	var products []Product
+	var pages []Page
 
 	if database.DB != nil {
 		var logoURL, compDesc, compPhone, compEmail, compAddress sql.NullString
@@ -174,19 +175,44 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 			}
 			pRows.Close()
 		}
+
+		// Load published pages and posts
+		pageRows, err := database.DB.Query(
+			"SELECT id, type, title, slug, content, excerpt, featured_image, status, meta_title, meta_description, author_id, ia_update, published_at, created_at, updated_at FROM pages WHERE company_id = ? AND status = 'published' ORDER BY created_at DESC",
+			companyID,
+		)
+		if err == nil {
+			for pageRows.Next() {
+				var page Page
+				var publishedAt sql.NullTime
+				if err := pageRows.Scan(
+					&page.ID, &page.Type, &page.Title, &page.Slug,
+					&page.Content, &page.Excerpt, &page.FeaturedImage,
+					&page.Status, &page.MetaTitle, &page.MetaDescription,
+					&page.AuthorID, &page.IaUpdate, &publishedAt, &page.CreatedAt, &page.UpdatedAt,
+				); err == nil {
+					if publishedAt.Valid {
+						page.PublishedAt = publishedAt.Time
+					}
+					page.CompanyID = companyID
+					pages = append(pages, page)
+				}
+			}
+			pageRows.Close()
+		}
 	}
 
-	log.Printf("ℹ️  [StorePage] host=%s tenantID=%d companyID=%d cats=%d prods=%d",
-		domainName, tenantID, companyID, len(categories), len(products))
+	log.Printf("ℹ️  [StorePage] host=%s tenantID=%d companyID=%d cats=%d prods=%d pages=%d",
+		domainName, tenantID, companyID, len(categories), len(products), len(pages))
 
-	return tenantID, companyID, company, theme, categories, products, true
+	return tenantID, companyID, company, theme, categories, products, pages, true
 }
 
 // CategoryPage handles GET /:categorySlug
 // URL: /chatbots
 func CategoryPage(c *fiber.Ctx) error {
 	catSlug := c.Params("categorySlug")
-	tenantID, companyID, company, theme, categories, products, ok := resolveTenant(c)
+	tenantID, companyID, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -216,6 +242,7 @@ func CategoryPage(c *fiber.Ctx) error {
 		Theme:       theme,
 		Categories:  categories,
 		Products:    filtered,
+		Pages:       pages,
 		CurrentPath: "/" + catSlug,
 		ActiveCat:   catSlug,
 	})
@@ -236,7 +263,7 @@ func ProductPage(c *fiber.Ctx) error {
 	catSlug := c.Params("categorySlug")
 	prodSlug := c.Params("productSlug")
 
-	_, _, company, theme, categories, products, ok := resolveTenant(c)
+	_, _, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -263,6 +290,7 @@ func ProductPage(c *fiber.Ctx) error {
 		Theme:         theme,
 		Categories:    categories,
 		Products:      products,
+		Pages:         pages,
 		CurrentPath:   "/" + catSlug + "/" + prodSlug,
 		ActiveCat:     catSlug,
 		ActiveProduct: activeProduct,
@@ -276,7 +304,7 @@ func ProductPage(c *fiber.Ctx) error {
 
 // CatalogoPage handles GET /catalogo — full catalog (all products)
 func CatalogoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, products, ok := resolveTenant(c)
+	_, _, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -285,6 +313,7 @@ func CatalogoPage(c *fiber.Ctx) error {
 		Theme:       theme,
 		Categories:  categories,
 		Products:    products,
+		Pages:       pages,
 		CurrentPath: "/catalogo",
 	})
 	if err != nil {
@@ -296,7 +325,7 @@ func CatalogoPage(c *fiber.Ctx) error {
 
 // CarritoPage handles GET /carrito
 func CarritoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, ok := resolveTenant(c)
+	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -304,6 +333,7 @@ func CarritoPage(c *fiber.Ctx) error {
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
+		Pages:       pages,
 		CurrentPath: "/carrito",
 	})
 	if err != nil {
@@ -315,7 +345,7 @@ func CarritoPage(c *fiber.Ctx) error {
 
 // NosotrosPage handles GET /nosotros
 func NosotrosPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, ok := resolveTenant(c)
+	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -323,6 +353,7 @@ func NosotrosPage(c *fiber.Ctx) error {
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
+		Pages:       pages,
 		CurrentPath: "/nosotros",
 	})
 	if err != nil {
@@ -334,7 +365,7 @@ func NosotrosPage(c *fiber.Ctx) error {
 
 // ContactoPage handles GET /contacto
 func ContactoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, ok := resolveTenant(c)
+	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -342,7 +373,74 @@ func ContactoPage(c *fiber.Ctx) error {
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
+		Pages:       pages,
 		CurrentPath: "/contacto",
+	})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	c.Set("Content-Type", "text/html")
+	return c.SendString(html)
+}
+
+// BlogPage handles GET /blog — list all blog posts
+func BlogPage(c *fiber.Ctx) error {
+	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	if !ok {
+		return nil
+	}
+
+	// Filter only posts
+	var posts []Page
+	for _, p := range pages {
+		if p.Type == "post" {
+			posts = append(posts, p)
+		}
+	}
+
+	html, err := renderStorefront(StorefrontData{
+		Company:     company,
+		Theme:       theme,
+		Categories:  categories,
+		Pages:       posts,
+		CurrentPath: "/blog",
+	})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	c.Set("Content-Type", "text/html")
+	return c.SendString(html)
+}
+
+// PageBySlug handles GET /p/:slug — dynamic page/post by slug
+// This allows rendering any page or post created in the CMS
+func PageBySlug(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	if !ok {
+		return nil
+	}
+
+	// Find the page by slug
+	var activePage *Page
+	for i, p := range pages {
+		if p.Slug == slug {
+			activePage = &pages[i]
+			break
+		}
+	}
+
+	if activePage == nil {
+		return c.Status(404).SendString("<h1>404</h1><p>Página no encontrada.</p>")
+	}
+
+	html, err := renderStorefront(StorefrontData{
+		Company:     company,
+		Theme:       theme,
+		Categories:  categories,
+		Pages:       pages,
+		CurrentPath: "/p/" + slug,
+		ActivePage:  activePage,
 	})
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
