@@ -105,6 +105,8 @@ func Home(c *fiber.Ctx) error {
 		}
 	}
 
+	log.Printf("ℹ️  [Domain Resolved]: host=%s resolved=%v tenantID=%d companyID=%d", domainName, resolved, tenantID, companyID)
+
 	// If the domain is not registered, redirect to CloudFly landing page
 	if !resolved && !isLocal {
 		return c.Redirect("https://www.cloudfly.com.co", 302)
