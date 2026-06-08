@@ -34,6 +34,9 @@ public class FacebookOAuthController {
     private final JwtProvider jwtProvider;
     private final RoleRepository roleRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${facebook.login.app.id:${facebook.app.id:}}")
+    private String facebookLoginAppId;
+
     public FacebookOAuthController(OAuthService oauthService,
                                     UserService userService,
                                     JwtProvider jwtProvider,
@@ -122,7 +125,7 @@ public class FacebookOAuthController {
     @GetMapping("/facebook/config")
     public Mono<ResponseEntity<Map<String, String>>> getFacebookConfig() {
         return Mono.just(ResponseEntity.ok(Map.of(
-                "appId", System.getenv().getOrDefault("FACEBOOK_APP_ID", "")
+                "appId", facebookLoginAppId != null ? facebookLoginAppId : ""
         )));
     }
 }

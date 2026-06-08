@@ -29,8 +29,11 @@ export const authOptions: NextAuthOptions = {
         const { username, password } = credentials as { username: string; password: string }
 
         try {
+          const apiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+          console.log(`[NextAuth] Connecting to backend at: ${apiUrl}/auth/login`)
+          
           // ** Login API Call to match the user credentials and receive user data in response along with his role
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          const res = await fetch(`${apiUrl}/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

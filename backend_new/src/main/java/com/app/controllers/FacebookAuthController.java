@@ -86,4 +86,14 @@ public class FacebookAuthController {
                     return Mono.just(ResponseEntity.internalServerError().build());
                 });
     }
+
+    @GetMapping("/ad-accounts")
+    public Mono<ResponseEntity<List<Map<String, Object>>>> getAdAccounts(@RequestHeader("X-FB-User-Token") String userToken) {
+        return facebookService.getUserAdAccounts(userToken)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> {
+                    log.error("Error fetching ad accounts: {}", e.getMessage());
+                    return Mono.just(ResponseEntity.internalServerError().build());
+                });
+    }
 }

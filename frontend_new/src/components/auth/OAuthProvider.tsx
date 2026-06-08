@@ -132,16 +132,18 @@ const OAuthProvider: React.FC<OAuthProviderProps> = ({ mode, onError, onSuccess 
   // Initialize Facebook SDK
   // ============================================================
   useEffect(() => {
-    if (!facebookAppId) return;
+    // CLOUD-286: Prioritize Consumer Login App ID for social sign-in/registration
+    const loginAppId = process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_APP_ID || facebookAppId;
+    if (!loginAppId) return;
 
     // Set up fbAsyncInit
     window.fbAsyncInit = () => {
       if (window.FB) {
         window.FB.init({
-          appId: facebookAppId,
+          appId: loginAppId,
           cookie: true,
           xfbml: true,
-          version: 'v18.0',
+          version: 'v19.0',
         });
         setFacebookReady(true);
       }

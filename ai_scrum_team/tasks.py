@@ -139,7 +139,23 @@ quality_assurance = Task(
          g. Use 'Chrome DevTools: Network Requests' again to verify all API calls returned 2xx status codes.
         - CRITICAL - PASO OBLIGATORIO ANTES DE CUALQUIER CDP: SIEMPRE lanza Chrome con debugging ANTES de usar cualquier herramienta CDP. Ejecuta este comando con 'Execute Console Command' PRIMERO: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\tmp\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`. Si el CDP devuelve error de conexión (puerto 9222 rechazado), es porque Chrome no está corriendo con debugging — ejecuta el mismo comando y espera 3 segundos antes de reintentar.
        - Write a Python test script (e.g. test_frontend_cdp.py) that documents the test steps and assertions, save it using 'Write Code To File' to the path 'tests/AGENTE_DEV_<feature_name>_cdp.py'. This script should use the websocket-client library to connect to CDP directly and run the same assertions you performed manually.
- 
+
+    2b. EVIDENCIA VISUAL OBLIGATORIA — CAPTURAS ANOTADAS EN JIRA:
+       - CADA VEZ que detectes un error, bug visual, regresión o mejora de UI, DEBES documentarlo visualmente siguiendo este flujo OBLIGATORIO:
+         PASO 1: Navega a la página afectada con 'Chrome DevTools: Navigate'.
+         PASO 2: Usa 'Chrome DevTools: Screenshot with Annotation' para tomar una captura anotada. Parámetros:
+                 - `filename`: nombre descriptivo (ej: 'login_button_error.png')
+                 - `annotation_text`: descripción clara del error (ej: 'ERROR: El botón de login no responde — HTTP 401 desde /api/auth/login')
+                 - `annotation_color`: 'error' para bugs, 'warning' para advertencias, 'info' para mejoras, 'qa' para hallazgos generales
+                 - `highlight_selector`: selector CSS del elemento problemático si lo conoces (ej: '#login-btn', '.error-banner')
+         PASO 3: Usa 'Jira: Attach Screenshot and Comment' para subir la captura anotada al issue de Jira. Parámetros:
+                 - `issue_key`: el ticket afectado (ej: 'CLOUD-123')
+                 - `screenshot_path`: la ruta devuelta por el paso anterior
+                 - `comment`: descripción detallada del hallazgo, incluyendo pasos para reproducir y sugerencia de solución
+                 - `bug_type`: 'ui', 'layout', 'qa' o 'improvement'
+       - APLICA ESTE FLUJO tanto en caso de FALLO (para reportar el error) como en caso de ÉXITO (para documentar el estado visual correcto).
+       - El comentario del agente QA en Jira SIEMPRE debe mencionar el nombre del archivo de captura adjuntada.
+
     3. E2E INTEGRATION & SPEC COMPLIANCE:
        - You must verify that the full, multi-tiered data flow behaves perfectly (e.g., frontend action triggers backend api -> backend persists in DB -> pushes to Kafka -> worker processes campaign -> Evolution API sends message).
        - The task should ONLY be considered a SUCCESS if all E2E integration, backend, database, and frontend tests pass with 0 failures. If any test fails, it is a FAILURE.

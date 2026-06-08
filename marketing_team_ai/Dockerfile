@@ -10,21 +10,21 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements primero (cache Docker)
-COPY requirements.txt .
+COPY marketing_team_ai/requirements.txt .
 
 # Instalar dependencias
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar todos los módulos del proyecto
-COPY *.py ./
-COPY agents/ ./agents/
-COPY crews/ ./crews/
-COPY flows/ ./flows/
-COPY kafka/ ./kafka/
-COPY services/ ./services/
-COPY tools/ ./tools/
-COPY sql/ ./sql/
+# Copiar todos los módulos del proyecto desde marketing_team_ai/
+COPY marketing_team_ai/*.py ./
+COPY marketing_team_ai/agents/ ./agents/
+COPY marketing_team_ai/crews/ ./crews/
+COPY marketing_team_ai/flows/ ./flows/
+COPY marketing_team_ai/kafka/ ./kafka/
+COPY marketing_team_ai/services/ ./services/
+COPY marketing_team_ai/tools/ ./tools/
+COPY marketing_team_ai/sql/ ./sql/
 
 # Puerto
 EXPOSE 8000

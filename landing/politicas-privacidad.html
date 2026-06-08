@@ -5,305 +5,234 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Política de Privacidad de CloudFly ERP - Información sobre cómo recopilamos, usamos y protegemos sus datos personales.">
-    <title>Política de Privacidad - CloudFly ERP</title>
+        content="Política de Privacidad de CloudFly - Conoce cómo recopilamos, procesamos y protegemos tus datos personales e información del negocio.">
+    <title>Política de Privacidad | CloudFly</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Estilos específicos para páginas legales */
-        .legal-hero {
-            padding: 140px 0 60px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            text-align: center;
-        }
-
-        .legal-hero h1 {
-            font-size: 3rem;
-            color: #1e293b;
-            margin-bottom: 1rem;
-            font-weight: 800;
-        }
-
-        .legal-hero p {
-            font-size: 1.1rem;
-            color: #64748b;
-        }
-
-        .legal-content {
-            padding: 80px 0;
-            background: #fff;
+        /* Estilos específicos para páginas legales integrados con la plantilla */
+        .legal-section {
+            padding: 12rem 0 6rem 0;
+            background: linear-gradient(180deg, rgba(248, 250, 252, 0.5) 0%, rgba(255, 255, 255, 1) 100%);
         }
 
         .legal-container {
             max-width: 800px;
             margin: 0 auto;
-            color: #334155;
+            color: var(--text-color);
             line-height: 1.8;
-            font-size: 1.05rem;
         }
 
-        .legal-container h2 {
-            color: #1e293b;
+        .legal-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .legal-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .legal-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .legal-content h2 {
+            font-size: 1.75rem;
             margin-top: 3rem;
             margin-bottom: 1.5rem;
-            font-size: 1.75rem;
+            color: #1e293b;
             font-weight: 700;
         }
 
-        .legal-container h3 {
-            color: #334155;
+        .legal-content h3 {
+            font-size: 1.3rem;
             margin-top: 2rem;
             margin-bottom: 1rem;
-            font-size: 1.4rem;
+            color: #334155;
             font-weight: 600;
         }
 
-        .legal-container p {
+        .legal-content p {
             margin-bottom: 1.5rem;
+            color: #475569;
         }
 
-        .legal-container ul {
+        .legal-content ul {
             margin-bottom: 1.5rem;
             padding-left: 1.5rem;
         }
 
-        .legal-container li {
+        .legal-content li {
             margin-bottom: 0.75rem;
+            color: #475569;
         }
 
-        .legal-container strong {
-            color: #1e293b;
-            font-weight: 600;
+        .legal-content strong {
+            color: #0f172a;
         }
     </style>
 </head>
 
 <body>
-    <!-- Header/Navigation -->
-    <header class="header">
+    <div class="mesh-bg"></div>
+
+    <header id="main-header">
         <div class="container">
-            <nav class="nav">
-                <div class="logo">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" style="color: #8B5CF6;">
-                        <path d="M12 8V4H8"></path>
-                        <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-                        <path d="M2 14h2"></path>
-                        <path d="M20 14h2"></path>
-                        <path d="M15 13v2"></path>
-                        <path d="M9 13v2"></path>
-                    </svg>
-                    <span class="logo-text">CloudFly Marketing AI Pro</span>
-                </div>
-                <!-- Links regresan a la landing principal -->
-                <ul class="nav-links">
-                    <li><a href="landing.html#caracteristicas">Características</a></li>
-                    <li><a href="landing.html#modulos">Módulos</a></li>
-                </ul>
-                <div class="nav-actions">
-                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-secondary">Acceso Clientes</a>
-                    <a href="https://dashboard.cloudfly.com.co/register" class="btn-primary">Prueba Gratis</a>
+            <nav>
+                <a href="index.html" class="logo">
+                    <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                </a>
+                <div class="nav-links">
+                    <a href="index.html#ventajas">Ventajas</a>
+                    <a href="index.html#ia">IA Agent</a>
+                    <div class="dropdown">
+                        <a href="#servicios" style="cursor: pointer;">Nuestros Servicios <i data-lucide="chevron-down"
+                                style="width: 16px; vertical-align: middle;"></i></a>
+                        <div class="dropdown-content">
+                            <a href="diseno-web.html">Diseño Web</a>
+                            <a href="desarrollo-aplicaciones.html">Desarrollo a la Medida</a>
+                            <a href="consultoria.html">Consultoría</a>
+                            <a href="hosting.html">Hosting (VPS, Compartido)</a>
+                            <a href="soporte-wordpress.html">Soporte WordPress</a>
+                            <a href="estrategia-digital.html">Estrategia Digital</a>
+                            <a href="desarrollo-movil.html">Desarrollo Móvil</a>
+                        </div>
+                    </div>
+                    <a href="index.html#pos">POS</a>
+                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta">Iniciar Sesión</a>
                 </div>
             </nav>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="legal-hero">
+    <section class="legal-section">
         <div class="container">
-            <h1>Política de Privacidad</h1>
-            <p>Última actualización: 27 de Diciembre de 2025</p>
-        </div>
-    </section>
+            <div class="legal-container">
+                <div class="legal-header">
+                    <h1>Política de Privacidad</h1>
+                    <p>Última actualización: 4 de Junio de 2026</p>
+                </div>
+                
+                <div class="legal-content">
+                    <h2>1. Introducción</h2>
+                    <p>
+                        En CloudFly, respetamos tu privacidad y nos comprometemos firmemente a proteger la seguridad de tus datos personales e información empresarial. Esta Política de Privacidad describe cómo recopilamos, usamos, divulgamos y salvaguardamos tu información cuando interactúas con nuestra Plataforma.
+                    </p>
 
-    <!-- Main Content -->
-    <section class="legal-content">
-        <div class="container legal-container">
-            <h2>1. Introducción</h2>
-            <p>
-                En CloudFly ERP ("nosotros", "nuestro" o "la Empresa"), respetamos su privacidad y nos comprometemos
-                firmemente a proteger sus datos personales. Esta Política de Privacidad describe cómo recopilamos,
-                usamos, divulgamos y salvaguardamos su información cuando visita nuestro sitio web o utiliza nuestra
-                plataforma de servicios empresariales (la "Plataforma").
-            </p>
-            <p>
-                Por favor, lea esta política de privacidad cuidadosamente. Si no está de acuerdo con los términos de
-                esta política de privacidad, no acceda al sitio.
-            </p>
+                    <h2>2. Información que Recopilamos</h2>
+                    <p>
+                        Podemos recopilar información sobre ti de diversas formas al registrarte o usar nuestros servicios:
+                    </p>
+                    <h3>2.1. Datos Personales</h3>
+                    <p>
+                        Información básica de contacto y perfil como tu nombre, dirección de correo electrónico, número de teléfono y nombre de tu empresa, proporcionados de forma voluntaria al registrarte en la plataforma.
+                    </p>
+                    <h3>2.2. Datos de Canales Integrados (APIs de Meta, WhatsApp, Telegram, etc.)</h3>
+                    <p>
+                        Nuestra Plataforma permite la conexión con canales externos para centralizar mensajería y automatizaciones. Al integrar estos canales, recolectamos:
+                    </p>
+                    <ul>
+                        <li><strong>Identificadores de usuario y perfiles públicos</strong> de tus clientes finales (por ejemplo, nombres de remitentes en Facebook, WhatsApp e Instagram) para permitir la personalización de mensajes.</li>
+                        <li><strong>Mensajes entrantes y salientes</strong> para canalizarlos a través del gestor de CRM de CloudFly y alimentar al Agente Comercial de Inteligencia Artificial (con tecnologías como RAG).</li>
+                    </ul>
+                    <p>
+                        <strong>Importante:</strong> Cumplimos estrictamente con las políticas de uso de datos de las plataformas de terceros. No utilizamos datos obtenidos a través de las APIs de Meta o WhatsApp con fines publicitarios no autorizados, ni los vendemos o compartimos con terceros ajenos al servicio.
+                    </p>
 
-            <h2>2. Información que Recopilamos</h2>
-            <p>
-                Podemos recopilar información sobre usted de varias maneras. La información que podemos recopilar a
-                través de la Plataforma incluye:
-            </p>
+                    <h2>3. Uso de la Información</h2>
+                    <p>
+                        Utilizamos la información recolectada para:
+                    </p>
+                    <ul>
+                        <li>Proporcionar, operar y mantener las funciones comerciales del ERP y CRM de CloudFly.</li>
+                        <li>Habilitar la automatización de flujos de venta y atención mediante IA Agent en tus canales vinculados.</li>
+                        <li>Gestionar la facturación y el procesamiento seguro de pagos de tus suscripciones a la Plataforma.</li>
+                        <li>Prevenir actividades de fraude, seguridad informática y uso indebido del servicio.</li>
+                    </ul>
 
-            <h3>2.1. Datos Personales</h3>
-            <p>
-                Información de identificación personal, como su nombre, dirección de envío, dirección de correo
-                electrónico, número de teléfono y datos demográficos, que usted nos proporciona voluntariamente al
-                registrarse en la Plataforma o al elegir participar en diversas actividades relacionadas con la misma.
-            </p>
+                    <h2>4. Seguridad y Retención de Datos</h2>
+                    <p>
+                        Implementamos robustas medidas de seguridad técnicas, físicas y organizativas para resguardar tus datos y evitar accesos no autorizados, alteraciones o filtraciones. Conservamos tu información únicamente mientras tu cuenta esté activa o según sea necesario para cumplir con nuestras obligaciones legales y contractuales.
+                    </p>
 
-            <h3>2.2. Datos Financieros</h3>
-            <p>
-                Información financiera, como datos relacionados con su método de pago (por ejemplo, número de tarjeta de
-                crédito válido, marca de la tarjeta, fecha de vencimiento), que podemos recopilar cuando compra,
-                solicita, devuelve, cambia o solicita información sobre nuestros servicios desde la Plataforma.
-            </p>
+                    <h2>5. Derechos del Usuario</h2>
+                    <p>
+                        De acuerdo con la legislación colombiana (Ley 1581 de 2012 de Habeas Data) y normativas internacionales de protección de datos, tienes derecho a conocer, actualizar, rectificar y solicitar la eliminación de tu información personal en cualquier momento escribiendo a nuestro correo de soporte.
+                    </p>
 
-            <h3>2.3. Datos Derivados</h3>
-            <p>
-                Información que nuestros servidores recopilan automáticamente cuando accede a la Plataforma, como su
-                dirección IP, tipo de navegador, sistema operativo, tiempos de acceso y las páginas que ha visto
-                directamente antes y después de acceder a la Plataforma.
-            </p>
-
-            <h3>2.4. Integración con Redes Sociales y Terceros</h3>
-            <p>
-                Nuestra plataforma permite la integración con servicios de terceros como Facebook, WhatsApp Business
-                API, Instagram y TikTok para proporcionar funcionalidades de Chatbot y gestión de mensajería.
-            </p>
-            <ul>
-                <li><strong>Facebook & Instagram:</strong> Recopilamos información básica de su perfil público y
-                    gestionamos los mensajes que su página recibe para procesarlos a través de nuestro sistema.</li>
-                <li><strong>WhatsApp:</strong> Procesamos números de teléfono y contenido de mensajes para facilitar la
-                    comunicación automatizada.</li>
-            </ul>
-            <p>
-                <strong>Importante:</strong> No utilizamos los datos obtenidos a través de estas API para fines de
-                vigilancia, venta de datos a terceros ni para fines publicitarios no autorizados.
-            </p>
-
-            <h2>3. Uso de su Información</h2>
-            <p>
-                Tener información precisa sobre usted nos permite brindarle una experiencia fluida, eficiente y
-                personalizada. Específicamente, podemos utilizar la información recopilada sobre usted a través de la
-                Plataforma para:
-            </p>
-            <ul>
-                <li>Crear y administrar su cuenta.</li>
-                <li>Procesar sus pagos y facturación (suscripciones a CloudFly).</li>
-                <li>Enviarle un correo electrónico con respecto a su cuenta o pedido.</li>
-                <li>Habilitar las comunicaciones de usuario a usuario (módulos de chat).</li>
-                <li>Aumentar la eficiencia y el funcionamiento de la Plataforma.</li>
-                <li>Monitorizar y analizar el uso y las tendencias para mejorar su experiencia.</li>
-                <li>Prevenir transacciones fraudulentas y monitorear contra el robo y proteger contra actividades
-                    delictivas.</li>
-            </ul>
-
-            <h2>4. Divulgación de su Información</h2>
-            <p>
-                Podemos compartir información que hemos recopilado sobre usted en ciertas situaciones. Su información
-                puede ser divulgada de la siguiente manera:
-            </p>
-
-            <h3>4.1. Por Ley o para Proteger Derechos</h3>
-            <p>
-                Si creemos que la divulgación de información sobre usted es necesaria para responder a un proceso legal,
-                investigar o remediar posibles violaciones de nuestras políticas, o para proteger los derechos, la
-                propiedad y la seguridad de otros, podemos compartir su información según lo permitido o requerido por
-                cualquier ley, regla o regulación aplicable.
-            </p>
-
-            <h3>4.2. Proveedores de Servicios Externos</h3>
-            <p>
-                Podemos compartir su información con terceros que prestan servicios para nosotros o en nuestro nombre,
-                incluyendo procesamiento de pagos, análisis de datos, entrega de correo electrónico, servicios de
-                alojamiento, servicio al cliente y asistencia de marketing.
-            </p>
-
-            <h2>5. Seguridad de sus Datos</h2>
-            <p>
-                Utilizamos medidas de seguridad administrativas, técnicas y físicas para ayudar a proteger su
-                información personal. Si bien hemos tomado medidas razonables para asegurar la información personal que
-                nos proporciona, tenga en cuenta que a pesar de nuestros esfuerzos, ninguna medida de seguridad es
-                perfecta o impenetrable, y ninguna transmisión de datos puede garantizarse contra cualquier intercepción
-                u otro tipo de uso indebido.
-            </p>
-
-            <h2>6. Política para Niños</h2>
-            <p>
-                No solicitamos a sabiendas información ni comercializamos con niños menores de 13 años. Si nos enteramos
-                de que hemos recopilado información personal de un niño menor de 13 años sin verificación del
-                consentimiento de los padres, eliminaremos esa información lo más rápido posible.
-            </p>
-
-            <h2>7. Contacto</h2>
-            <p>
-                Si tiene preguntas o comentarios sobre esta Política de Privacidad, por favor contáctenos en:
-            </p>
-            <p>
-                <strong>CloudFly ERP</strong><br>
-                Bogotá, Colombia<br>
-                Email: <a href="mailto:privacidad@cloudfly.com.co"
-                    style="color: #8B5CF6; text-decoration: none;">privacidad@cloudfly.com.co</a>
-            </p>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-column">
-                    <div class="footer-logo">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #8B5CF6;">
-                            <path d="M12 8V4H8"></path>
-                            <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-                            <path d="M2 14h2"></path>
-                            <path d="M20 14h2"></path>
-                            <path d="M15 13v2"></path>
-                            <path d="M9 13v2"></path>
-                        </svg>
-                        <span>CloudFly Marketing AI Pro</span>
-                    </div>
-                    <p class="footer-description">
-                        Plataforma ERP completa para empresas modernas. Gestión integral con inteligencia artificial.
+                    <h2>6. Contacto</h2>
+                    <p>
+                        Si tienes preguntas o solicitudes respecto a esta política, contáctanos en:
+                    </p>
+                    <p>
+                        <strong>CloudFly ERP Group</strong><br>
+                        Medellín, Colombia<br>
+                        Email: <a href="mailto:soporte@cloudfly.com.co" style="color: var(--primary); text-decoration: none;">soporte@cloudfly.com.co</a>
                     </p>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="footer-column">
-                    <h4 class="footer-title">Producto</h4>
-                    <ul class="footer-links">
-                        <li><a href="landing.html#caracteristicas">Características</a></li>
-                        <li><a href="landing.html#modulos">Módulos</a></li>
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-info">
+                    <a href="index.html" class="logo">
+                        <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                    </a>
+                    <p>La plataforma líder en ERP, Desarrollo a la Medida e IA para el crecimiento empresarial en Latinoamérica.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Nuestros Servicios</h4>
+                    <ul>
+                        <li><a href="diseno-web.html">Diseño Web</a></li>
+                        <li><a href="desarrollo-aplicaciones.html">Desarrollo de Apps</a></li>
+                        <li><a href="consultoria.html">Consultoría IT</a></li>
+                        <li><a href="hosting.html">Hosting Cloud</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-column">
-                    <h4 class="footer-title">Empresa</h4>
-                    <ul class="footer-links">
-                        <li><a href="landing.html#contacto">Contacto</a></li>
-                        <li><a href="#">Términos y Condiciones</a></li>
+                <div class="footer-links">
+                    <h4>Soluciones</h4>
+                    <ul>
+                        <li><a href="soporte-wordpress.html">Soporte WordPress</a></li>
+                        <li><a href="estrategia-digital.html">Estrategia Digital</a></li>
+                        <li><a href="desarrollo-movil.html">Desarrollo Móvil</a></li>
+                        <li><a href="index.html#ia">Agentes de IA</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-column">
-                    <h4 class="footer-title">Soporte</h4>
-                    <ul class="footer-links">
-                        <li><a href="#">Centro de Ayuda</a></li>
-                        <li><a href="#">Privacidad</a></li>
+                <div class="footer-links">
+                    <h4>Contáctenos</h4>
+                    <ul>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="map-pin" style="width: 16px;"></i> Medellín - Colombia
+                        </li>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="mail" style="width: 16px;"></i> soporte@cloudfly.com.co
+                        </li>
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="phone" style="width: 16px;"></i> Wsp: +57 3245640657
+                        </li>
                     </ul>
                 </div>
             </div>
-
-            <div class="footer-bottom">
-                <p class="copyright">
-                    © 2024-2025 CloudFly. Todos los derechos reservados. Hecho con ❤️ en Colombia 🇨🇴
-                </p>
+            <div class="copyright">
+                <p>© 2026 CloudFly ERP Group. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Animación simple para el header al hacer scroll
-        const header = document.querySelector('.header');
-        window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 50) {
+        lucide.createIcons();
+        window.addEventListener('scroll', function () {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) {
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');

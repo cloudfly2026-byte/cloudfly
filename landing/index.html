@@ -1,143 +1,442 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark-theme">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="CloudFly - Potencia tu empresa con Inteligencia Artificial y Soluciones de Desarrollo a la Medida.">
-    <title>CloudFly | Tu Socio Estratégico en Transformación Digital</title>
+        content="CloudFly - Automatiza tu negocio con Inteligencia Artificial. Gestión comercial, CRM, POS y agentes IA en un ecosistema unificado.">
+    <title>CloudFly | Inteligencia Artificial para Escalar tu Negocio</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- GSAP for Professional Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <style>
+
+
+        /* Testimonials Section Custom Layout */
+        .testimonials {
+            padding: 8rem 0;
+            background: linear-gradient(180deg, #090D1A 0%, rgba(0, 163, 255, 0.03) 100%);
+            position: relative;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .testimonial-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .testimonial-card p {
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .testimonial-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 163, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: 700;
+            border: 2px solid var(--primary);
+        }
+
+        .testimonial-meta h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .testimonial-meta span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 992px) {
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Screenshot showcase switcher */
+        .screenshot-showcase {
+            padding: 8rem 0;
+        }
+
+        .screenshot-selector {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .screenshot-btn {
+            background: rgba(0, 163, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-btn.active, .screenshot-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 163, 255, 0.3);
+        }
+
+        .screenshot-frame {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 1rem;
+            box-shadow: var(--shadow-deep);
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .screenshot-frame img {
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
+            display: none;
+        }
+
+        /* Futuristic Preloader Style */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #03000a;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .preloader-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 163, 255, 0.4) 0%, transparent 70%);
+            filter: blur(30px);
+            animation: pulseGlow 2s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+        }
+
+        .preloader-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .preloader-logo {
+            height: 140px;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 0 20px rgba(0, 163, 255, 0.6));
+            animation: logoPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(0, 163, 255, 0.6)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 35px rgba(0, 163, 255, 0.9)); }
+        }
+
+        .loader-bar-container {
+            width: 240px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            margin: 0 auto 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(0, 163, 255, 0.15);
+        }
+
+        .loader-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00A3FF, #00C2FF);
+            border-radius: 99px;
+            box-shadow: 0 0 10px #00A3FF;
+        }
+
+        .preloader-status {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #00C2FF;
+            text-shadow: 0 0 8px rgba(0, 163, 255, 0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive Preloader adjustments */
+        @media (max-width: 768px) {
+            .preloader-logo {
+                height: 80px; /* Reducido en pantallas chicas */
+                margin-bottom: 1.5rem;
+            }
+            .loader-bar-container {
+                width: 180px;
+            }
+            .preloader-status {
+                font-size: 0.75rem;
+                letter-spacing: 1px;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Futuristic AI Preloader Screen -->
+    <div id="preloader">
+        <div class="preloader-glow"></div>
+        <div class="preloader-content">
+            <img class="preloader-logo" src="logo.png" alt="CloudFly AI Loading">
+            <div class="preloader-status" id="preloader-text">Iniciando Red Neuronal...</div>
+            <div class="loader-bar-container">
+                <div class="loader-bar" id="loader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="mesh-bg"></div>
 
     <header id="main-header">
         <div class="container">
             <nav>
                 <a href="index.html" class="logo">
-                    <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                    <img src="logo.png" alt="CloudFly Logo">
                 </a>
-                <div class="nav-links">
-                    <a href="index.html#ventajas">Ventajas</a>
-                    <a href="index.html#ia">IA Agent</a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div class="nav-links" id="navLinks">
+                    <a href="index.html#ventajas" onclick="closeMobileMenu()">Ventajas</a>
+                    <a href="index.html#showcase" onclick="closeMobileMenu()">Plataforma</a>
+                    <a href="index.html#ia" onclick="closeMobileMenu()">IA Omnicanal</a>
                     <div class="dropdown">
-                        <a href="#servicios" style="cursor: pointer;">Nuestros Servicios <i data-lucide="chevron-down"
+                        <a href="#servicios" style="cursor: pointer;">Servicios IT <i data-lucide="chevron-down"
                                 style="width: 16px; vertical-align: middle;"></i></a>
                         <div class="dropdown-content">
-                            <a href="diseno-web.html">Diseño Web</a>
-                            <a href="desarrollo-aplicaciones.html">Desarrollo a la Medida</a>
-                            <a href="consultoria.html">Consultoría</a>
-                            <a href="hosting.html">Hosting (VPS, Compartido)</a>
-                            <a href="soporte-wordpress.html">Soporte WordPress</a>
-                            <a href="estrategia-digital.html">Estrategia Digital</a>
-                            <a href="desarrollo-movil.html">Desarrollo Móvil</a>
+                            <a href="diseno-web.html" onclick="closeMobileMenu()">Diseño Web Premium</a>
+                            <a href="desarrollo-aplicaciones.html" onclick="closeMobileMenu()">Desarrollo a la Medida</a>
+                            <a href="consultoria.html" onclick="closeMobileMenu()">Consultoría Tecnológica</a>
+                            <a href="hosting.html" onclick="closeMobileMenu()">Hosting Cloud & VPS</a>
+                            <a href="soporte-wordpress.html" onclick="closeMobileMenu()">Soporte WordPress</a>
+                            <a href="estrategia-digital.html" onclick="closeMobileMenu()">Estrategia Digital</a>
+                            <a href="desarrollo-movil.html" onclick="closeMobileMenu()">Desarrollo Apps Móviles</a>
                         </div>
                     </div>
-                    <a href="index.html#pos">POS</a>
-                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta">Iniciar Sesión</a>
+                    <a href="index.html#testimonios" onclick="closeMobileMenu()">Testimonios</a>
+                    <a href="https://dashboard.cloudfly.com.co/login" class="btn-cta" onclick="closeMobileMenu()">Iniciar Sesión</a>
                 </div>
             </nav>
         </div>
     </header>
 
+    <!-- HERO SECTION -->
     <section class="hero">
         <div class="container hero-content">
-            <div class="hero-text">
+            <div class="hero-text text-reveal">
                 <div class="hero-badges">
-                    <span class="badge">Automatización IA 🚀</span>
-                    <span class="badge">Soluciones Digitales 360°</span>
+                    <span class="badge">Inteligencia Artificial Omnicanal 🤖</span>
+                    <span class="badge">SaaS Cloud de Gestión 📊</span>
                 </div>
-                <h1>Tu negocio en piloto automático: <span>Vende y gestiona</span> 24/7.</h1>
-                <p>CloudFly es más que un ERP; es tu socio tecnológico integral. Desde agentes de Inteligencia
-                    Artificial que captan leads y cierran ventas en WhatsApp, hasta desarrollo de aplicaciones a medida
-                    y diseño web premium. Automatizamos, digitalizamos y escalamos tu operación para que domines tu
-                    mercado.</p>
+                <h1>Deja de perder clientes. Vende en piloto automático <span>con Inteligencia Artificial</span></h1>
+                <p>Libera a tu equipo del trabajo repetitivo. Responde objeciones y cierra ventas 24/7 en WhatsApp e Instagram con agentes IA. Toma el control absoluto de tus inventarios, POS y CRM desde una sola pantalla sin complicaciones.</p>
                 <div class="hero-cta-group">
-                    <a href="https://dashboard.cloudfly.com.co/register" class="btn-cta">Transforma tu Negocio Ahora</a>
+                    <a href="https://dashboard.cloudfly.com.co/register" class="btn-cta">Comenzar a vender gratis ahora</a>
                 </div>
             </div>
-            <div class="hero-visual">
+            <div class="hero-visual reveal-visual" style="height: 500px; position: relative;">
                 <div class="ai-glow"></div>
-                <img src="dashboard.png" alt="CloudFly Dashboard">
+                <canvas id="neural-canvas" style="width: 100%; height: 100%; border-radius: 24px; background: transparent;"></canvas>
             </div>
         </div>
     </section>
 
+    <!-- LIVE PLATFORM CAPTURES SECTION (DARK MODE SHOWCASE) -->
+    <section id="showcase" class="screenshot-showcase">
+        <div class="container">
+            <div class="section-head reveal-head">
+                <h2>Explora la Plataforma</h2>
+                <p>Nuestra interfaz inteligente en modo oscuro diseñada para optimizar cada interacción.</p>
+            </div>
+            
+            <div class="screenshot-selector reveal-head">
+                <button class="screenshot-btn active" onclick="switchScreenshot(0)">Panel General</button>
+                <button class="screenshot-btn" onclick="switchScreenshot(1)">Flujo de Campañas</button>
+                <button class="screenshot-btn" onclick="switchScreenshot(2)">Tablero Kanban (CRM)</button>
+                <button class="screenshot-btn" onclick="switchScreenshot(3)">Builder Automatizaciones</button>
+                <button class="screenshot-btn" onclick="switchScreenshot(4)">Lista de Contactos</button>
+            </div>
+
+            <div class="screenshot-frame reveal-visual">
+                <img id="ss-0" src="dashboard_dark_main.png" alt="Panel General Cloudfly" class="active">
+                <img id="ss-1" src="dashboard_dark_campaigns.png" alt="Campañas Meta Cloudfly">
+                <img id="ss-2" src="dashboard_dark_kanban.png" alt="Tablero Kanban CRM Cloudfly">
+                <img id="ss-3" src="dashboard_dark_workflows.png" alt="Builder Visual Automatizaciones Cloudfly">
+                <img id="ss-4" src="dashboard_dark_contacts.png" alt="Lista de Contactos CRM Cloudfly">
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES BENTO GRID -->
     <section id="ventajas" class="features">
         <div class="container">
-            <div class="section-head">
-                <h2>Potencia y Automatización</h2>
-                <p>Nuestra carta comercial es simple: resultados tangibles a través de tecnología de punta.</p>
+            <div class="section-head reveal-head">
+                <h2>Menos esfuerzo, mejores resultados</h2>
+                <p>Deja atrás las hojas de cálculo confusas y las respuestas lentas. Automatiza todo en un solo lugar.</p>
             </div>
 
             <div class="bento-grid">
-                <div class="bento-item item-1">
+                <div class="bento-item item-1 reveal-card">
                     <div class="icon-box"><i data-lucide="trending-up"></i></div>
-                    <h3>Dashboard en Vivo</h3>
-                    <p>Visualiza tus KPIs, ventas y rendimiento en tiempo real con gráficas interactivas.</p>
-                    <img src="dashboard.png" style="width: 100%; margin-top: 2rem; border-radius: 12px; opacity: 0.8;"
-                        alt="Dashboard">
+                    <h3>Control total sin fricción</h3>
+                    <p>Monitorea ingresos, embudos de conversión y rendimiento comercial en tiempo real con datos visuales claros.</p>
                 </div>
-                <div class="bento-item item-2">
+                <div class="bento-item item-2 reveal-card">
                     <div class="icon-box"><i data-lucide="bot"></i></div>
-                    <h3>Agente Comercial IA</h3>
-                    <p>Tus clientes no esperan. Nuestro chatbot atiende consultas complejas, maneja objeciones y agenda
-                        citas automáticamente, con conocimiento experto de tu empresa (RAG).</p>
+                    <h3>Clausura de ventas 24/7</h3>
+                    <p>Agentes inteligentes entrenados con tu conocimiento que resuelven dudas y guían al cliente hasta el pago sin demoras.</p>
                 </div>
-                <div class="bento-item item-3">
-                    <div class="icon-box"><i data-lucide="code"></i></div>
-                    <h3>Desarrollo a la Medida</h3>
-                    <p>Si tu negocio lo requiere, nosotros lo programamos. Apps móviles y plataformas SaaS de clase
-                        mundial.</p>
+                <div class="bento-item item-3 reveal-card">
+                    <div class="icon-box"><i data-lucide="zap"></i></div>
+                    <h3>Cero chats ignorados</h3>
+                    <p>Agrupa los mensajes de WhatsApp, Messenger e Instagram en una sola bandeja de entrada inteligente para que nada se escape.</p>
                 </div>
-                <div class="bento-item item-4">
+                <div class="bento-item item-4 reveal-card">
                     <div class="icon-box"><i data-lucide="shopping-cart"></i></div>
-                    <h3>Ecosistema Completo</h3>
-                    <p>Nómina electrónica, POS rápido, inventario y más, todo en un solo ecosistema integrado.</p>
+                    <h3>Ventas rápidas e inventario seguro</h3>
+                    <p>Facturación POS ágil y sincronización de stock inmediata en la nube para evitar ventas sin stock y disputas.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="ia" class="special-section" style="background: white; padding: 8rem 0;">
+    <!-- OMNICHANNEL IA IN-DEPTH -->
+    <section id="ia" class="special-section" style="background: rgba(15, 22, 42, 0.5); padding: 8rem 0; border-top: 1px solid var(--border);">
         <div class="container hero-content">
-            <div class="hero-visual">
+            <div class="hero-visual reveal-visual">
                 <img src="ai_channels.png" alt="AI Agent Channels">
             </div>
-            <div class="hero-text">
-                <h2>Cierra ventas en todos lados con <span>IA Omnicanal</span></h2>
-                <p>Implementamos soluciones de inteligencia artificial conectadas directamente a WhatsApp, Facebook e
-                    Instagram. Diseñamos flujos de ventas y atención al cliente que responden instantáneamente y con la
-                    misma efectividad que tu mejor vendedor.</p>
+            <div class="hero-text text-reveal">
+                <h2>Cierra tratos mientras descansas <span>con IA Omnicanal</span></h2>
+                <p>Nuestros agentes IA sostienen conversaciones humanas persuasivas y naturales. Se integran con tu inventario oficial para mostrar productos, enviar catálogos, agendar citas en tu calendario y acelerar la decisión de compra.</p>
                 <ul style="list-style: none; margin-top: 1rem;">
-                    <li style="margin-bottom: 1rem;"><i data-lucide="check-circle"
-                            style="color: var(--primary); vertical-align: middle;"></i> Respuestas con entendimiento
-                        semántico (RAG)</li>
-                    <li style="margin-bottom: 1rem;"><i data-lucide="check-circle"
-                            style="color: var(--primary); vertical-align: middle;"></i> Calificación de leads 24/7</li>
-                    <li style="margin-bottom: 1rem;"><i data-lucide="check-circle"
-                            style="color: var(--primary); vertical-align: middle;"></i> Agendamiento directo y
-                        sincronización de calendario</li>
+                    <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="check-circle"
+                            style="color: var(--primary);"></i> Respuestas instantáneas y precisas (eliminación de la ansiedad del cliente)</li>
+                    <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="check-circle"
+                            style="color: var(--primary);"></i> Agendamiento autónomo de reservas (cero llamadas de ida y vuelta)</li>
+                    <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="check-circle"
+                            style="color: var(--primary);"></i> Traspaso inteligente a un agente humano en casos complejos</li>
                 </ul>
             </div>
         </div>
     </section>
 
-    <section id="pos" class="special-section" style="padding: 8rem 0;">
-        <div class="container hero-content" style="grid-template-columns: 1fr 1fr;">
-            <div class="hero-text">
-                <h2>Una plataforma comercial <span>diseñada para escalar</span></h2>
-                <p>Nuestra ficha de producto cubre cada frente de tu operación: POS, Inventario, Contabilidad y Nómina
-                    Colombiana. CloudFly se adapta a las reglas de tu negocio y a los requerimientos de la DIAN.</p>
-                <a href="https://dashboard.cloudfly.com.co/register" class="btn-cta"
-                    style="margin-top: 2rem; display: inline-block;">Probar Demo Gratis</a>
+    <!-- TESTIMONIALS SECTION -->
+    <section id="testimonios" class="testimonials">
+        <div class="container">
+            <div class="section-head reveal-head">
+                <h2>Resultados reales de personas reales</h2>
+                <p>Descubre cómo empresas en Latinoamérica están escalando y automatizando sus procesos hoy.</p>
             </div>
-            <div class="hero-visual">
-                <img src="products.png" alt="Products catalog">
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card reveal-card">
+                    <p>"Antes nos tomaba horas responder cotizaciones por WhatsApp. Con la IA implementada, el 70% de las dudas recurrentes se resuelven en minutos y vendemos 24/7."</p>
+                    <div class="testimonial-user">
+                        <div class="testimonial-avatar">MG</div>
+                        <div class="testimonial-meta">
+                            <h4>María González</h4>
+                            <span>Directora de Ventas, TechStore</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card reveal-card">
+                    <p>"El dashboard nos dio claridad mental. Ver cuántos prospectos tenemos en cada etapa del embudo comercial nos permite tomar decisiones sin adivinanzas."</p>
+                    <div class="testimonial-user">
+                        <div class="testimonial-avatar">AH</div>
+                        <div class="testimonial-meta">
+                            <h4>Andrés Herrera</h4>
+                            <span>Fundador de Soluciones Distribuidas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card reveal-card">
+                    <p>"Teníamos miedo de perder la cercanía con el cliente, pero la IA de Cloudfly responde con tanta precisión que los clientes se sienten perfectamente atendidos."</p>
+                    <div class="testimonial-user">
+                        <div class="testimonial-avatar">DC</div>
+                        <div class="testimonial-meta">
+                            <h4>Diana Cardona</h4>
+                            <span>CTO de AgroCol</span>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </section>
+
+    <!-- FINAL HERO CALL TO ACTION -->
+    <section class="special-section" style="padding: 8rem 0; border-top: 1px solid var(--border); text-align: center;">
+        <div class="container reveal-head">
+            <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">Empieza a vender más hoy mismo</h2>
+            <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 2.5rem;">Crea tu cuenta en 30 segundos. Explora gratis todas las capacidades durante 7 días. Cero compromisos, cancela cuando quieras.</p>
+            <a href="https://dashboard.cloudfly.com.co/register" class="btn-cta" style="font-size: 1.15rem; padding: 1rem 2.5rem;">Iniciar mi prueba gratis de 7 días</a>
         </div>
     </section>
 
@@ -146,15 +445,14 @@
             <div class="footer-grid">
                 <div class="footer-info">
                     <a href="index.html" class="logo">
-                        <img src="logo.png" alt="CloudFly Logo" style="height: 200px;">
+                        <img src="logo.png" alt="CloudFly Logo" style="height: 55px;">
                     </a>
-                    <p>La plataforma líder en ERP, Desarrollo a la Medida e IA para el crecimiento empresarial en
-                        Latinoamérica.</p>
+                    <p>La plataforma inteligente en ERP, Desarrollo a la Medida e IA para el crecimiento empresarial.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Nuestros Servicios</h4>
                     <ul>
-                        <li><a href="diseno-web.html">Diseño Web</a></li>
+                        <li><a href="diseno-web.html">Diseño Web Premium</a></li>
                         <li><a href="desarrollo-aplicaciones.html">Desarrollo de Apps</a></li>
                         <li><a href="consultoria.html">Consultoría IT</a></li>
                         <li><a href="hosting.html">Hosting Cloud</a></li>
@@ -172,29 +470,29 @@
                 <div class="footer-links">
                     <h4>Contáctenos</h4>
                     <ul>
-                        <li
-                            style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
                             <i data-lucide="map-pin" style="width: 16px;"></i> Medellín - Colombia
                         </li>
-                        <li
-                            style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
                             <i data-lucide="mail" style="width: 16px;"></i> soporte@cloudfly.com.co
                         </li>
-                        <li
-                            style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                        <li style="margin-bottom: 0.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
                             <i data-lucide="phone" style="width: 16px;"></i> Wsp: +57 3245640657
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="copyright">
-                <p>© 2026 CloudFly ERP Group. Todos los derechos reservados.</p>
+                <p>© 2026 CloudFly ERP Group. Todos los derechos reservados. <a href="politicas-privacidad.html" style="color: var(--text-muted); text-decoration: none; margin-left: 1rem;">Privacidad</a> | <a href="condiciones-servicio.html" style="color: var(--text-muted); text-decoration: none; margin-left: 1rem;">Términos</a></p>
             </div>
         </div>
     </footer>
 
     <script>
+        // Init Lucide Icons
         lucide.createIcons();
+
+        // Sticky Header Effect
         window.addEventListener('scroll', function () {
             const header = document.getElementById('main-header');
             if (window.scrollY > 50) {
@@ -203,6 +501,460 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        // Screenshot Showcase Switcher
+        function switchScreenshot(index) {
+            // Remove active classes
+            document.querySelectorAll('.screenshot-btn').forEach((btn, idx) => {
+                if (idx === index) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            document.querySelectorAll('.screenshot-frame img').forEach((img, idx) => {
+                if (idx === index) img.classList.add('active');
+                else img.classList.remove('active');
+            });
+        }
+
+        // GSAP Animations with ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Futuristic Loader Sequence
+        const loadingTexts = [
+            "Iniciando Red Neuronal...",
+            "Cargando Agentes Autónomos...",
+            "Estableciendo Conexión Segura...",
+            "Sincronizando Base de Datos CRM...",
+            "Sistema Listo."
+        ];
+        
+        let currentTextIndex = 0;
+        const textElement = document.getElementById("preloader-text");
+        const barFill = document.getElementById("loader-bar-fill");
+        
+        const loaderTimeline = gsap.timeline({
+            onComplete: () => {
+                // Fade out preloader
+                gsap.to("#preloader", {
+                    opacity: 0,
+                    duration: 0.8,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        document.getElementById("preloader").style.display = "none";
+                        // Play Hero entrance animations
+                        playHeroEntrance();
+                    }
+                });
+            }
+        });
+
+        // Animate the bar filling and text swapping
+        loaderTimeline.to(barFill, {
+            width: "100%",
+            duration: 3,
+            ease: "power1.inOut"
+        });
+
+        const textInterval = setInterval(() => {
+            if (currentTextIndex < loadingTexts.length - 1) {
+                currentTextIndex++;
+                textElement.innerText = loadingTexts[currentTextIndex];
+            } else {
+                clearInterval(textInterval);
+            }
+        }, 600);
+
+        function playHeroEntrance() {
+            // Hero Reveal
+            gsap.from('.text-reveal > *', {
+                opacity: 0,
+                y: 50,
+                duration: 1.2,
+                stagger: 0.15,
+                ease: 'power4.out'
+            });
+
+            gsap.from('.reveal-visual', {
+                opacity: 0,
+                scale: 0.9,
+                y: 30,
+                duration: 1.4,
+                ease: 'power3.out',
+                delay: 0.2
+            });
+        }
+
+        // Parallax Effect on Mesh Background & visual elements
+        gsap.to('.mesh-bg', {
+            scrollTrigger: {
+                trigger: 'body',
+                start: 'top top',
+                end: 'bottom bottom',
+                scrub: 1.5
+            },
+            yPercent: 20,
+            ease: 'none'
+        });
+
+        // Parallax on Hero Visual Canvas
+        gsap.to('.hero-visual', {
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'top top',
+                end: 'bottom top',
+                scrub: true
+            },
+            y: 80,
+            ease: 'none'
+        });
+
+        // Parallax on Platform Captures
+        gsap.to('.screenshot-frame', {
+            scrollTrigger: {
+                trigger: '#showcase',
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: 1
+            },
+            y: -60,
+            ease: 'none'
+        });
+
+        // Section Heads
+        document.querySelectorAll('.reveal-head').forEach(el => {
+            gsap.from(el, {
+                scrollTrigger: {
+                    trigger: el,
+                    start: 'top 85%',
+                    toggleActions: 'play none none reverse'
+                },
+                opacity: 0,
+                y: 35,
+                duration: 1,
+                ease: 'power3.out'
+            });
+        });
+
+        // Bento Cards and Testimonial Cards
+        document.querySelectorAll('.reveal-card').forEach((el, index) => {
+            gsap.from(el, {
+                scrollTrigger: {
+                    trigger: el,
+                    start: 'top 90%',
+                    toggleActions: 'play none none reverse'
+                },
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                delay: (index % 3) * 0.1,
+                ease: 'power3.out'
+            });
+        });
+
+        // ============================================================
+        // Neural Network Canvas Animation (Adapted from Towc)
+        // ============================================================
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Match container size
+        let w = canvas.width = canvas.parentElement.offsetWidth;
+        let h = canvas.height = canvas.parentElement.offsetHeight || 500;
+
+        const opts = {
+            range: 160,
+            baseConnections: 3,
+            addedConnections: 4,
+            baseSize: 4,
+            minSize: 1,
+            dataToConnectionSize: 0.4,
+            sizeMultiplier: 0.7,
+            allowedDist: 35,
+            baseDist: 35,
+            addedDist: 25,
+            connectionAttempts: 80,
+            dataToConnections: 1.2,
+            baseSpeed: 0.03,
+            addedSpeed: 0.04,
+            baseGlowSpeed: 0.3,
+            addedGlowSpeed: 0.3,
+            rotVelX: 0.002,
+            rotVelY: 0.0015,
+            repaintColor: 'rgba(3, 1, 10, 0.15)', // transparent repaint to leave trail
+            connectionColor: 'hsla(200, 80%, light%, alp)', // blue
+            rootColor: 'hsla(220, 80%, light%, alp)', // deep blue
+            endColor: 'hsla(280, 80%, light%, alp)', // violet
+            dataColor: 'hsla(190, 100%, light%, alp)', // cyan data pulse
+            wireframeWidth: 0.1,
+            wireframeColor: 'rgba(0, 163, 255, 0.15)',
+            depth: 250,
+            focalLength: 250,
+            vanishPoint: {
+                x: w / 2,
+                y: h / 2
+            }
+        };
+
+        let squareRange = opts.range * opts.range;
+        let squareAllowed = opts.allowedDist * opts.allowedDist;
+        let mostDistant = opts.depth + opts.range;
+        let sinX = 0, sinY = 0, cosX = 0, cosY = 0;
+        let connections = [], data = [], all = [], tick = 0;
+        let animating = false;
+        const Tau = Math.PI * 2;
+
+        function initNeuralNet() {
+            connections = [];
+            data = [];
+            all = [];
+            
+            const connection = new Connection(0, 0, 0, opts.baseSize);
+            connection.step = Connection.rootStep;
+            connections.push(connection);
+            all.push(connection);
+            connection.link();
+            
+            // Build tree
+            const toDevelop = [...connection.links];
+            while (toDevelop.length > 0) {
+                const conn = toDevelop.shift();
+                conn.link();
+                toDevelop.push(...conn.links);
+            }
+            
+            if (!animating) {
+                animating = true;
+                animateNeuralNet();
+            }
+        }
+
+        function Connection(x, y, z, size) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.size = size;
+            this.screen = {};
+            this.links = [];
+            this.isEnd = false;
+            this.glowSpeed = opts.baseGlowSpeed + opts.addedGlowSpeed * Math.random();
+        }
+
+        Connection.prototype.link = function () {
+            if (this.size < opts.minSize) return this.isEnd = true;
+            const links = [];
+            const connectionsNum = opts.baseConnections + Math.random() * opts.addedConnections | 0;
+            let attempt = opts.connectionAttempts;
+            const pos = {};
+
+            while (links.length < connectionsNum && --attempt > 0) {
+                const alpha = Math.random() * Math.PI;
+                const beta = Math.random() * Tau;
+                const len = opts.baseDist + opts.addedDist * Math.random();
+                
+                pos.x = this.x + len * Math.cos(alpha) * Math.sin(beta);
+                pos.y = this.y + len * Math.sin(alpha) * Math.sin(beta);
+                pos.z = this.z + len * Math.cos(beta);
+                
+                if (pos.x * pos.x + pos.y * pos.y + pos.z * pos.z < squareRange) {
+                    let passedExisting = true;
+                    for (let i = 0; i < connections.length; ++i) {
+                        if (squareDist(pos, connections[i]) < squareAllowed) {
+                            passedExisting = false;
+                            break;
+                        }
+                    }
+                    if (passedExisting) {
+                        links.push({ x: pos.x, y: pos.y, z: pos.z });
+                    }
+                }
+            }
+            
+            if (links.length === 0) {
+                this.isEnd = true;
+            } else {
+                for (let i = 0; i < links.length; ++i) {
+                    const p = links[i];
+                    const connection = new Connection(p.x, p.y, p.z, this.size * opts.sizeMultiplier);
+                    this.links.push(connection);
+                    all.push(connection);
+                    connections.push(connection);
+                }
+            }
+        };
+
+        Connection.prototype.step = function () {
+            this.setScreen();
+            this.screen.color = (this.isEnd ? opts.endColor : opts.connectionColor)
+                .replace('light', 40 + ((tick * this.glowSpeed) % 40))
+                .replace('alp', 0.15 + (1 - this.screen.z / mostDistant) * 0.7);
+            
+            for (let i = 0; i < this.links.length; ++i) {
+                ctx.moveTo(this.screen.x, this.screen.y);
+                ctx.lineTo(this.links[i].screen.x, this.links[i].screen.y);
+            }
+        };
+
+        Connection.rootStep = function () {
+            this.setScreen();
+            this.screen.color = opts.rootColor
+                .replace('light', 45 + ((tick * this.glowSpeed) % 45))
+                .replace('alp', (1 - this.screen.z / mostDistant) * 0.8);
+            
+            for (let i = 0; i < this.links.length; ++i) {
+                ctx.moveTo(this.screen.x, this.screen.y);
+                ctx.lineTo(this.links[i].screen.x, this.links[i].screen.y);
+            }
+        };
+
+        Connection.prototype.draw = function () {
+            ctx.fillStyle = this.screen.color;
+            ctx.beginPath();
+            ctx.arc(this.screen.x, this.screen.y, this.screen.scale * this.size, 0, Tau);
+            ctx.fill();
+        };
+
+        function Data(connection) {
+            this.glowSpeed = opts.baseGlowSpeed + opts.addedGlowSpeed * Math.random();
+            this.speed = opts.baseSpeed + opts.addedSpeed * Math.random();
+            this.screen = {};
+            this.setConnection(connection);
+        }
+
+        Data.prototype.reset = function () {
+            this.setConnection(connections[0]);
+            this.ended = 2;
+        };
+
+        Data.prototype.step = function () {
+            this.proportion += this.speed;
+            if (this.proportion < 1) {
+                this.x = this.ox + this.dx * this.proportion;
+                this.y = this.oy + this.dy * this.proportion;
+                this.z = this.oz + this.dz * this.proportion;
+                this.size = (this.os + this.ds * this.proportion) * opts.dataToConnectionSize;
+            } else {
+                this.setConnection(this.nextConnection);
+            }
+            this.screen.lastX = this.screen.x;
+            this.screen.lastY = this.screen.y;
+            this.setScreen();
+            this.screen.color = opts.dataColor
+                .replace('light', 50 + ((tick * this.glowSpeed) % 40))
+                .replace('alp', 0.3 + (1 - this.screen.z / mostDistant) * 0.6);
+        };
+
+        Data.prototype.draw = function () {
+            if (this.ended) return --this.ended;
+            ctx.beginPath();
+            ctx.strokeStyle = this.screen.color;
+            ctx.lineWidth = this.size * this.screen.scale;
+            ctx.moveTo(this.screen.lastX, this.screen.lastY);
+            ctx.lineTo(this.screen.x, this.screen.y);
+            ctx.stroke();
+        };
+
+        Data.prototype.setConnection = function (connection) {
+            if (connection.isEnd) {
+                this.reset();
+            } else {
+                this.connection = connection;
+                this.nextConnection = connection.links[connection.links.length * Math.random() | 0];
+                this.ox = connection.x;
+                this.oy = connection.y;
+                this.oz = connection.z;
+                this.os = connection.size;
+                this.nx = this.nextConnection.x;
+                this.ny = this.nextConnection.y;
+                this.nz = this.nextConnection.z;
+                this.ns = this.nextConnection.size;
+                this.dx = this.nx - this.ox;
+                this.dy = this.ny - this.oy;
+                this.dz = this.nz - this.oz;
+                this.ds = this.ns - this.os;
+                this.proportion = 0;
+            }
+        };
+
+        Connection.prototype.setScreen = Data.prototype.setScreen = function () {
+            let x = this.x, y = this.y, z = this.z;
+            const Y = y;
+            y = y * cosX - z * sinX;
+            z = z * cosX + Y * sinX;
+            const Z = z;
+            z = z * cosY - x * sinY;
+            x = x * cosY + Z * sinY;
+            this.screen.z = z;
+            z += opts.depth;
+            this.screen.scale = opts.focalLength / z;
+            this.screen.x = opts.vanishPoint.x + x * this.screen.scale;
+            this.screen.y = opts.vanishPoint.y + y * this.screen.scale;
+        };
+
+        function squareDist(a, b) {
+            const x = b.x - a.x, y = b.y - a.y, z = b.z - a.z;
+            return x * x + y * y + z * z;
+        }
+
+        function animateNeuralNet() {
+            window.requestAnimationFrame(animateNeuralNet);
+            ctx.clearRect(0, 0, w, h);
+            
+            ++tick;
+            const rotX = tick * opts.rotVelX;
+            const rotY = tick * opts.rotVelY;
+            cosX = Math.cos(rotX);
+            sinX = Math.sin(rotX);
+            cosY = Math.cos(rotY);
+            sinY = Math.sin(rotY);
+            
+            if (data.length < connections.length * opts.dataToConnections) {
+                const datum = new Data(connections[0]);
+                data.push(datum);
+                all.push(datum);
+            }
+            
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.beginPath();
+            ctx.lineWidth = opts.wireframeWidth;
+            ctx.strokeStyle = opts.wireframeColor;
+            all.forEach(item => item.step());
+            ctx.stroke();
+            
+            ctx.globalCompositeOperation = 'source-over';
+            all.sort((a, b) => b.screen.z - a.screen.z);
+            all.forEach(item => item.draw());
+        }
+
+        window.addEventListener('resize', () => {
+            w = canvas.width = canvas.parentElement.offsetWidth;
+            h = canvas.height = canvas.parentElement.offsetHeight || 500;
+            opts.vanishPoint.x = w / 2;
+            opts.vanishPoint.y = h / 2;
+            ctx.fillRect(0, 0, w, h);
+        });
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const nav = document.getElementById('navLinks');
+            const icon = document.querySelector('.menu-toggle i');
+            nav.classList.toggle('active');
+            if (nav.classList.contains('active')) {
+                icon.setAttribute('data-lucide', 'x');
+            } else {
+                icon.setAttribute('data-lucide', 'menu');
+            }
+            lucide.createIcons();
+        }
+
+        function closeMobileMenu() {
+            const nav = document.getElementById('navLinks');
+            const icon = document.querySelector('.menu-toggle i');
+            nav.classList.remove('active');
+            icon.setAttribute('data-lucide', 'menu');
+            lucide.createIcons();
+        }
+
+        // Initialize Net
+        initNeuralNet();
     </script>
 </body>
 

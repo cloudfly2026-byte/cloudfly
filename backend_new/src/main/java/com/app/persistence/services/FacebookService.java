@@ -181,4 +181,19 @@ public class FacebookService {
                     return Mono.just(Map.of("is_valid", false, "error", e.getMessage()));
                 });
     }
+
+    public Mono<List<Map<String, Object>>> getUserAdAccounts(String userAccessToken) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/me/adaccounts")
+                        .queryParam("fields", "id,name,currency,account_status")
+                        .queryParam("access_token", userAccessToken)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .map(response -> {
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+                    return data != null ? data : List.of();
+                });
+    }
 }

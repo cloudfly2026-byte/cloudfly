@@ -40,6 +40,16 @@ elif _provider == "groq":
     HEALTH_API_KEY = os.getenv("GROQ_API_KEY") or ""
     CANDIDATE_MODELS = [MODEL_DEFAULT, "llama3-70b-8192", "mixtral-8x7b-32768"]
     DEFAULT_MODEL = MODEL_DEFAULT
+elif _provider == "nvidia":
+    HEALTH_API_BASE = "https://integrate.api.nvidia.com/v1"
+    HEALTH_API_KEY = os.getenv("NVIDIA_API_KEY") or ""
+    CANDIDATE_MODELS = [
+        MODEL_DEFAULT,
+        "openrouter/owl-alpha",
+        "google/gemini-2.5-flash",
+        "anthropic/claude-3-haiku"
+    ]
+    DEFAULT_MODEL = MODEL_DEFAULT
 else:
     # OpenRouter (default)
     HEALTH_API_BASE = "https://openrouter.ai/api/v1"
@@ -77,15 +87,36 @@ def get_healthy_key_for_testing(keys):
     return None
 
 
-def check_model_health(model_name, api_key):
-    """Check model health via the configured provider API."""
-    url = f"{HEALTH_API_BASE}/chat/completions"
+def check_model_health(model_name, api_key_default=None):
+    """Check model health resolving provider dynamically from model name."""
+    prov = "openrouter"
+    m_name = model_name
+    if "/" in model_name:
+        parts = model_name.split("/", 1)
+        if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+            prov = parts[0]
+            m_name = parts[1]
+            
+    if prov == "nvidia":
+        api_base = "https://integrate.api.nvidia.com/v1"
+        api_key = os.getenv("NVIDIA_API_KEY") or api_key_default or ""
+    elif prov == "openai":
+        api_base = "https://api.openai.com/v1"
+        api_key = os.getenv("OPENAI_API_KEY") or api_key_default or ""
+    elif prov == "groq":
+        api_base = "https://api.groq.com/openai/v1"
+        api_key = os.getenv("GROQ_API_KEY") or api_key_default or ""
+    else:
+        api_base = "https://openrouter.ai/api/v1"
+        api_key = os.getenv("SCRUM_TEAM_OPENROUTER_KEY") or os.getenv("OPENROUTER_API_KEY") or api_key_default or ""
+        
+    url = f"{api_base}/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": model_name,
+        "model": m_name,
         "messages": [{"role": "user", "content": "say ok"}],
         "max_tokens": 5
     }

@@ -325,6 +325,9 @@ const StepBillingPlan = ({ handleNext, handleBack, tenantId, userId }: StepBilli
                                         <TextField {...field} size='small' label="CVC" placeholder="123" error={!!errors.cardCvc} helperText={errors.cardCvc?.message as string} />
                                     )} />
                                 </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', fontStyle: 'italic', lineHeight: 1.4 }}>
+                                    Se solicita una tarjeta para validar la suscripción, pero puedes cancelar en cualquier momento durante los 7 días de prueba y no se realizará ningún cobro.
+                                </Typography>
                             </Box>
                         )}
 

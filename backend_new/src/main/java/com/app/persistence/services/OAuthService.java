@@ -44,10 +44,10 @@ public class OAuthService {
     @Value("${google.client.id:}")
     private String googleClientId;
 
-    @Value("${facebook.app.id:}")
+    @Value("${facebook.login.app.id:${facebook.app.id:}}")
     private String facebookAppId;
 
-    @Value("${facebook.app.secret:}")
+    @Value("${facebook.login.app.secret:${facebook.app.secret:}}")
     private String facebookAppSecret;
 
     public OAuthService(UserRepository userRepository,

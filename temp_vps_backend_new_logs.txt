@@ -1,943 +1,200 @@
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::                (v3.4.0)
-
-2026-06-03T15:42:18.458-05:00  INFO 1 --- [           main] com.app.BackendNewApplication            : Starting BackendNewApplication v0.0.1-SNAPSHOT using Java 17.0.8.1 with PID 1 (/app/target/backend-new-0.0.1-SNAPSHOT.jar started by root in /app)
-2026-06-03T15:42:18.473-05:00 DEBUG 1 --- [           main] com.app.BackendNewApplication            : Running with Spring Boot v3.4.0, Spring v6.2.0
-2026-06-03T15:42:18.477-05:00  INFO 1 --- [           main] com.app.BackendNewApplication            : The following 1 profile is active: "production"
-2026-06-03T15:42:22.083-05:00  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data R2DBC repositories in DEFAULT mode.
-2026-06-03T15:42:23.002-05:00  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 865 ms. Found 49 R2DBC repository interfaces.
-2026-06-03T15:42:27.243-05:00 DEBUG 1 --- [           main] io.asyncer.r2dbc.mysql.Extensions        : Discovering Extensions using ServiceLoader
-🛡️ [CORE-LOG] INITIALIZING PasswordEncoder IN AppConfig...
-🛡️ [CORE-LOG] INITIALIZING ReactiveAuthenticationManager IN AppConfig...
-2026-06-03T15:42:29.848-05:00  INFO 1 --- [           main] c.a.p.services.EvolutionService          : 🚀 [EVOLUTION-SERVICE] Initialized. URL: 'http://evolution-api:8080', Key: 'CAMBIA_ESTA_LLAVE_LARGA_Y_UNICA', Webhook: 'https://api.cloudfly.com.co/api/webhooks/evolution'
-2026-06-03T15:42:31.176-05:00  INFO 1 --- [           main] c.a.p.s.SocketNotificationService        : 🚀 [SOCKET-NOTIFY] Service initialized. URL: http://chat-socket-service:3001
-2026-06-03T15:42:33.699-05:00  INFO 1 --- [           main] c.a.w.engine.WorkflowActionDispatcher    : 🎯 [WORKFLOW-DISPATCHER] Registered 2 action executors: [whatsapp.send_text, crm.tag_contact]
-2026-06-03T15:42:33.983-05:00  INFO 1 --- [           main] com.app.config.JwtAuthenticationFilter   : 🛡️ [JWT-FILTER] Initializing JwtAuthenticationFilter...
-🛡️ [CORE-LOG] INITIALIZING SecurityWebFilterChain IN AppConfig...
-2026-06-03T15:42:34.096-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.AIAgentController:
-	{GET /api/v1/agents/my-agents}: getMyAgents()
-	{GET /api/v1/agents/templates}: getGlobalTemplates()
-	{POST /api/v1/agents/personalize}: personalizeAgent(TenantAgentConfig)
-	{PUT /api/v1/agents/personalize/{id}}: updatePersonalization(Long,TenantAgentConfig)
-	{POST /api/v1/agents/templates}: createGlobalTemplate(GlobalAgent)
-2026-06-03T15:42:34.158-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.AuthController:
-	{GET [/auth/auth/session, /auth/session]}: getSession()
-	{POST [/auth/auth/register, /auth/register]}: register(AuthRegisterRequest)
-	{GET [/auth/auth/verify, /auth/verify]}: verify(String)
-	{POST /auth/login}: login(LoginRequest)
-	{POST [/auth/auth/validate-username, /auth/validate-username]}: validateUsername(Map)
-	{POST [/auth/auth/validate-email, /auth/validate-email]}: validateEmail(Map)
-	{POST [/auth/auth/validate-account, /auth/validate-account]}: validateAccount(Map)
-	{POST /auth/forgot-password}: forgotPassword(Map,String)
-	{POST [/auth/auth/reset-password, /auth/reset-password]}: resetPassword(ResetPasswordRequest)
-	{POST [/auth/auth/validate-token, /auth/validate-token]}: validateToken(Map)
-	{POST [/auth/auth/complete-onboarding, /auth/complete-onboarding]}: completeOnboarding(Map)
-2026-06-03T15:42:34.227-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.BillingInternalController:
-	{POST /internal/billing/payment-methods}: savePaymentMethod(PaymentMethodEntity)
-	{POST /internal/billing/subscriptions/{id}/activate-trial}: activateTrial(Long)
-	{GET /internal/billing/subscriptions/due}: getSubscriptionsDue()
-	{GET /internal/billing/payment-methods/default}: getDefaultPaymentMethod(Long)
-	{GET /internal/billing/invoices}: getInvoices(Long,String)
-	{POST /internal/billing/invoices/generate-subscription}: generateInvoice(InvoiceEntity)
-	{PUT /internal/billing/invoices/{id}/pdf}: updateInvoicePdf(Long,String)
-	{PUT /internal/billing/subscriptions/{id}/status}: updateSubscriptionStatus(Long,String)
-	{PUT /internal/billing/invoices/by-reference/{invoiceNumber}}: updateInvoiceStatusByReference(String,String)
-	{POST /internal/billing/payment-transactions}: saveTransaction(PaymentTransactionEntity)
-	{GET /internal/billing/subscriptions/{id}}: getSubscription(Long)
-	{GET /internal/billing/invoices/{id}}: getInvoice(Long)
-	{GET /internal/billing/tenants/{id}}: getTenant(Long)
-2026-06-03T15:42:34.268-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.BillingSchedulerController:
-	{POST /api/billing/run-scheduler}: runScheduler()
-	{GET /api/billing/scheduler-preview}: previewScheduler()
-2026-06-03T15:42:34.276-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.CampaignController:
-	{PUT /api/v1/marketing/campaigns/{id}}: update(Long,CampaignEntity,Map)
-	{POST /api/v1/marketing/campaigns}: create(CampaignEntity,Map)
-	{GET /api/v1/marketing/campaigns}: getAll(Map)
-	{PATCH /api/v1/marketing/campaigns/{id}/status}: updateStatus(Long,Map,Map)
-	{GET /api/v1/marketing/campaigns/{id}/logs}: getLogs(Long,Map)
-	{GET /api/v1/marketing/campaigns/{id}}: getById(Long,Map)
-2026-06-03T15:42:34.294-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.CategoryController:
-	{GET [/categorias/{id}, /categories/{id}]}: getCategoryById(Long)
-	{GET [/categorias/customer/{tenantId}, /categories/customer/{tenantId}]}: getAllTenantCategories(Long,Long)
-	{DELETE [/categorias/{id}, /categories/{id}]}: deleteCategory(Long)
-	{PATCH [/categorias/{id}/toggle-status, /categories/{id}/toggle-status]}: toggleCategoryStatus(Long)
-	{PUT [/categorias/{id}, /categories/{id}]}: updateCategory(Long,CategoryCreateRequest,Map)
-	{POST [/categorias, /categories]}: createCategory(CategoryCreateRequest,Map)
-2026-06-03T15:42:34.306-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChannelConfigController:
-	{GET /api/channel-config/config}: getConfig()
-	{GET /api/channel-config/status}: getStatus()
-	{GET /api/channel-config/qr}: getQrCode()
-	{POST /api/channel-config/activate}: activateChannel()
-	{POST /api/channel-config/config}: updateConfig(ChannelConfigDTO)
-2026-06-03T15:42:34.314-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChannelController:
-	{GET /api/v1/marketing/channels/{id}}: getChannelById(Long)
-	{POST /api/v1/marketing/channels}: createChannel(ChannelEntity)
-	{GET /api/v1/marketing/channels}: getChannels()
-2026-06-03T15:42:34.329-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChannelTypeConfigController:
-	{PUT /api/channel-types/{id}}: update(Long,ChannelTypeConfigDTO)
-	{DELETE /api/channel-types/{id}}: delete(Long)
-	{GET /api/channel-types/by-name/{typeName}}: getByName(String)
-	{POST /api/channel-types}: create(ChannelTypeConfigDTO)
-	{GET /api/channel-types}: getAll()
-	{GET /api/channel-types/active}: getActive()
-	{GET /api/channel-types/{id}}: getById(Long)
-	{PATCH /api/channel-types/{id}/toggle-status}: toggleStatus(Long)
-2026-06-03T15:42:34.339-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChatController:
-	{GET /api/v1/chat/messages/{contactId}}: getMessages(Long)
-	{GET /api/v1/chat/unread-summary}: getUnreadSummary()
-	{PUT /api/v1/chat/mark-read/{contactId}}: markContactMessagesAsRead(Long)
-	{POST /api/v1/chat/send/{phone}}: sendMessage(String,Map)
-2026-06-03T15:42:34.355-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChatbotConfigController:
-	{GET /api/contacts/{contactId:\d+}}: getContactById(Long,Map)
-	{POST /api/contacts/{contactId:\d+}/chatbot-toggle}: toggleChatbot(Long,Map)
-	{POST /api/contacts/chatbotEnable}: checkChatbotEnable(Map)
-2026-06-03T15:42:34.372-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ChatbotController:
-	{POST /api/chatbots/invalidate-cache}: invalidateCache(Map)
-	{GET /api/chatbots}: getChatbot(Integer)
-	{POST /api/chatbots}: createChatbot(ChatbotEntity)
-	{PUT /api/chatbots/{id}}: updateChatbot(Integer,ChatbotEntity)
-	{DELETE /api/chatbots/{id}}: deleteChatbot(Integer,Integer)
-2026-06-03T15:42:34.382-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.CompanyController:
-	{GET /api/v1/companies}: getAllCompanies(Long,Authentication)
-	{GET /api/v1/companies/{id}}: getCompanyById(Long,Authentication)
-	{POST /api/v1/companies}: createCompany(CompanyEntity,Authentication)
-	{PUT /api/v1/companies/{id}}: updateCompany(Long,CompanyEntity,Authentication)
-	{DELETE /api/v1/companies/{id}}: deleteCompany(Long,Authentication)
-2026-06-03T15:42:34.398-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ContactController:
-	{GET /api/v1/contacts/search}: searchContacts(String,Map)
-	{GET /api/v1/contacts/check-email}: checkEmailAvailability(String,Map)
-	{GET /api/v1/contacts}: getAllContacts(Map)
-	{GET /api/v1/contacts/{id}}: getContactById(Long,Map)
-	{PATCH /api/v1/contacts/{id}/chatbot}: toggleChatbot(Long,Map,Map)
-	{GET /api/v1/contacts/paginated}: getPaginatedContacts(int,int,String,String,String,String,Map)
-	{POST /api/v1/contacts}: createContact(ContactEntity,Map)
-	{PUT /api/v1/contacts/{id}}: updateContact(Long,ContactEntity,Map)
-	{DELETE /api/v1/contacts/{id}}: deleteContact(Long,Map)
-	{GET /api/v1/contacts/check-phone}: checkPhoneAvailability(String,Map)
-	{GET /api/v1/contacts/check-document}: checkDocumentAvailability(String,Long,Map)
-2026-06-03T15:42:34.419-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.CustomerController:
-	{GET /customers/validate/email}: validateEmail(String)
-	{DELETE /customers/{id}/full}: deleteTenantFull(Long)
-	{GET /customers}: getAllCustomers()
-	{GET /customers/{id}}: getCustomerById(Long)
-	{GET /customers/validate/nit}: validateNit(String)
-	{GET /customers/validate/whatsapp}: validateWhatsApp(String)
-	{POST /customers/account-setup}: accountSetup(AccountSetupRequest)
-	{POST /customers/account-setup/payment}: accountSetupPayment(Map)
-	{DELETE /customers/purge-all-except-master}: purgeAllExceptMaster()
-2026-06-03T15:42:34.430-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.DaneController:
-	{GET /api/settings/dane/departamentos}: getDepartamentos()
-	{GET /api/settings/dane/ciudades/{codigoDepartamento}}: getCiudadesByDepartamento(String)
-	{GET /api/settings/dane/codigo/{codigo}}: getByCodigo(String)
-2026-06-03T15:42:34.440-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.DashboardController:
-	{GET /dashboard/sales}: getSalesChart(ServerHttpRequest,String,Long)
-	{GET /dashboard/pipeline-stats}: getPipelineStats(ServerHttpRequest,Long)
-	{GET /dashboard/stats}: getStats(ServerHttpRequest,Long)
-2026-06-03T15:42:34.456-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.EvolutionController:
-	{GET /api/evolution/status/{name}}: getStatus(String)
-	{POST /api/evolution/instance/{name}}: createInstance(String)
-	{POST /api/evolution/webhook/{name}}: setWebhook(String)
-	{GET /api/evolution/qr/{name}}: getQr(String)
-2026-06-03T15:42:34.462-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.EvolutionWebhookController:
-	{POST /api/webhooks/evolution}: handleWebhook(Map)
-2026-06-03T15:42:34.467-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.FacebookAuthController:
-	{GET /api/channels/facebook/config}: getConfig()
-	{POST /api/channels/facebook/validate-token}: validateToken(Map)
-	{POST /api/channels/facebook/exchange-token}: exchangeToken(Map)
-	{GET /api/channels/facebook/pages}: getPages(String)
-	{POST /api/channels/facebook/register}: registerPage(Map,Long,Long)
-2026-06-03T15:42:34.476-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.FacebookWebhookController:
-	{POST /api/webhooks/facebook}: handleWebhookEvent(Map)
-	{GET /api/webhooks/facebook}: verifyWebhook(String,String,String)
-2026-06-03T15:42:34.481-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.HealthController:
-	{GET /health}: health()
-2026-06-03T15:42:34.487-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.InvoiceController:
-	{GET /invoices}: findAll(Map)
-	{GET /invoices/{id}}: getById(Long)
-	{GET /invoices/gateways}: getGatewayConfig(String,Map)
-	{POST /invoices/gateways}: saveGatewayConfig(TenantPaymentGatewayDTO,Map)
-	{GET /public/invoices/{token}}: getPublicInvoice(String)
-	{GET /public/invoices/{token}/gateway}: getPublicGatewayConfig(String)
-	{POST /invoices/from-order/{orderId}}: createInvoiceFromOrder(Long,String,String,Map)
-2026-06-03T15:42:34.497-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.LeadController:
-	{POST /api/leads/generate}: generateLeads(LeadRequest)
-	{POST /api/leads/save-to-crm}: saveToCrm(LeadResponse,Map)
-2026-06-03T15:42:34.504-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.MarketingController:
-	{POST /api/v1/marketing/ads}: createCampaign(MarketingCampaignEntity,Authentication)
-	{GET /api/v1/marketing/ads/{id}}: getCampaignById(Long,Authentication)
-	{GET /api/v1/marketing/ads/{id}/ads}: getAdsByCampaign(Long,Authentication)
-	{POST /api/v1/marketing/ads/{id}/ads}: createAd(Long,CampaignAdEntity,Authentication)
-	{GET /api/v1/marketing/ads}: getCampaigns(Authentication)
-2026-06-03T15:42:34.517-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.MarketingHistoryController:
-	{GET /api/v1/marketing/agents/live-status}: getLiveStatus(Long,Long,Authentication)
-	{GET /api/v1/marketing/agents/history}: getActionHistory(Long,int,int,Long,Authentication)
-	{GET /api/v1/marketing/agents/connections}: getAgentConnections(Long,Authentication)
-	{GET /api/v1/marketing/agents/{agentId}/tasks}: getAgentTasks(String,Authentication)
-2026-06-03T15:42:34.552-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.MediaController:
-	{DELETE /api/v1/media/{id}}: delete(Long,Long)
-	{GET /api/v1/media/search}: search(Long,String)
-	{GET /api/v1/media}: getAll(Long)
-	{POST /api/v1/media, consumes [multipart/form-data]}: upload(Mono,Long)
-2026-06-03T15:42:34.566-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.OrderController:
-	{PUT /orders/{id}}: update(Long,OrderRequestDTO,Map)
-	{DELETE /orders/{id}}: delete(Long)
-	{POST /orders}: save(OrderRequestDTO,Map)
-	{GET /orders}: findAll(Map)
-	{GET /orders/{id}}: getById(Long)
-2026-06-03T15:42:34.572-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.PaymentMethodController:
-	{GET /api/v1/payment-methods/tenant/{tenantId}}: getTenantPaymentMethods(Long)
-2026-06-03T15:42:34.578-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.PipelineController:
-	{PUT /api/pipelines/{id}}: updatePipeline(Long,PipelineCreateRequest,Long)
-	{POST /api/pipelines/{id}/assign-conversation}: assignConversationToPipeline(Long,Map)
-	{PUT /api/pipelines/{id}/kanban/cards/{contactId}/stage}: updateCardStage(Long,Long,Long,Long)
-	{GET /api/pipelines/{id}/kanban}: getKanbanData(Long,Long)
-	{DELETE /api/pipelines/{id}}: deletePipeline(Long,Long)
-	{POST /api/pipelines}: createPipeline(PipelineCreateRequest)
-	{GET /api/pipelines/{id}}: getPipelineById(Long,Long)
-	{GET /api/pipelines}: getAllPipelines(Long,Long)
-2026-06-03T15:42:34.589-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.PlanController:
-	{GET /api/v1/plans}: getAllPlans()
-	{GET /api/v1/plans/active}: getAllActivePlans()
-	{POST /api/v1/plans}: createPlan(PlanDto)
-	{GET /api/v1/plans/{id}}: getPlanById(Long)
-	{PUT /api/v1/plans/{id}}: updatePlan(Long,PlanDto)
-	{PATCH /api/v1/plans/{id}/toggle-status}: togglePlanStatus(Long)
-	{DELETE /api/v1/plans/{id}}: deletePlan(Long)
-2026-06-03T15:42:34.596-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.ProductController:
-	{DELETE /api/v1/products/{id}}: delete(Long)
-	{POST /api/v1/products}: save(ProductCreateRequest,Map)
-	{GET /api/v1/products}: findAll(Map)
-	{GET /api/v1/products/{id}}: getById(Long)
-	{GET /api/v1/products/tenant/{tenantId}}: listByTenant(Long,Long)
-	{GET /api/v1/products/barcode/{barcode}}: getByBarcode(String,Long,Long)
-	{GET /api/v1/products/stock/multiple}: validateStockMultiple(List,Map)
-	{GET /api/v1/products/search}: searchByName(String,Map)
-	{GET /api/v1/products/type/{type}}: listByType(String,Map)
-2026-06-03T15:42:34.616-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.QuoteController:
-	{PUT /quotes/{id}}: update(Long,QuoteRequestDTO,Map)
-	{DELETE /quotes/{id}}: delete(Long)
-	{POST /quotes}: save(QuoteRequestDTO,Map)
-	{GET /quotes}: findAll(Map)
-	{GET /quotes/{id}}: getById(Long)
-	{POST /quotes/{id}/convert-to-order}: convertToOrder(Long)
-2026-06-03T15:42:34.625-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.RbacController:
-	{GET /api/rbac/modules-list}: getModulesList()
-	{GET /api/rbac/menu}: getMenu()
-	{GET /api/rbac/my-permissions}: getMyPermissions()
-2026-06-03T15:42:34.627-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.RoleController:
-	{GET /roles}: getAllRoles()
-2026-06-03T15:42:34.632-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.SendingListController:
-	{PUT /api/v1/marketing/lists/{id}}: update(Long,SendingListEntity,Map)
-	{DELETE /api/v1/marketing/lists/{id}}: delete(Long,Map)
-	{POST /api/v1/marketing/lists}: create(SendingListEntity,Map)
-	{GET /api/v1/marketing/lists}: getAll(Map)
-	{GET /api/v1/marketing/lists/{id}}: getById(Long,Map)
-	{GET /api/v1/marketing/lists/{id}/contacts}: getContactsByList(Long,Map)
-	{POST /api/v1/marketing/lists/{listId}/contacts/{contactId}}: addContact(Long,Long,Map)
-	{DELETE /api/v1/marketing/lists/{listId}/contacts/{contactId}}: removeContact(Long,Long,Map)
-2026-06-03T15:42:34.647-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.SubscriptionController:
-	{GET /api/v1/subscriptions/{id}}: getSubscriptionById(Long)
-	{GET /api/v1/subscriptions}: getAllSubscriptions()
-	{GET /api/v1/subscriptions/tenant/{tenantId}/active}: getActiveTenantSubscription(Long)
-	{POST /api/v1/subscriptions}: createSubscription(SubscriptionResponse)
-	{PUT /api/v1/subscriptions/{id}}: updateSubscription(Long,SubscriptionResponse)
-	{DELETE /api/v1/subscriptions/{id}}: deleteSubscription(Long)
-	{PATCH /api/v1/subscriptions/{id}/modules}: updateModules(Long,ModulesUpdateRequest)
-	{PATCH /api/v1/subscriptions/{id}/limits}: updateLimits(Long,LimitsUpdateRequest)
-	{PATCH /api/v1/subscriptions/{id}/cancel}: cancelSubscription(Long)
-	{PATCH /api/v1/subscriptions/{id}/toggle-auto-renew}: toggleAutoRenew(Long)
-	{POST /api/v1/subscriptions/{id}/renew}: renewSubscription(Long)
-2026-06-03T15:42:34.660-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.TagController:
-	{DELETE /api/v1/crm/contacts/{contactId}/tags/{tagId}}: disassociateTagFromContact(Long,Long,Map)
-	{POST /api/v1/crm/contacts/{contactId}/tags}: associateTagsToContact(Long,ContactTagsRequest,Map)
-	{GET /api/v1/crm/contacts/{contactId}/tags}: getTagsForContact(Long,Map)
-	{DELETE /api/v1/crm/tags/{id}}: deleteTag(Long,Map)
-	{PUT /api/v1/crm/tags/{id}}: updateTag(Long,TagRequest,Map)
-	{POST /api/v1/crm/tags}: createTag(TagRequest,Map)
-	{GET /api/v1/crm/tags}: getAllTags(Map)
-2026-06-03T15:42:34.669-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.UserController:
-	{GET /users}: getAllUsers(Map)
-	{GET /users/{id}}: getUserById(Long,Map)
-	{POST /users}: createUser(UserCreateUpdateRequest,Map)
-	{PUT /users/{id}}: updateUser(Long,UserCreateUpdateRequest,Map)
-	{DELETE /users/{id}}: deleteUser(Long,Map)
-2026-06-03T15:42:34.675-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.c.WorkflowController:
-	{GET /api/v1/workflows/{id}/logs}: getExecutionLogs(Long,Map)
-	{PATCH /api/v1/workflows/{id}/toggle-status}: toggleWorkflowStatus(Long,Map)
-	{DELETE /api/v1/workflows/{id}}: deleteWorkflow(Long,Map)
-	{PUT /api/v1/workflows/{id}}: updateWorkflow(Long,WorkflowRequest,Map)
-	{POST /api/v1/workflows}: createWorkflow(WorkflowRequest,Map)
-	{GET /api/v1/workflows/{id}}: getWorkflowById(Long,Map)
-	{GET /api/v1/workflows}: getWorkflows(String,String,Boolean,int,int,Map)
-2026-06-03T15:42:34.689-05:00 TRACE 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 
-	c.a.p.c.WebNotificationController:
-	{DELETE /api/notifications/{id}}: delete(String)
-	{PUT /api/notifications/{id}/read}: markAsRead(String)
-	{GET /api/notifications}: getMyNotifications()
-2026-06-03T15:42:34.718-05:00 DEBUG 1 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : 218 mappings in 'requestMappingHandlerMapping'
-2026-06-03T15:42:34.805-05:00  INFO 1 --- [           main] f.a.AutowiredAnnotationBeanPostProcessor : Inconsistent constructor declaration on bean with name '_reactiveMethodSecurityConfiguration': single autowire-marked constructor flagged as optional - this constructor is effectively required since there is no default constructor to fall back to: org.springframework.security.config.annotation.method.configuration.ReactiveAuthorizationManagerMethodSecurityConfiguration(org.springframework.security.access.expression.method.MethodSecurityExpressionHandler,org.springframework.beans.factory.ObjectProvider,org.springframework.beans.factory.ObjectProvider)
-2026-06-03T15:42:34.933-05:00 TRACE 1 --- [           main] o.s.w.r.f.s.s.RouterFunctionMapping      : 0 RouterFunction(s) in 'routerFunctionMapping'
-2026-06-03T15:42:34.959-05:00 TRACE 1 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped [/webjars/**] onto ResourceWebHandler [classpath [META-INF/resources/webjars/]]
-2026-06-03T15:42:34.959-05:00 TRACE 1 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped [/**] onto ResourceWebHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/]]
-2026-06-03T15:42:34.960-05:00 TRACE 1 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped [/media/**] onto ResourceWebHandler [URL [file:/uploads/]]
-2026-06-03T15:42:34.960-05:00 DEBUG 1 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /media/**] in 'resourceHandlerMapping'
-2026-06-03T15:42:35.379-05:00  INFO 1 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
-2026-06-03T15:42:35.469-05:00 DEBUG 1 --- [           main] o.s.w.r.r.m.a.ControllerMethodResolver   : ControllerAdvice beans: none
-2026-06-03T15:42:35.576-05:00 DEBUG 1 --- [           main] o.s.w.s.adapter.HttpWebHandlerAdapter    : enableLoggingRequestDetails='false': form data and headers will be masked to prevent unsafe logging of potentially sensitive data
-2026-06-03T15:42:36.032-05:00  WARN 1 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
-
-Using generated security password: 78ccc867-9d8f-4143-95f8-03a7262ab112
-
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
-
-2026-06-03T15:42:36.573-05:00  INFO 1 --- [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port 8080 (http)
-2026-06-03T15:42:36.672-05:00  INFO 1 --- [           main] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
-	allow.auto.create.topics = true
-	auto.commit.interval.ms = 5000
-	auto.include.jmx.reporter = true
-	auto.offset.reset = latest
-	bootstrap.servers = [kafka:9092]
-	check.crcs = true
-	client.dns.lookup = use_all_dns_ips
-	client.id = consumer-workflow-engine-1
-	client.rack = 
-	connections.max.idle.ms = 540000
-	default.api.timeout.ms = 60000
-	enable.auto.commit = false
-	enable.metrics.push = true
-	exclude.internal.topics = true
-	fetch.max.bytes = 52428800
-	fetch.max.wait.ms = 500
-	fetch.min.bytes = 1
-	group.id = workflow-engine
-	group.instance.id = null
-	group.protocol = classic
-	group.remote.assignor = null
-	heartbeat.interval.ms = 3000
-	interceptor.classes = []
-	internal.leave.group.on.close = true
-	internal.throw.on.fetch.stable.offset.unsupported = false
-	isolation.level = read_uncommitted
-	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
-	max.partition.fetch.bytes = 1048576
-	max.poll.interval.ms = 300000
-	max.poll.records = 500
-	metadata.max.age.ms = 300000
-	metadata.recovery.strategy = none
-	metric.reporters = []
-	metrics.num.samples = 2
-	metrics.recording.level = INFO
-	metrics.sample.window.ms = 30000
-	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
-	receive.buffer.bytes = 65536
-	reconnect.backoff.max.ms = 1000
-	reconnect.backoff.ms = 50
-	request.timeout.ms = 30000
-	retry.backoff.max.ms = 1000
-	retry.backoff.ms = 100
-	sasl.client.callback.handler.class = null
-	sasl.jaas.config = null
-	sasl.kerberos.kinit.cmd = /usr/bin/kinit
-	sasl.kerberos.min.time.before.relogin = 60000
-	sasl.kerberos.service.name = null
-	sasl.kerberos.ticket.renew.jitter = 0.05
-	sasl.kerberos.ticket.renew.window.factor = 0.8
-	sasl.login.callback.handler.class = null
-	sasl.login.class = null
-	sasl.login.connect.timeout.ms = null
-	sasl.login.read.timeout.ms = null
-	sasl.login.refresh.buffer.seconds = 300
-	sasl.login.refresh.min.period.seconds = 60
-	sasl.login.refresh.window.factor = 0.8
-	sasl.login.refresh.window.jitter = 0.05
-	sasl.login.retry.backoff.max.ms = 10000
-	sasl.login.retry.backoff.ms = 100
-	sasl.mechanism = GSSAPI
-	sasl.oauthbearer.clock.skew.seconds = 30
-	sasl.oauthbearer.expected.audience = null
-	sasl.oauthbearer.expected.issuer = null
-	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
-	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
-	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
-	sasl.oauthbearer.jwks.endpoint.url = null
-	sasl.oauthbearer.scope.claim.name = scope
-	sasl.oauthbearer.sub.claim.name = sub
-	sasl.oauthbearer.token.endpoint.url = null
-	security.protocol = PLAINTEXT
-	security.providers = null
-	send.buffer.bytes = 131072
-	session.timeout.ms = 45000
-	socket.connection.setup.timeout.max.ms = 30000
-	socket.connection.setup.timeout.ms = 10000
-	ssl.cipher.suites = null
-	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
-	ssl.endpoint.identification.algorithm = https
-	ssl.engine.factory.class = null
-	ssl.key.password = null
-	ssl.keymanager.algorithm = SunX509
-	ssl.keystore.certificate.chain = null
-	ssl.keystore.key = null
-	ssl.keystore.location = null
-	ssl.keystore.password = null
-	ssl.keystore.type = JKS
-	ssl.protocol = TLSv1.3
-	ssl.provider = null
-	ssl.secure.random.implementation = null
-	ssl.trustmanager.algorithm = PKIX
-	ssl.truststore.certificates = null
-	ssl.truststore.location = null
-	ssl.truststore.password = null
-	ssl.truststore.type = JKS
-	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
-
-2026-06-03T15:42:36.876-05:00  INFO 1 --- [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
-2026-06-03T15:42:37.452-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
-2026-06-03T15:42:37.454-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
-2026-06-03T15:42:37.454-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1780519357445
-2026-06-03T15:42:37.523-05:00  INFO 1 --- [           main] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Subscribed to topic(s): order-paid-topic
-2026-06-03T15:42:37.612-05:00  INFO 1 --- [           main] o.a.k.clients.consumer.ConsumerConfig    : ConsumerConfig values: 
-	allow.auto.create.topics = true
-	auto.commit.interval.ms = 5000
-	auto.include.jmx.reporter = true
-	auto.offset.reset = latest
-	bootstrap.servers = [kafka:9092]
-	check.crcs = true
-	client.dns.lookup = use_all_dns_ips
-	client.id = consumer-workflow-engine-2
-	client.rack = 
-	connections.max.idle.ms = 540000
-	default.api.timeout.ms = 60000
-	enable.auto.commit = false
-	enable.metrics.push = true
-	exclude.internal.topics = true
-	fetch.max.bytes = 52428800
-	fetch.max.wait.ms = 500
-	fetch.min.bytes = 1
-	group.id = workflow-engine
-	group.instance.id = null
-	group.protocol = classic
-	group.remote.assignor = null
-	heartbeat.interval.ms = 3000
-	interceptor.classes = []
-	internal.leave.group.on.close = true
-	internal.throw.on.fetch.stable.offset.unsupported = false
-	isolation.level = read_uncommitted
-	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
-	max.partition.fetch.bytes = 1048576
-	max.poll.interval.ms = 300000
-	max.poll.records = 500
-	metadata.max.age.ms = 300000
-	metadata.recovery.strategy = none
-	metric.reporters = []
-	metrics.num.samples = 2
-	metrics.recording.level = INFO
-	metrics.sample.window.ms = 30000
-	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor, class org.apache.kafka.clients.consumer.CooperativeStickyAssignor]
-	receive.buffer.bytes = 65536
-	reconnect.backoff.max.ms = 1000
-	reconnect.backoff.ms = 50
-	request.timeout.ms = 30000
-	retry.backoff.max.ms = 1000
-	retry.backoff.ms = 100
-	sasl.client.callback.handler.class = null
-	sasl.jaas.config = null
-	sasl.kerberos.kinit.cmd = /usr/bin/kinit
-	sasl.kerberos.min.time.before.relogin = 60000
-	sasl.kerberos.service.name = null
-	sasl.kerberos.ticket.renew.jitter = 0.05
-	sasl.kerberos.ticket.renew.window.factor = 0.8
-	sasl.login.callback.handler.class = null
-	sasl.login.class = null
-	sasl.login.connect.timeout.ms = null
-	sasl.login.read.timeout.ms = null
-	sasl.login.refresh.buffer.seconds = 300
-	sasl.login.refresh.min.period.seconds = 60
-	sasl.login.refresh.window.factor = 0.8
-	sasl.login.refresh.window.jitter = 0.05
-	sasl.login.retry.backoff.max.ms = 10000
-	sasl.login.retry.backoff.ms = 100
-	sasl.mechanism = GSSAPI
-	sasl.oauthbearer.clock.skew.seconds = 30
-	sasl.oauthbearer.expected.audience = null
-	sasl.oauthbearer.expected.issuer = null
-	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
-	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
-	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
-	sasl.oauthbearer.jwks.endpoint.url = null
-	sasl.oauthbearer.scope.claim.name = scope
-	sasl.oauthbearer.sub.claim.name = sub
-	sasl.oauthbearer.token.endpoint.url = null
-	security.protocol = PLAINTEXT
-	security.providers = null
-	send.buffer.bytes = 131072
-	session.timeout.ms = 45000
-	socket.connection.setup.timeout.max.ms = 30000
-	socket.connection.setup.timeout.ms = 10000
-	ssl.cipher.suites = null
-	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
-	ssl.endpoint.identification.algorithm = https
-	ssl.engine.factory.class = null
-	ssl.key.password = null
-	ssl.keymanager.algorithm = SunX509
-	ssl.keystore.certificate.chain = null
-	ssl.keystore.key = null
-	ssl.keystore.location = null
-	ssl.keystore.password = null
-	ssl.keystore.type = JKS
-	ssl.protocol = TLSv1.3
-	ssl.provider = null
-	ssl.secure.random.implementation = null
-	ssl.trustmanager.algorithm = PKIX
-	ssl.truststore.certificates = null
-	ssl.truststore.location = null
-	ssl.truststore.password = null
-	ssl.truststore.type = JKS
-	value.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
-
-2026-06-03T15:42:37.618-05:00  INFO 1 --- [           main] o.a.k.c.t.i.KafkaMetricsCollector        : initializing Kafka metrics collector
-2026-06-03T15:42:37.661-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka version: 3.8.1
-2026-06-03T15:42:37.661-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka commitId: 70d6ff42debf7e17
-2026-06-03T15:42:37.661-05:00  INFO 1 --- [           main] o.a.kafka.common.utils.AppInfoParser     : Kafka startTimeMs: 1780519357661
-2026-06-03T15:42:37.716-05:00  INFO 1 --- [           main] o.a.k.c.c.internals.LegacyKafkaConsumer  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Subscribed to topic(s): appointment-scheduled-topic
-2026-06-03T15:42:37.927-05:00  INFO 1 --- [           main] com.app.BackendNewApplication            : Started BackendNewApplication in 21.973 seconds (process running for 24.657)
-2026-06-03T15:42:38.240-05:00  INFO 1 --- [           main] c.a.w.engine.DynamicWorkflowScheduler    : ⏰ [DYNAMIC-SCHEDULER] Initializing active scheduled workflows...
-2026-06-03T15:42:38.592-05:00 DEBUG 1 --- [           main] o.s.d.r2dbc.core.NamedParameterExpander  : Expanding SQL statement [SELECT * FROM workflows WHERE trigger_event = :triggerEvent AND is_active = 1] to [SELECT * FROM workflows WHERE trigger_event = ? AND is_active = 1]
-2026-06-03T15:42:39.768-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122414}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:39.811-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:39.833-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:40.145-05:00  INFO 1 --- [ntainer#1-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Cluster ID: X0slMP_PSYWJeNtm7k9XYg
-2026-06-03T15:42:40.146-05:00  INFO 1 --- [ntainer#0-0-C-1] org.apache.kafka.clients.Metadata        : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Cluster ID: X0slMP_PSYWJeNtm7k9XYg
-2026-06-03T15:42:40.156-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Discovered group coordinator kafka:9092 (id: 2147483646 rack: null)
-2026-06-03T15:42:40.157-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Discovered group coordinator kafka:9092 (id: 2147483646 rack: null)
-2026-06-03T15:42:40.167-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:40.168-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:40.240-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Request joining group due to: need to re-join with the given member-id: consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb
-2026-06-03T15:42:40.240-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Request joining group due to: need to re-join with the given member-id: consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27
-2026-06-03T15:42:40.241-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:40.241-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:40.253-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=68, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T15:42:40.253-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=68, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T15:42:40.329-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Finished assignment for group at generation 68: {consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb=Assignment(partitions=[order-paid-topic-0]), consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27=Assignment(partitions=[appointment-scheduled-topic-0])}
-2026-06-03T15:42:40.347-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=68, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T15:42:40.350-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[order-paid-topic-0])
-2026-06-03T15:42:40.351-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=68, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T15:42:40.351-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[appointment-scheduled-topic-0])
-2026-06-03T15:42:40.361-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Adding newly assigned partitions: appointment-scheduled-topic-0
-2026-06-03T15:42:40.361-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Adding newly assigned partitions: order-paid-topic-0
-2026-06-03T15:42:40.402-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition order-paid-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T15:42:40.401-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition appointment-scheduled-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T15:42:40.408-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [appointment-scheduled-topic-0]
-2026-06-03T15:42:40.506-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [order-paid-topic-0]
-2026-06-03T15:42:40.838-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:40.849-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:40.858-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:40.875-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:40.881-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:40.882-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:40.921-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:40.992-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:41.007-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.030-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.055-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.057-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:41.097-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.102-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.103-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.108-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:41.108-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.307-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.311-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.315-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:41.317-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.322-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.324-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.325-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122414 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:41.341-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:41.394-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.MySqlSimpleConnection    : Create a simple statement provided by text query
-2026-06-03T15:42:41.401-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT COUNT(*) FROM global_agents]
-2026-06-03T15:42:41.402-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.411-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.412-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.412-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='COUNT(*)' (origin:''), collationId=63, size=21, type=8, definitions=129, decimals=0}], eof=null}
-2026-06-03T15:42:41.413-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.443-05:00  INFO 1 --- [tor-tcp-epoll-2] c.a.p.seeders.GlobalAgentsSeeder         : ⏭️ [SEEDER] Global Agents already exist, skipping.
-2026-06-03T15:42:41.444-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.444-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.446-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: PingMessage{}
-2026-06-03T15:42:41.447-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122416}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:41.447-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:41.449-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.449-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:41.450-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.455-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.MySqlSimpleConnection    : Create a parameterized statement provided by text query
-2026-06-03T15:42:41.465-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT * FROM workflows WHERE trigger_event = ? AND is_active = 1] with [scheduler.cron]
-2026-06-03T15:42:41.467-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: PreparedTextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.487-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.488-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.489-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='cloud_master', table='workflows' (origin:'workflows'), column='id' (origin:'id'), collationId=63, size=20, type=8, definitions=16899, decimals=0}, DefinitionMetadataMessage{database='cloud_master', table='workflows' (origin:'workflows'), column='tenant_id' (origin:'tenant_id'), collationId=63, size=20, type=8, definitions=20489, decimals=0}, ...more 10 messages], eof=null}
-2026-06-03T15:42:41.490-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.491-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.492-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: PingMessage{}
-2026-06-03T15:42:41.495-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.496-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.521-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:41.525-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:41.528-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:41.531-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:41.536-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.536-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.537-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:41.537-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:41.541-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.545-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.548-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.549-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:41.551-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.551-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.551-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.552-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:41.552-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.563-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.564-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.564-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:41.565-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.566-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.566-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.567-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122416 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:41.567-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:41.582-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122417}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:41.583-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:41.584-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:41.622-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:41.623-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:41.626-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:41.629-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:41.630-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.631-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.631-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:41.632-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:41.633-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.637-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.638-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.638-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:41.639-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.639-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.640-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.641-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:41.641-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.668-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.669-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.670-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:41.671-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.673-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.673-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.674-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122417 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:41.674-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:41.690-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122418}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:41.690-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:41.693-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:41.742-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:41.744-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:41.748-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:41.752-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:41.764-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.765-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.766-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:41.767-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:41.769-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.773-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.775-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.775-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:41.776-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.777-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.778-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.779-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:41.780-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.792-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.793-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.794-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:41.795-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.795-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.795-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.796-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122418 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:41.797-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:41.811-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122419}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:41.812-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:41.813-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:41.864-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:41.867-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:41.877-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:41.880-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:41.882-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.882-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.883-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:41.884-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:41.885-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.900-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.900-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.902-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:41.903-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.904-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.905-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:41.908-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:41.909-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:41.930-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:41.932-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:41.932-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:41.936-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:41.938-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:41.940-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:41.943-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122419 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:41.943-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:41.956-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122421}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:41.959-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:41.961-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:42.004-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:42.005-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:42.015-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:42.021-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:42.024-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.026-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.026-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:42.027-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:42.027-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.042-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.044-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.047-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:42.049-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.053-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.059-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.060-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:42.064-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.089-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.090-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.090-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:42.090-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.091-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.091-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:42.093-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122421 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:42.094-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:42.107-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122423}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:42.110-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:42.111-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:42.141-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:42.144-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:42.146-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:42.151-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:42.152-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.152-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.153-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:42.153-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:42.154-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.162-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.162-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.163-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:42.163-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.164-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.164-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.164-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:42.165-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.175-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.177-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.178-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:42.179-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.179-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.181-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:42.183-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122423 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:42.183-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:42.191-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122424}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:42.192-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:42.193-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:42.257-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:42.259-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:42.263-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:42.266-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:42.272-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.272-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.273-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:42.275-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:42.275-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.279-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.279-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.280-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:42.280-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.281-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.284-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.285-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:42.287-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.304-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.305-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.305-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:42.309-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.310-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.311-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:42.312-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122424 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:42.313-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:42.348-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122426}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:42.348-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:42.350-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:42.380-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:42.381-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:42.382-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:42.387-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:42.388-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.388-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.388-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:42.389-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:42.389-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.400-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.403-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.403-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:42.403-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.404-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.404-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.405-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:42.405-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.447-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.447-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.448-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:42.450-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.452-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.452-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:42.452-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122426 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:42.453-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:42.460-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=122428}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
-2026-06-03T15:42:42.460-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
-2026-06-03T15:42:42.461-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
-2026-06-03T15:42:42.506-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
-2026-06-03T15:42:42.506-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
-2026-06-03T15:42:42.511-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
-2026-06-03T15:42:42.516-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
-2026-06-03T15:42:42.517-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.517-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.518-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
-2026-06-03T15:42:42.518-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
-2026-06-03T15:42:42.518-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.523-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.524-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.524-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
-2026-06-03T15:42:42.525-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.525-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.525-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
-2026-06-03T15:42:42.526-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
-2026-06-03T15:42:42.526-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
-2026-06-03T15:42:42.660-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
-2026-06-03T15:42:42.663-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
-2026-06-03T15:42:42.664-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
-2026-06-03T15:42:42.666-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
-2026-06-03T15:42:42.667-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
-2026-06-03T15:42:42.667-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
-2026-06-03T15:42:42.667-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 122428 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
-2026-06-03T15:42:42.667-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
-2026-06-03T15:42:43.278-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T15:42:43.280-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T15:42:43.280-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Revoke previously assigned partitions appointment-scheduled-topic-0
-2026-06-03T15:42:43.280-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Revoke previously assigned partitions order-paid-topic-0
-2026-06-03T15:42:43.281-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: [order-paid-topic-0]
-2026-06-03T15:42:43.281-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: [appointment-scheduled-topic-0]
-2026-06-03T15:42:43.282-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:43.282-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] (Re-)joining group
-2026-06-03T15:42:43.294-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=69, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T15:42:43.295-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=69, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T15:42:43.577-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Finished assignment for group at generation 69: {consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb=Assignment(partitions=[]), consumer-workflow-engine-1-3ae95dfd-d774-4ccd-929e-fc4bc22f2a72=Assignment(partitions=[order-paid-topic-0]), consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27=Assignment(partitions=[appointment-scheduled-topic-0]), consumer-workflow-engine-2-55df7809-972f-4a86-9d41-db4f1cc7d686=Assignment(partitions=[])}
-2026-06-03T15:42:43.618-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=69, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T15:42:43.619-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=69, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T15:42:43.622-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[])
-2026-06-03T15:42:43.625-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Adding newly assigned partitions: 
-2026-06-03T15:42:43.622-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[appointment-scheduled-topic-0])
-2026-06-03T15:42:43.627-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Adding newly assigned partitions: appointment-scheduled-topic-0
-2026-06-03T15:42:43.626-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: []
-2026-06-03T15:42:43.655-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition appointment-scheduled-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T15:42:43.656-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [appointment-scheduled-topic-0]
-2026-06-03T15:43:37.536-05:00  WARN 1 --- [r-kafka-metrics] i.m.p.PrometheusMeterRegistry            : The meter (MeterId{name='kafka.consumer.fetch.manager.records.per.request.avg', tags=[tag(client.id=consumer-workflow-engine-1),tag(kafka.version=3.8.1),tag(spring.id=kafkaConsumerFactory.consumer-workflow-engine-1)]}) registration has failed: Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'kafka.consumer.fetch.manager.records.per.request.avg' containing tag keys [client.id, kafka.version, spring.id, topic]. The meter you are attempting to register has keys [client.id, kafka.version, spring.id]. Note that subsequent logs will be logged at debug level.
-2026-06-03T15:51:40.157-05:00  INFO 1 --- [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Node -1 disconnected.
-2026-06-03T15:51:40.249-05:00  INFO 1 --- [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Node -1 disconnected.
-2026-06-03T16:05:28.291-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T16:05:28.296-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Revoke previously assigned partitions 
-2026-06-03T16:05:28.297-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: []
-2026-06-03T16:05:28.299-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] (Re-)joining group
-2026-06-03T16:05:30.019-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T16:05:30.020-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Revoke previously assigned partitions appointment-scheduled-topic-0
-2026-06-03T16:05:30.020-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: [appointment-scheduled-topic-0]
-2026-06-03T16:05:30.020-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] (Re-)joining group
-2026-06-03T16:05:30.028-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=70, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T16:05:30.028-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=70, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T16:05:30.483-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Finished assignment for group at generation 70: {consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb=Assignment(partitions=[order-paid-topic-0]), consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27=Assignment(partitions=[appointment-scheduled-topic-0])}
-2026-06-03T16:05:30.495-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=70, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T16:05:30.496-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[appointment-scheduled-topic-0])
-2026-06-03T16:05:30.496-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Adding newly assigned partitions: appointment-scheduled-topic-0
-2026-06-03T16:05:30.497-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=70, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T16:05:30.497-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[order-paid-topic-0])
-2026-06-03T16:05:30.497-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Adding newly assigned partitions: order-paid-topic-0
-2026-06-03T16:05:30.504-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition appointment-scheduled-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T16:05:30.505-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [appointment-scheduled-topic-0]
-2026-06-03T16:05:30.503-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition order-paid-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T16:05:30.506-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [order-paid-topic-0]
-2026-06-03T16:05:51.058-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T16:05:51.059-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Revoke previously assigned partitions appointment-scheduled-topic-0
-2026-06-03T16:05:51.061-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: [appointment-scheduled-topic-0]
-2026-06-03T16:05:51.062-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] (Re-)joining group
-2026-06-03T16:05:51.076-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Request joining group due to: group is already rebalancing
-2026-06-03T16:05:51.076-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Revoke previously assigned partitions order-paid-topic-0
-2026-06-03T16:05:51.077-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions revoked: [order-paid-topic-0]
-2026-06-03T16:05:51.077-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] (Re-)joining group
-2026-06-03T16:05:51.082-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=71, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T16:05:51.086-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully joined group with generation Generation{generationId=71, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T16:05:51.093-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Finished assignment for group at generation 71: {consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb=Assignment(partitions=[order-paid-topic-0]), consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27=Assignment(partitions=[appointment-scheduled-topic-0]), consumer-workflow-engine-1-d3245404-9599-4c17-aa46-952d8781f71b=Assignment(partitions=[]), consumer-workflow-engine-2-51328d34-c0f4-4493-a8c9-509386caf690=Assignment(partitions=[])}
-2026-06-03T16:05:51.099-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=71, memberId='consumer-workflow-engine-2-38a98449-820d-42be-9ce8-45eff8792e27', protocol='range'}
-2026-06-03T16:05:51.099-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Successfully synced group in generation Generation{generationId=71, memberId='consumer-workflow-engine-1-68537a94-6ced-49da-bd8a-fb22047ef2eb', protocol='range'}
-2026-06-03T16:05:51.100-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[order-paid-topic-0])
-2026-06-03T16:05:51.101-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Notifying assignor about the new Assignment(partitions=[appointment-scheduled-topic-0])
-2026-06-03T16:05:51.101-05:00  INFO 1 --- [ntainer#1-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-2, groupId=workflow-engine] Adding newly assigned partitions: appointment-scheduled-topic-0
-2026-06-03T16:05:51.101-05:00  INFO 1 --- [ntainer#0-0-C-1] k.c.c.i.ConsumerRebalanceListenerInvoker : [Consumer clientId=consumer-workflow-engine-1, groupId=workflow-engine] Adding newly assigned partitions: order-paid-topic-0
-2026-06-03T16:05:51.107-05:00  INFO 1 --- [ntainer#1-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition appointment-scheduled-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T16:05:51.108-05:00  INFO 1 --- [ntainer#1-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [appointment-scheduled-topic-0]
-2026-06-03T16:05:51.112-05:00  INFO 1 --- [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerUtils        : Setting offset for partition order-paid-topic-0 to the committed offset FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[kafka:9092 (id: 1 rack: null)], epoch=0}}
-2026-06-03T16:05:51.113-05:00  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : workflow-engine: partitions assigned: [order-paid-topic-0]
+2026-06-04T13:53:31.677-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:31.677-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129627 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:31.677-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:31.696-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129628}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:31.696-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:31.697-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:31.748-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:31.749-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:31.751-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:31.754-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:31.755-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.755-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.755-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:31.756-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:31.756-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.759-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.761-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.763-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:31.765-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.766-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.766-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.767-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:31.767-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.779-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.780-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.780-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:31.780-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.781-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.782-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:31.783-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129628 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:31.783-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:31.794-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129629}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:31.795-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:31.796-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:31.834-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:31.835-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:31.837-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:31.841-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:31.842-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.843-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.843-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:31.844-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:31.844-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.851-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.854-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.854-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:31.854-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.855-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.855-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.856-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:31.857-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.867-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.868-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.868-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:31.868-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.869-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.869-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:31.869-05:00 DEBUG 1 --- [tor-tcp-epoll-6] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129629 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:31.869-05:00 DEBUG 1 --- [tor-tcp-epoll-6] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:31.877-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129630}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:31.878-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:31.879-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:31.930-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:31.931-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:31.933-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:31.935-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:31.936-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.936-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.936-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:31.937-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:31.937-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.940-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.941-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.942-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:31.942-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.943-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.943-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.944-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:31.944-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.955-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.956-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.956-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:31.957-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.957-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.957-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:31.958-05:00 DEBUG 1 --- [tor-tcp-epoll-1] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129630 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:31.958-05:00 DEBUG 1 --- [tor-tcp-epoll-1] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:31.962-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129631}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:31.962-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:31.963-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:31.986-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:31.986-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:31.988-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:31.991-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:31.991-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.991-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.992-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:31.992-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:31.992-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:31.995-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:31.995-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:31.995-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:31.996-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:31.996-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:31.996-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:31.997-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:31.997-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.009-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.010-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.010-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:32.019-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.020-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.020-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:32.020-05:00 DEBUG 1 --- [tor-tcp-epoll-2] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129631 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:32.020-05:00 DEBUG 1 --- [tor-tcp-epoll-2] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:32.027-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129632}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:32.027-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:32.028-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:32.060-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:32.060-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:32.063-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:32.065-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:32.066-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.066-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.066-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:32.067-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:32.067-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.072-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.072-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.073-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:32.074-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.075-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.076-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.076-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:32.077-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.090-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.094-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.094-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:32.095-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.095-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.095-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:32.095-05:00 DEBUG 1 --- [tor-tcp-epoll-3] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129632 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:32.095-05:00 DEBUG 1 --- [tor-tcp-epoll-3] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:32.106-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129633}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:32.108-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:32.109-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:32.137-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:32.137-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:32.143-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:32.145-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:32.146-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.146-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.146-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:32.147-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:32.147-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.149-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.150-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.150-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:32.150-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.150-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.151-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.151-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:32.151-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.162-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.162-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.162-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:32.163-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.163-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.163-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:32.164-05:00 DEBUG 1 --- [tor-tcp-epoll-4] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129633 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:32.164-05:00 DEBUG 1 --- [tor-tcp-epoll-4] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:53:32.171-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: HandshakeV10Request{header=HandshakeHeader{protocolVersion=10, serverVersion=8.0.46, connectionId=129634}, salt=REDACTED, serverCapability=Capability<0x5bfafbf>, serverStatuses=2, authType='caching_sha2_password'}
+2026-06-04T13:53:32.172-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: SslRequest41{capability=Capability<0x12faa0f>, collationId=45}
+2026-06-04T13:53:32.173-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL event triggered, enable SSL handler to pipeline
+2026-06-04T13:53:32.194-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticSslResponseMessage{}
+2026-06-04T13:53:32.195-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: HandshakeResponse41{capability=Capability<0x12faa0f>, collationId=45, user='root', authentication=REDACTED, authType='caching_sha2_password', database='cloud_master', attributes={}, zstdCompressionLevel=3}
+2026-06-04T13:53:32.196-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.client.SslBridgeHandler  : SSL handshake completed, remove SSL bridge in pipeline
+2026-06-04T13:53:32.197-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: AuthMoreDataMessage{failed=false}
+2026-06-04T13:53:32.198-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.198-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=false, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.198-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing client session: []
+2026-06-04T13:53:32.198-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SELECT @@transaction_isolation AS i,@@version_comment AS v]
+2026-06-04T13:53:32.199-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.201-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.201-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.201-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='', table='' (origin:''), column='i' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}, DefinitionMetadataMessage{database='', table='' (origin:''), column='v' (origin:''), collationId=45, size=87380, type=253, definitions=0, decimals=31}], eof=null}
+2026-06-04T13:53:32.202-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.202-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.202-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=2, information='', systemVariables={}}
+2026-06-04T13:53:32.202-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.QUERY             : Executing statement [SHOW VARIABLES LIKE 'innodb_lock_wait_timeout']
+2026-06-04T13:53:32.202-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Request: TextQueryMessage{sql=REDACTED}
+2026-06-04T13:53:32.211-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Result
+2026-06-04T13:53:32.212-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.m.m.server.MetadataDecodeContext   : Respond a metadata bundle by filled-up
+2026-06-04T13:53:32.212-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: SyntheticMetadataMessage{completed=false, messages=[DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Variable_name' (origin:'Variable_name'), collationId=45, size=256, type=253, definitions=4097, decimals=0}, DefinitionMetadataMessage{database='performance_schema', table='session_variables' (origin:'session_variables'), column='Value' (origin:'Value'), collationId=45, size=4096, type=253, definitions=0, decimals=0}], eof=null}
+2026-06-04T13:53:32.212-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: RowMessage(encoded)
+2026-06-04T13:53:32.213-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.MessageDuplexCodec    : Decode context change to DecodeContext-Command
+2026-06-04T13:53:32.213-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r.mysql.client.ReactorNettyClient    : Response: OkMessage{isEndOfRows=true, affectedRows=0, lastInsertId=0, serverStatuses=22, information='', systemVariables={}}
+2026-06-04T13:53:32.213-05:00 DEBUG 1 --- [tor-tcp-epoll-5] io.asyncer.r2dbc.mysql.InitFlow          : Initializing connection 129634 context: SessionState{level=IsolationLevel{sql='REPEATABLE READ'}, product='MySQL Community Server - GPL', timeZone=null, lockWaitTimeout=PT50S, lockWaitTimeoutSupported=true}
+2026-06-04T13:53:32.213-05:00 DEBUG 1 --- [tor-tcp-epoll-5] i.a.r2dbc.mysql.MySqlSimpleConnection    : Batch is supported by server
+2026-06-04T13:54:29.908-05:00  WARN 1 --- [r-kafka-metrics] i.m.p.PrometheusMeterRegistry            : The meter (MeterId{name='kafka.consumer.fetch.manager.records.per.request.avg', tags=[tag(client.id=consumer-workflow-engine-1),tag(kafka.version=3.8.1),tag(spring.id=kafkaConsumerFactory.consumer-workflow-engine-1)]}) registration has failed: Prometheus requires that all meters with the same name have the same set of tag keys. There is already an existing meter named 'kafka.consumer.fetch.manager.records.per.request.avg' containing tag keys [client.id, kafka.version, spring.id, topic]. The meter you are attempting to register has keys [client.id, kafka.version, spring.id]. Note that subsequent logs will be logged at debug level.

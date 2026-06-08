@@ -11,7 +11,28 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 class VisionWorker:
     def __init__(self, env_path=None):
-        self.api_key    = os.getenv("OPENROUTER_API_KEY")
+        from dotenv import load_dotenv
+        if env_path:
+            load_dotenv(dotenv_path=env_path)
+        else:
+            load_dotenv()
+            
+        self.model_default = os.getenv("MODEL_DEFAULT", "openrouter/owl-alpha")
+        self.prov = "openrouter"
+        self.model_name = self.model_default
+        if "/" in self.model_default:
+            parts = self.model_default.split("/", 1)
+            if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                self.prov = parts[0]
+                self.model_name = parts[1]
+                
+        if self.prov == "nvidia":
+            self.api_key = os.getenv("NVIDIA_API_KEY")
+            self.api_base = "https://integrate.api.nvidia.com/v1"
+        else:
+            self.api_key = os.getenv("OPENROUTER_API_KEY")
+            self.api_base = "https://openrouter.ai/api/v1"
+            
         self.jira_url   = os.getenv("JIRA_API_URL")
         self.jira_email = os.getenv("JIRA_EMAIL")
         self.jira_token = os.getenv("JIRA_API_TOKEN")
@@ -57,8 +78,16 @@ class VisionWorker:
     def analyze_with_gemini_api(self, local_path: str, issue_key: str, filename: str) -> str:
         img_b64 = self.encode_image_base64(local_path)
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        
+        model = "google/gemini-2.5-flash:free"
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        
+        if self.prov == "nvidia":
+            model = self.model_name
+            url = f"{self.api_base}/chat/completions"
+            
         payload = {
-            "model": "google/gemini-2.5-flash:free",
+            "model": model,
             "messages": [{
                 "role": "user",
                 "content": [
@@ -73,11 +102,15 @@ class VisionWorker:
                 ]
             }]
         }
-        print(f"☁️  [Vision Worker - API]: Enviando {filename} a Gemini 2.5 Flash...")
-        res = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=60)
+        
+        if self.prov == "nvidia":
+            payload["chat_template_kwargs"] = {"thinking": True}
+            
+        print(f"☁️  [Vision Worker - API]: Enviando {filename} a {model}...")
+        res = requests.post(url, json=payload, headers=headers, timeout=60)
         if res.status_code == 200:
             return res.json()['choices'][0]['message']['content']
-        return f"Error Gemini API: HTTP {res.status_code} — {res.text[:200]}"
+        return f"Error Vision API: HTTP {res.status_code} — {res.text[:200]}"
 
     def analyze_comment_image_async(self, issue_key, attachment_id, filename, content_url):
         threading.Thread(

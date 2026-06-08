@@ -12,7 +12,6 @@ import (
 
 	"cloudfly-storefront/internal/database"
 	"github.com/gofiber/fiber/v2"
-	"github.com/redis/go-redis/v9"
 )
 
 type Tenant struct {

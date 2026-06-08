@@ -26,6 +26,8 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  // CLOUD-308: Transpile react-perfect-scrollbar to fix ModuleParseError with next-flight-css-loader
+  transpilePackages: ['react-perfect-scrollbar'],
 }
 
 export default nextConfig

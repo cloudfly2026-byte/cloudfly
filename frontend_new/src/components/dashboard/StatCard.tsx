@@ -1,115 +1,123 @@
 'use client'
 
-import { useMemo } from 'react'
-
+import React from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
-import TrendingUp from '@mui/icons-material/TrendingUp'
-import TrendingDown from '@mui/icons-material/TrendingDown'
-import type { SxProps, Theme } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
+import type { CardProps } from '@mui/material/Card'
 
-interface StatCardProps {
-    title: string
-    value: string | number
-    change?: number
-    changeLabel?: string
-    icon?: React.ReactNode
-    color?: 'primary' | 'success' | 'warning' | 'error' | 'info'
-    loading?: boolean
+interface StatCardProps extends CardProps {
+  title: string
+  stats: string
+  avatarIcon: string
+  avatarColor: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'
+  avatarSize?: number
+  trend?: 'up' | 'down' | 'neutral'
+  trendValue?: string
+  subtitle?: string
 }
 
-const StatCard = ({ title, value, change, changeLabel, icon, color = 'primary', loading }: StatCardProps) => {
-    const isPositive = change !== undefined && change >= 0
+const StatCard = ({
+  title,
+  stats,
+  avatarIcon,
+  avatarColor,
+  avatarSize = 42,
+  trend,
+  trendValue,
+  subtitle,
+  ...rest
+}: StatCardProps) => {
+  const theme = useTheme()
+  const colorValue = theme.palette[avatarColor].main
 
-    const cardStyles: SxProps<Theme> = useMemo(
-        () => ({
-            height: '100%',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '4px',
-                height: '100%',
-                bgcolor: `${color}.main`
-            }
-        }),
-        [color]
-    )
-
-    if (loading) {
-        return (
-            <Card sx={cardStyles}>
-                <CardContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box sx={{ height: 20, bgcolor: 'action.hover', borderRadius: 1 }} />
-                        <Box sx={{ height: 32, bgcolor: 'action.hover', borderRadius: 1, width: '60%' }} />
-                        <Box sx={{ height: 16, bgcolor: 'action.hover', borderRadius: 1, width: '40%' }} />
-                    </Box>
-                </CardContent>
-            </Card>
-        )
-    }
-
-    return (
-        <Card sx={cardStyles}>
-            <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {title}
-                        </Typography>
-                        <Typography variant="h4" component="div" fontWeight={600}>
-                            {value}
-                        </Typography>
-                    </Box>
-                    {icon && (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 48,
-                                height: 48,
-                                borderRadius: 2,
-                                bgcolor: `${color}.lighter`,
-                                color: `${color}.main`
-                            }}
-                        >
-                            {icon}
-                        </Box>
-                    )}
+  return (
+    <Card
+      sx={{
+        borderRadius: 3,
+        border: `1px solid ${alpha(colorValue, 0.15)}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 25px ${alpha(colorValue, 0.12)}`,
+          borderColor: alpha(colorValue, 0.3)
+        }
+      }}
+      {...rest}
+    >
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant='caption'
+              sx={{
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                color: 'text.secondary'
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              variant='h4'
+              sx={{
+                fontWeight: 800,
+                color: colorValue,
+                mt: 0.5
+              }}
+            >
+              {stats}
+            </Typography>
+            {subtitle && (
+              <Typography variant='caption' color='text.secondary'>
+                {subtitle}
+              </Typography>
+            )}
+            {trend && trendValue && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                <Box
+                  component='span'
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: trend === 'up' ? 'success.main' : trend === 'down' ? 'error.main' : 'text.secondary',
+                    fontSize: '0.75rem',
+                    fontWeight: 600
+                  }}
+                >
+                  {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'} {trendValue}
                 </Box>
-
-                {change !== undefined && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {isPositive ? (
-                            <TrendingUp fontSize="small" color="success" />
-                        ) : (
-                            <TrendingDown fontSize="small" color="error" />
-                        )}
-                        <Typography
-                            variant="body2"
-                            color={isPositive ? 'success.main' : 'error.main'}
-                            fontWeight={500}
-                        >
-                            {isPositive ? '+' : ''}
-                            {change}%
-                        </Typography>
-                        {changeLabel && (
-                            <Typography variant="body2" color="text.secondary">
-                                {changeLabel}
-                            </Typography>
-                        )}
-                    </Box>
-                )}
-            </CardContent>
-        </Card>
-    )
+              </Box>
+            )}
+          </Box>
+          <Box
+            sx={{
+              width: avatarSize,
+              height: avatarSize,
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `linear-gradient(135deg, ${alpha(colorValue, 0.2)} 0%, ${alpha(colorValue, 0.08)} 100%)`,
+              flexShrink: 0
+            }}
+          >
+            <span
+              className={`tabler-${avatarIcon.includes('tabler-') ? avatarIcon.replace('tabler-', '') : avatarIcon}`}
+              style={{
+                fontSize: avatarSize * 0.5,
+                color: colorValue,
+                lineHeight: 1
+              }}
+            />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default StatCard

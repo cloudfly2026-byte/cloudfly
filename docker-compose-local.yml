@@ -183,6 +183,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
       - NEXT_PUBLIC_BASE_URL=http://localhost:3000
       - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+      - BACKEND_API_URL=http://backend-api:8080
       - ENVIRONMENT=development
       - NODE_ENV=development
     networks:

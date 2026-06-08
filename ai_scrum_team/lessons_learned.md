@@ -550,3 +550,23 @@ Este archivo registra errores históricos y lecciones aprendidas para que el equ
 ## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-03 13:33:48) - Área: Resume-CLOUD-239
 *   **Fallo Detectado**: `Error code: 429`
 *   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-06 18:32:53) - Área: Resume-CLOUD-319
+*   **Fallo Detectado**: `Error code: 429`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-07 16:46:09) - Área: Resume-CLOUD-320
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-07 18:08:10) - Área: Resume-CLOUD-316
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-07 18:11:27) - Área: Resume-CLOUD-308
+*   **Fallo Detectado**: `Error code: 429`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.

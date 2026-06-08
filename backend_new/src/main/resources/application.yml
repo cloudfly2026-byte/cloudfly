@@ -64,6 +64,10 @@ facebook:
     id: ${FACEBOOK_APP_ID:}
     secret: ${FACEBOOK_APP_SECRET:}
     version: v19.0
+  login:
+    app:
+      id: ${FACEBOOK_LOGIN_APP_ID:}
+      secret: ${FACEBOOK_LOGIN_APP_SECRET:}
 
 # CLOUD-279/CLOUD-280: OAuth Configuration
 google:

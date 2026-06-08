@@ -967,6 +967,235 @@ def chrome_network_requests() -> str:
         return f"❌ Error en Chrome DevTools Network Requests: {str(e)}"
 
 
+
+@tool("Chrome DevTools: Screenshot with Annotation")
+def chrome_screenshot_and_annotate(
+    filename: str = "screenshot.png",
+    annotation_text: str = "",
+    annotation_color: str = "error",
+    highlight_selector: str = "",
+) -> str:
+    """
+    Takes a full-page screenshot of the current Chrome tab via CDP, optionally annotates it
+    with a descriptive banner and/or highlights a CSS-selected element with a red box,
+    and saves the result to C:\\apps\\cloudfly\\screenshots.
+
+    Use this tool when you detect a UI bug, visual regression, or want to document an
+    improvement request with a visual evidence for a Jira issue or comment.
+
+    :param filename: Output filename (e.g. 'login_error.png'). Saved to screenshots folder.
+    :param annotation_text: Descriptive text to add as a banner at the bottom of the image
+                            (e.g. 'ERROR: El botón de login no responde al hacer click').
+    :param annotation_color: Color of annotations. Use: 'error' (red), 'warning' (orange),
+                             'info' (blue), 'success' (green), 'qa' (purple). Default: 'error'.
+    :param highlight_selector: Optional CSS selector of the element to highlight with a box
+                               (e.g. '#login-btn', '.error-message', '[data-id="submit"]').
+                               Leave empty to skip element highlighting.
+    """
+    import base64
+    import json as _json
+
+    out_dir = r"C:\apps\cloudfly\screenshots"
+    os.makedirs(out_dir, exist_ok=True)
+    raw_path = os.path.join(out_dir, filename)
+
+    # 1. Tomar captura via CDP
+    try:
+        import websocket
+        ws_url = _cdp_get_ws_url()
+        ws = websocket.create_connection(ws_url, timeout=10)
+        ws.send(_json.dumps({"id": 1, "method": "Page.captureScreenshot",
+                              "params": {"format": "png", "captureBeyondViewport": True}}))
+        resp = _json.loads(ws.recv())
+        ws.close()
+        data = resp.get("result", {}).get("data", "")
+        if not data:
+            return f"❌ CDP no devolvió datos de imagen. Respuesta: {resp}"
+        with open(raw_path, "wb") as f:
+            f.write(base64.b64decode(data))
+    except Exception as e:
+        return f"❌ Error tomando screenshot via CDP: {str(e)}"
+
+    # 2. Obtener bounds del selector CSS (si se proveyó)
+    selector_bounds = None
+    if highlight_selector:
+        try:
+            import websocket as _ws2
+            ws2 = _ws2.create_connection(_cdp_get_ws_url(), timeout=8)
+            js_bounds = (
+                f"(function() {{"
+                f"  var el = document.querySelector('{highlight_selector}');"
+                f"  if (!el) return null;"
+                f"  var r = el.getBoundingClientRect();"
+                f"  return JSON.stringify({{x: Math.round(r.left), y: Math.round(r.top),"
+                f"    w: Math.round(r.width), h: Math.round(r.height)}});"
+                f"}})()"
+            )
+            ws2.send(_json.dumps({"id": 2, "method": "Runtime.evaluate",
+                                   "params": {"expression": js_bounds, "returnByValue": True}}))
+            r2 = _json.loads(ws2.recv())
+            ws2.close()
+            raw_val = r2.get("result", {}).get("result", {}).get("value")
+            if raw_val:
+                selector_bounds = _json.loads(raw_val)
+        except Exception as se:
+            print(f"⚠️ [Screenshot Annotator]: No se pudo obtener bounds de '{highlight_selector}': {se}")
+
+    # 3. Anotar imagen si hay texto o selector
+    annotated_path = raw_path
+    if annotation_text or selector_bounds:
+        try:
+            scrum_dir = os.path.dirname(os.path.abspath(__file__))
+            if scrum_dir not in sys.path:
+                sys.path.insert(0, scrum_dir)
+            from screenshot_annotator import annotate_with_selector_hint
+            stem = os.path.splitext(filename)[0]
+            annotated_filename = f"{stem}_annotated.png"
+            annotated_path = os.path.join(out_dir, annotated_filename)
+            annotated_path = annotate_with_selector_hint(
+                image_path=raw_path,
+                description=annotation_text or f"Elemento marcado: {highlight_selector}",
+                selector_bounds=selector_bounds,
+                color=annotation_color,
+                output_path=annotated_path,
+            )
+            print(f"🎨 [Screenshot Annotator]: Imagen anotada guardada en {annotated_path}")
+        except Exception as ae:
+            print(f"⚠️ [Screenshot Annotator]: Error al anotar imagen — {ae}. Se usará la captura sin anotar.")
+
+    result_msg = f"✅ Screenshot guardado en {annotated_path}"
+    if selector_bounds:
+        result_msg += f" | Elemento '{highlight_selector}' marcado en {selector_bounds}"
+    return result_msg
+
+
+@tool("Jira: Attach Screenshot and Comment")
+def jira_attach_and_comment_screenshot(
+    issue_key: str,
+    screenshot_path: str,
+    comment: str,
+    bug_type: str = "ui",
+) -> str:
+    """
+    Uploads a screenshot (PNG/JPG) to a Jira issue as an attachment and posts a
+    descriptive comment. Also indexes the image in the visual memory (Qdrant) for
+    future RAG lookups.
+
+    Use this after 'Chrome DevTools: Screenshot with Annotation' to attach visual
+    evidence to an issue. The comment will include a reference to the attached image.
+
+    :param issue_key: The exact Jira issue key (e.g., 'CLOUD-14'). DO NOT invent keys.
+    :param screenshot_path: Absolute path to the screenshot file
+                            (e.g. 'C:\\apps\\cloudfly\\screenshots\\login_error_annotated.png').
+    :param comment: Descriptive comment to post on the issue explaining what the screenshot shows.
+    :param bug_type: Category for visual memory indexing: 'ui', 'layout', 'qa', 'improvement'.
+    """
+    import requests as _req
+    import base64
+
+    jira_url   = os.getenv("JIRA_API_URL", "").rstrip("/")
+    jira_email = os.getenv("JIRA_EMAIL", "")
+    jira_token = os.getenv("JIRA_API_TOKEN", "")
+
+    if not jira_url or not jira_email or not jira_token:
+        return "❌ Jira no está configurado. Verifica JIRA_API_URL, JIRA_EMAIL y JIRA_API_TOKEN en .env"
+
+    if not os.path.exists(screenshot_path):
+        return f"❌ Archivo no encontrado: {screenshot_path}"
+
+    auth_b64 = base64.b64encode(f"{jira_email}:{jira_token}".encode()).decode()
+    headers_base = {
+        "Authorization": f"Basic {auth_b64}",
+        "X-Atlassian-Token": "no-check",
+    }
+
+    # 1. Subir adjunto a Jira
+    filename = os.path.basename(screenshot_path)
+    attachment_url = f"{jira_url}/rest/api/3/issue/{issue_key}/attachments"
+    try:
+        with open(screenshot_path, "rb") as img_file:
+            files = {"file": (filename, img_file, "image/png")}
+            resp = _req.post(attachment_url, headers=headers_base, files=files, timeout=30)
+
+        if resp.status_code not in (200, 201):
+            return (
+                f"❌ Error al subir adjunto a {issue_key}. "
+                f"HTTP {resp.status_code}: {resp.text[:300]}"
+            )
+
+        attach_data = resp.json()
+        # attach_data puede ser una lista
+        if isinstance(attach_data, list):
+            attach_info = attach_data[0]
+        else:
+            attach_info = attach_data
+
+        attach_id  = attach_info.get("id", "?")
+        attach_url = attach_info.get("content", screenshot_path)
+        print(f"📎 [Jira Attach]: Adjunto '{filename}' subido a {issue_key} (id={attach_id})")
+
+    except Exception as e:
+        return f"❌ Error al subir adjunto: {str(e)}"
+
+    # 2. Publicar comentario con referencia a la imagen
+    full_comment = (
+        f"{comment}\n\n"
+        f"📸 *Captura adjunta*: [{filename}|{attach_url}]\n"
+        f"_Generado automáticamente por el AI Scrum Team_"
+    )
+    try:
+        if jira_wrapper and hasattr(jira_wrapper, 'jira'):
+            jira_wrapper.jira.issue_add_comment(issue_key, full_comment)
+            print(f"💬 [Jira Comment]: Comentario con referencia de imagen publicado en {issue_key}")
+        else:
+            # Fallback via REST API directa
+            comment_url = f"{jira_url}/rest/api/3/issue/{issue_key}/comment"
+            comment_headers = {
+                "Authorization": f"Basic {auth_b64}",
+                "Content-Type": "application/json",
+            }
+            body = {"body": full_comment}
+            _req.post(comment_url, headers=comment_headers, json=body, timeout=15)
+            print(f"💬 [Jira Comment]: Comentario publicado en {issue_key} (via REST)")
+    except Exception as ce:
+        print(f"⚠️ [Jira Comment]: No se pudo publicar comentario — {ce}")
+
+    # 3. Indexar imagen en visual memory (Qdrant) de forma no bloqueante
+    def _index_async():
+        try:
+            scrum_dir = os.path.dirname(os.path.abspath(__file__))
+            if scrum_dir not in sys.path:
+                sys.path.insert(0, scrum_dir)
+            from visual_memory import index_image
+            # Leer summary del issue para enriquecer metadata
+            issue_summary = issue_key
+            if jira_wrapper and hasattr(jira_wrapper, 'jira'):
+                try:
+                    issue_data = jira_wrapper.jira.issue(issue_key)
+                    issue_summary = issue_data.get("fields", {}).get("summary", issue_key)
+                except Exception:
+                    pass
+            index_image(
+                image_source=screenshot_path,
+                issue_key=issue_key,
+                summary=issue_summary,
+                description=comment[:500],
+                bug_type=bug_type,
+                resolved=False,
+            )
+            print(f"📌 [Visual Memory]: Screenshot de {issue_key} indexado en Qdrant.")
+        except Exception as ve:
+            print(f"⚠️ [Visual Memory]: No se pudo indexar screenshot — {ve}")
+
+    threading.Thread(target=_index_async, daemon=True, name="ScreenshotIndexer").start()
+
+    return (
+        f"✅ Screenshot adjuntado a {issue_key} (id={attach_id}) y comentario publicado.\n"
+        f"📎 Archivo: {filename}\n"
+        f"🔗 URL: {attach_url}"
+    )
+
+
 def get_jira_tools():
     """
     Returns native CrewAI tools for Jira to avoid Pydantic validation errors 
@@ -980,7 +1209,9 @@ def get_jira_tools():
         execute_command_and_wait,
         # ── Chrome DevTools Protocol (CDP) — E2E Browser Testing ──────
         chrome_navigate, chrome_screenshot, chrome_evaluate,
-        chrome_inject_log_interceptor, chrome_get_console_logs, chrome_network_requests
+        chrome_inject_log_interceptor, chrome_get_console_logs, chrome_network_requests,
+        # ── Screenshots con anotaciones + adjuntos Jira ────────────────
+        chrome_screenshot_and_annotate, jira_attach_and_comment_screenshot,
     ]
     
     # Force disable caching on every tool to avoid 'from cache' ghost results
