@@ -42,6 +42,7 @@ type Product struct {
 	Price       float64 `json:"price"`
 	Category    string  `json:"category"`
 	Brand       string  `json:"brand"`
+	SKU         string  `json:"sku"`
 	Image       string  `json:"image"`
 	Rating      float64 `json:"rating"`
 	Available   bool    `json:"available"`
@@ -228,7 +229,7 @@ func Home(c *fiber.Ctx) error {
 		}
 
 		// Load actual products from `productos` table
-		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
+		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
 		if err == nil {
 			var dbProds []Product
 			for pRows.Next() {
@@ -237,9 +238,10 @@ func Home(c *fiber.Ctx) error {
 				var pDesc sql.NullString
 				var pPrice float64
 				var pBrand sql.NullString
+				var pSku sql.NullString
 				var pInvStatus sql.NullString
 
-				if err := pRows.Scan(&prodID, &pName, &pDesc, &pPrice, &pBrand, &pInvStatus); err == nil {
+				if err := pRows.Scan(&prodID, &pName, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err == nil {
 					var brandStr = "Generico"
 					if pBrand.Valid {
 						brandStr = pBrand.String
@@ -248,6 +250,11 @@ func Home(c *fiber.Ctx) error {
 					var descStr = ""
 					if pDesc.Valid {
 						descStr = pDesc.String
+					}
+
+					var skuStr = ""
+					if pSku.Valid {
+						skuStr = pSku.String
 					}
 
 					var isAvailable = true
@@ -279,6 +286,7 @@ func Home(c *fiber.Ctx) error {
 						Price:       pPrice,
 						Category:    catName,
 						Brand:       brandStr,
+						SKU:          skuStr,
 						Image:       imgURL,
 						Rating:      4.8,
 						Available:   isAvailable,

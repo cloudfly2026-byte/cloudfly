@@ -1637,12 +1637,14 @@
                 price: {{$element.Price}},
                 category: "{{$element.Category}}",
                 brand: "{{$element.Brand}}",
+                sku: "{{$element.SKU}}",
                 image: "{{$element.Image}}",
                 rating: {{$element.Rating}},
                 available: {{$element.Available}},
                 specs: {
                     "Marca": "{{$element.Brand}}",
-                    "Categoría": "{{$element.Category}}"
+                    "Categoría": "{{$element.Category}}",
+                    "SKU": "{{$element.SKU}}"
                 }
             },
             {{end}}
@@ -1927,7 +1929,7 @@
                     </div>
                     <div class="sidebar-widget">
                         <h4 class="widget-title">Buscar</h4>
-                        <input type="text" class="input-text" placeholder="Buscar productos..." value="${catalogState.activeFilters.search}" oninput="debounceSearch(this.value)" style="width: 100%;">
+                        <input type="text" class="input-text" placeholder="Nombre, categoría o SKU..." value="${catalogState.activeFilters.search}" oninput="debounceSearch(this.value)" style="width: 100%;">
                     </div>
                 </aside>
             `;
@@ -2071,7 +2073,8 @@
                     if (!p.name.toLowerCase().includes(q) &&
                         !p.description.toLowerCase().includes(q) &&
                         !p.brand.toLowerCase().includes(q) &&
-                        !p.category.toLowerCase().includes(q)) {
+                        !p.category.toLowerCase().includes(q) &&
+                        !p.sku.toLowerCase().includes(q)) {
                         return false;
                     }
                 }
