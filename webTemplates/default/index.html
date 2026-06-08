@@ -1556,7 +1556,7 @@
                     {{else}}
                     <div class="logo-placeholder"><i class="fa-solid fa-store"></i></div>
                     {{end}}
-                    <span>{{.Company.Name}}</span>
+                    {{if .Company.Name}}<span>{{.Company.Name}}</span>{{end}}
                 </div>
             </div>
             
@@ -1565,37 +1565,20 @@
                 <ul class="footer-links">
                     <li><a href="#/">Inicio</a></li>
                     <li><a href="#/catalogo">Catálogo</a></li>
-                    <li><a href="#/nosotros">Nosotros</a></li>
-                    <li><a href="#/contacto">Contacto</a></li>
                 </ul>
             </div>
 
             <div class="footer-column">
-                <h4 class="footer-title">Servicio al Cliente</h4>
+                <h4 class="footer-title">Información</h4>
                 <ul class="footer-links">
-                    <li><a href="#/faq">Preguntas Frecuentes</a></li>
-                    <li><a href="#/envios">Métodos de Envío</a></li>
-                    <li><a href="#/devoluciones">Cambios y Devoluciones</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h4 class="footer-title">Contacto</h4>
-                <ul class="contact-info-list">
-                    <li><i class="fa-solid fa-location-dot"></i> Calle 100 #15-30, Bogotá, Colombia</li>
-                    <li><i class="fa-solid fa-phone"></i> +57 300 123 4567</li>
-                    <li><i class="fa-solid fa-envelope"></i> soporte@cloudfly.com.co</li>
-                    <li><i class="fa-brands fa-whatsapp"></i> +57 300 123 4567</li>
+                    <li><a href="#/privacidad">Políticas de Privacidad</a></li>
+                    <li><a href="#/terminos">Términos y Condiciones</a></li>
                 </ul>
             </div>
         </div>
 
         <div class="footer-bottom">
-            <span>&copy; 2026 {{.Company.Name}}. Todos los derechos reservados. Impulsado por CloudFly.</span>
-            <div class="footer-legal-links">
-                <a href="#/privacidad">Políticas de Privacidad</a>
-                <a href="#/terminos">Términos y Condiciones</a>
-            </div>
+            <span>&copy; 2026 {{if .Company.Name}}{{.Company.Name}}{{else}}Tienda{{end}}. Impulsado por <a href="https://www.cloudfly.com.co" target="_blank" style="color: var(--primary);">CloudFly</a>.</span>
         </div>
     </footer>
 
@@ -1626,15 +1609,14 @@
                 name: "{{$element.Name}}",
                 description: "{{$element.Description}}",
                 price: {{$element.Price}},
-                category: "electronica",
-                brand: "CloudFly Pro",
-                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80",
-                rating: 4.8,
-                available: true,
+                category: "{{$element.Category}}",
+                brand: "{{$element.Brand}}",
+                image: "{{$element.Image}}",
+                rating: {{$element.Rating}},
+                available: {{$element.Available}},
                 specs: {
-                    "Garantía": "12 meses",
-                    "Envío": "Nacional inmediato",
-                    "Material": "Premium Composite"
+                    "Marca": "{{$element.Brand}}",
+                    "Categoría": "{{$element.Category}}"
                 }
             },
             {{end}}
@@ -1735,18 +1717,19 @@
         }
 
         // Dynamic View Renderers
+        // Store company name for JS use
+        const companyName = "{{.Company.Name}}";
+        const companyLogo = "{{.Company.Logo}}";
+
         function renderHome(container) {
             let heroHtml = `
                 <section class="hero-section">
                     <div class="hero-text">
-                        {{if .Company.Logo}}
-                        <img class="hero-company-logo" src="{{.Company.Logo}}" alt="Logo">
-                        {{end}}
-                        <h1 class="hero-title">Estilo y Calidad en un Solo Lugar</h1>
-                        <p class="hero-subtitle">Descubre productos premium seleccionados para ti, con el respaldo, garantía y envíos ultra rápidos de {{.Company.Name}}.</p>
+                        ${companyLogo ? `<img class="hero-company-logo" src="${companyLogo}" alt="Logo">` : ''}
+                        <h1 class="hero-title">${companyName ? companyName : 'Bienvenido a Nuestra Tienda'}</h1>
                         <div class="hero-ctas">
-                            <button class="btn btn-primary" onclick="location.hash='#/catalogo'">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>
-                            <button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>
+                            ${dynamicProducts.length > 0 ? `<button class="btn btn-primary" onclick="location.hash='#/catalogo'">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>` : ''}
+                            ${dynamicCategories.length > 0 ? `<button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>` : ''}
                         </div>
                     </div>
                     <div class="hero-image-wrapper">
@@ -1755,39 +1738,44 @@
                 </section>
             `;
 
-            let catsHtml = `<div class="section-header"><h3 class="section-title">Categorías Destacadas</h3></div><div class="category-grid">`;
-            dynamicCategories.forEach(cat => {
-                catsHtml += `
-                    <div class="category-card" onclick="location.hash='#/categoria/${cat.slug}'">
-                        <div class="category-icon-box"><i class="${cat.icon}"></i></div>
-                        <span class="category-name">${cat.name}</span>
-                    </div>
-                `;
-            });
-            catsHtml += `</div>`;
-
-            let prodsHtml = `<div class="section-header"><h3 class="section-title">Productos Destacados</h3><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="location.hash='#/catalogo'">Ver Todo</button></div><div class="products-grid">`;
-            dynamicProducts.slice(0, 4).forEach(prod => {
-                prodsHtml += `
-                    <div class="product-card">
-                        <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
-                            <img class="product-card-img" src="${prod.image}" alt="${prod.name}">
-                            ${prod.price > 100 ? `<span class="product-card-badge">Top</span>` : ''}
+            let catsHtml = '';
+            if (dynamicCategories.length > 0) {
+                catsHtml = `<div class="section-header"><h3 class="section-title">Categorías Destacadas</h3></div><div class="category-grid">`;
+                dynamicCategories.forEach(cat => {
+                    catsHtml += `
+                        <div class="category-card" onclick="location.hash='#/categoria/${cat.slug}'">
+                            <div class="category-icon-box"><i class="${cat.icon}"></i></div>
+                            <span class="category-name">${cat.name}</span>
                         </div>
-                        <div class="product-card-content">
-                            <span class="product-card-rating"><i class="fa-solid fa-star"></i> ${prod.rating}</span>
-                            <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
-                            <div class="product-card-price-row">
-                                <span class="product-card-price">$${prod.price.toFixed(2)}</span>
-                                <button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
+                    `;
+                });
+                catsHtml += `</div>`;
+            }
+
+            let prodsHtml = '';
+            if (dynamicProducts.length > 0) {
+                prodsHtml = `<div class="section-header"><h3 class="section-title">Productos Destacados</h3><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="location.hash='#/catalogo'">Ver Todo</button></div><div class="products-grid">`;
+                dynamicProducts.slice(0, 4).forEach(prod => {
+                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                    prodsHtml += `
+                        <div class="product-card">
+                            <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
+                                ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
+                            </div>
+                            <div class="product-card-content">
+                                ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
+                                <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                                <div class="product-card-price-row">
+                                    <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
+                                    ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            });
-            prodsHtml += `</div>`;
+                    `;
+                });
+                prodsHtml += `</div>`;
+            }
 
             let benefitsHtml = `
                 <section class="benefits-section">
@@ -1843,8 +1831,8 @@
 
             let newsletterHtml = `
                 <section class="newsletter-section">
-                    <h3 class="newsletter-title">¡Únete al Club de {{.Company.Name}}!</h3>
-                    <p class="newsletter-desc">Subscríbete para recibir ofertas exclusivas, lanzamientos de nuevos productos y descuentos semanales de CloudFly.</p>
+                    <h3 class="newsletter-title">¡Únete al Club${companyName ? ' de ' + companyName : ''}!</h3>
+                    <p class="newsletter-desc">Subscríbete para recibir ofertas exclusivas, lanzamientos de nuevos productos y descuentos semanales.</p>
                     <div class="newsletter-form">
                         <input type="email" class="input-text" placeholder="Ingresa tu correo electrónico">
                         <button class="btn btn-primary" onclick="showToast('¡Gracias por suscribirte!')">Suscribirme</button>
@@ -1897,19 +1885,19 @@
                 cardsHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No se encontraron productos coincidentes.</div>`;
             } else {
                 filtered.forEach(prod => {
+                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
                     cardsHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
-                                <img class="product-card-img" src="${prod.image}" alt="${prod.name}">
+                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
+                                ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                             </div>
                             <div class="product-card-content">
-                                <span class="product-card-rating"><i class="fa-solid fa-star"></i> ${prod.rating}</span>
+                                ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
                                 <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
                                 <div class="product-card-price-row">
-                                    <span class="product-card-price">$${prod.price.toFixed(2)}</span>
-                                    <button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
+                                    <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
+                                    ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1948,29 +1936,34 @@
         }
 
         function renderCategoryPage(container, slug) {
-            let catName = slug.charAt(0).toUpperCase() + slug.slice(1);
-            let catDesc = `Explora nuestra colección selecta de productos en la categoría de ${catName}. Envío rápido nacional.`;
+            // Find matching category name from dynamicCategories
+            const matchedCat = dynamicCategories.find(c => c.slug === slug);
+            let catName = matchedCat ? matchedCat.name : slug.charAt(0).toUpperCase() + slug.slice(1);
 
             let filtered = dynamicProducts.filter(p => p.category.toLowerCase() === slug.toLowerCase());
+            // Also try matching by category name if slug didn't match
+            if (filtered.length === 0 && matchedCat) {
+                filtered = dynamicProducts.filter(p => p.category.toLowerCase() === matchedCat.name.toLowerCase());
+            }
 
             let gridHtml = '';
             if (filtered.length === 0) {
                 gridHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No hay productos en esta categoría por ahora.</div>`;
             } else {
                 filtered.forEach(prod => {
+                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
                     gridHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
-                                <img class="product-card-img" src="${prod.image}" alt="${prod.name}">
+                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
+                                ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                             </div>
                             <div class="product-card-content">
-                                <span class="product-card-rating"><i class="fa-solid fa-star"></i> ${prod.rating}</span>
+                                ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
                                 <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
                                 <div class="product-card-price-row">
-                                    <span class="product-card-price">$${prod.price.toFixed(2)}</span>
-                                    <button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
+                                    <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
+                                    ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1981,7 +1974,7 @@
             container.innerHTML = `
                 <div class="category-header-banner">
                     <h1 class="category-banner-title">${catName}</h1>
-                    <p class="category-banner-desc">${catDesc}</p>
+                    <p class="category-banner-desc">Mostrando ${filtered.length} producto${filtered.length !== 1 ? 's' : ''} en ${catName}</p>
                 </div>
                 <div class="products-grid" style="margin-top: 2rem;">
                     ${gridHtml}
@@ -1992,67 +1985,92 @@
         function renderProductPage(container, id) {
             const prod = dynamicProducts.find(p => p.id == id);
             if (!prod) {
-                container.innerHTML = `<h2>Producto no encontrado</h2>`;
+                container.innerHTML = `<div style="text-align: center; padding: 4rem 1rem;"><h2>Producto no encontrado</h2><button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="location.hash='#/catalogo'">Ver Catálogo</button></div>`;
                 return;
             }
+
+            const imgSrc = prod.image || 'https://via.placeholder.com/600x600?text=Sin+Imagen';
+
+            // Build specs table only with non-empty values
+            const specsEntries = prod.specs ? Object.entries(prod.specs).filter(([k, v]) => v && v.trim() !== '') : [];
 
             let tabsHtml = `
                 <div class="product-tab-section">
                     <div class="tabs-header">
-                        <button class="tab-btn active" onclick="switchTab(event, 'tab-desc')">Descripción</button>
-                        <button class="tab-btn" onclick="switchTab(event, 'tab-specs')">Especificaciones</button>
-                        <button class="tab-btn" onclick="switchTab(event, 'tab-reviews')">Opiniones</button>
+                        ${prod.description ? `<button class="tab-btn active" onclick="switchTab(event, 'tab-desc')">Descripción</button>` : ''}
+                        ${specsEntries.length > 0 ? `<button class="tab-btn${!prod.description ? ' active' : ''}" onclick="switchTab(event, 'tab-specs')">Especificaciones</button>` : ''}
                     </div>
-                    <div class="tab-content active" id="tab-desc">
-                        <p>${prod.description} Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam ac ante ligula. Suspendisse potenti.</p>
-                    </div>
-                    <div class="tab-content" id="tab-specs">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                            ${Object.entries(prod.specs).map(([key, val]) => `
-                                <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <td style="padding: 0.5rem; font-weight: 600; color: var(--text-main);">${key}</td>
-                                    <td style="padding: 0.5rem;">${val}</td>
-                                </tr>
-                            `).join('')}
-                        </table>
-                    </div>
-                    <div class="tab-content" id="tab-reviews">
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div>
-                                <span style="color: var(--warning); font-size: 0.85rem;"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span>
-                                <strong style="margin-left: 0.5rem; color: var(--text-main);">Juan D.</strong>
-                                <p style="font-size: 0.85rem; margin-top: 4px;">"Excelente. Tal y como en las fotos y llegó súper rápido."</p>
-                            </div>
+                    ${prod.description ? `<div class="tab-content active" id="tab-desc"><p>${prod.description}</p></div>` : ''}
+                    ${specsEntries.length > 0 ? `
+                        <div class="tab-content${!prod.description ? ' active' : ''}" id="tab-specs">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                ${specsEntries.map(([key, val]) => `
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.5rem; font-weight: 600; color: var(--text-main);">${key}</td>
+                                        <td style="padding: 0.5rem;">${val}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
                         </div>
-                    </div>
+                    ` : ''}
                 </div>
             `;
+
+            // Related products: same category, excluding current product
+            let relatedProds = dynamicProducts.filter(rp => rp.id !== prod.id && rp.category === prod.category);
+            if (relatedProds.length === 0) {
+                relatedProds = dynamicProducts.filter(rp => rp.id !== prod.id).slice(0, 3);
+            } else {
+                relatedProds = relatedProds.slice(0, 3);
+            }
+
+            let relatedHtml = '';
+            if (relatedProds.length > 0) {
+                relatedHtml = `
+                    <div style="margin-top: 3rem;">
+                        <h3 class="section-title" style="margin-bottom: 1.5rem;">Productos Relacionados</h3>
+                        <div class="products-grid">
+                            ${relatedProds.map(rp => {
+                                const rpImg = rp.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                                return `
+                                    <div class="product-card">
+                                        <div class="product-card-image-box" onclick="location.hash='#/producto/${rp.id}'">
+                                            <img class="product-card-img" src="${rpImg}" alt="${rp.name}">
+                                        </div>
+                                        <div class="product-card-content">
+                                            <h4 class="product-card-title" onclick="location.hash='#/producto/${rp.id}'">${rp.name}</h4>
+                                            <div class="product-card-price-row">
+                                                <span class="product-card-price">$${rp.price.toLocaleString('es-CO')}</span>
+                                                ${rp.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${rp.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
 
             container.innerHTML = `
                 <div class="product-detail-container">
                     <div class="product-gallery">
                         <div class="main-image-wrapper">
-                            <img class="main-product-img" src="${prod.image}" alt="${prod.name}" id="main-product-image">
-                        </div>
-                        <div class="thumbnail-gallery">
-                            <div class="thumbnail-img-box active" onclick="swapGalleryImage('${prod.image}', this)">
-                                <img src="${prod.image}" alt="Thumb">
-                            </div>
-                            <div class="thumbnail-img-box" onclick="swapGalleryImage('https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&q=80', this)">
-                                <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&q=80" alt="Thumb Alt">
-                            </div>
+                            <img class="main-product-img" src="${imgSrc}" alt="${prod.name}" id="main-product-image">
                         </div>
                     </div>
 
                     <div class="product-info-panel">
                         <div class="product-meta-top">
-                            <span class="product-brand-tag">${prod.brand}</span>
+                            ${prod.brand ? `<span class="product-brand-tag">${prod.brand}</span>` : ''}
                             <h1 class="product-name-title">${prod.name}</h1>
-                            <div class="product-price-large">$${prod.price.toFixed(2)}</div>
+                            <div class="product-price-large">$${prod.price.toLocaleString('es-CO')}</div>
+                            ${!prod.available ? '<span style="color: var(--danger); font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-circle-xmark"></i> Agotado</span>' : '<span style="color: var(--success); font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-circle-check"></i> Disponible</span>'}
                         </div>
 
-                        <p class="product-short-desc">${prod.description}</p>
+                        ${prod.description ? `<p class="product-short-desc">${prod.description}</p>` : ''}
 
+                        ${prod.available ? `
                         <div class="product-actions-box">
                             <div>
                                 <div class="qty-label">Cantidad</div>
@@ -2068,36 +2086,24 @@
                                 <button class="btn btn-secondary" onclick="buyNow(${prod.id})">Comprar Ahora</button>
                             </div>
 
-                            <a href="https://wa.me/573000000000?text=Hola!%20Me%20interesa%20preguntar%20por%20el%20producto%20${encodeURIComponent(prod.name)}" target="_blank" class="btn btn-secondary" style="border-color: #25d366; color: #25d366; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;">
+                            <a href="https://wa.me/?text=${encodeURIComponent('Hola! Me interesa el producto: ' + prod.name)}" target="_blank" class="btn btn-secondary" style="border-color: #25d366; color: #25d366; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;">
                                 <i class="fa-brands fa-whatsapp"></i> Preguntar por WhatsApp
                             </a>
                         </div>
+                        ` : `
+                        <div class="product-actions-box">
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Este producto no está disponible actualmente.</p>
+                            <a href="https://wa.me/?text=${encodeURIComponent('Hola! Quiero saber cuándo estará disponible: ' + prod.name)}" target="_blank" class="btn btn-secondary" style="border-color: #25d366; color: #25d366; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <i class="fa-brands fa-whatsapp"></i> Consultar Disponibilidad
+                            </a>
+                        </div>
+                        `}
 
                         ${tabsHtml}
                     </div>
                 </div>
 
-                <div style="margin-top: 3rem;">
-                    <h3 class="section-title" style="margin-bottom: 1.5rem;">Productos Relacionados</h3>
-                    <div class="products-grid">
-                        ${dynamicProducts.slice(0, 3).map(rp => `
-                            <div class="product-card">
-                                <div class="product-card-image-box" onclick="location.hash='#/producto/${rp.id}'">
-                                    <img class="product-card-img" src="${rp.image}" alt="${rp.name}">
-                                </div>
-                                <div class="product-card-content">
-                                    <h4 class="product-card-title" onclick="location.hash='#/producto/${rp.id}'">${rp.name}</h4>
-                                    <div class="product-card-price-row">
-                                        <span class="product-card-price">$${rp.price.toFixed(2)}</span>
-                                        <button class="btn-add-cart-quick" onclick="addToCart(${rp.id})" aria-label="Agregar al carrito">
-                                            <i class="fa-solid fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
+                ${relatedHtml}
             `;
         }
 
@@ -2145,14 +2151,15 @@
             cart.forEach(item => {
                 const totalItemPrice = item.product.price * item.quantity;
                 subtotal += totalItemPrice;
+                const imgSrc = item.product.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
                 itemsHtml += `
                     <div class="cart-item-card">
                         <div class="cart-item-img-box">
-                            <img class="cart-item-img" src="${item.product.image}" alt="${item.product.name}">
+                            <img class="cart-item-img" src="${imgSrc}" alt="${item.product.name}">
                         </div>
                         <div class="cart-item-details">
                             <span class="cart-item-name">${item.product.name}</span>
-                            <span class="cart-item-price-unit">$${item.product.price.toFixed(2)} cada uno</span>
+                            <span class="cart-item-price-unit">$${item.product.price.toLocaleString('es-CO')} cada uno</span>
                         </div>
                         <div class="qty-selector" style="transform: scale(0.85);">
                             <button class="qty-btn" onclick="updateCartQty(${item.product.id}, -1)">-</button>
@@ -2160,7 +2167,7 @@
                             <button class="qty-btn" onclick="updateCartQty(${item.product.id}, 1)">+</button>
                         </div>
                         <div class="cart-item-actions">
-                            <span class="cart-item-total">$${totalItemPrice.toFixed(2)}</span>
+                            <span class="cart-item-total">$${totalItemPrice.toLocaleString('es-CO')}</span>
                             <button class="btn-remove-item" onclick="removeFromCart(${item.product.id})"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
                         </div>
                     </div>
@@ -2168,7 +2175,7 @@
             });
 
             const taxes = subtotal * 0.19;
-            const shipping = subtotal > 150 ? 0 : 15.00;
+            const shipping = subtotal > 150000 ? 0 : 15000;
             const total = subtotal + taxes + shipping;
 
             let summaryHtml = `
@@ -2176,19 +2183,19 @@
                     <h3 class="summary-title">Resumen de Compra</h3>
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <span>$${subtotal.toFixed(2)}</span>
+                        <span>$${subtotal.toLocaleString('es-CO')}</span>
                     </div>
                     <div class="summary-row">
                         <span>IVA (19%)</span>
-                        <span>$${taxes.toFixed(2)}</span>
+                        <span>$${taxes.toLocaleString('es-CO')}</span>
                     </div>
                     <div class="summary-row">
                         <span>Envío</span>
-                        <span>${shipping === 0 ? '<strong style="color: var(--success);">Gratis</strong>' : `$${shipping.toFixed(2)}`}</span>
+                        <span>${shipping === 0 ? '<strong style="color: var(--success);">Gratis</strong>' : `$${shipping.toLocaleString('es-CO')}`}</span>
                     </div>
                     <div class="summary-row total-row">
                         <span>Total</span>
-                        <span>$${total.toFixed(2)}</span>
+                        <span>$${total.toLocaleString('es-CO')}</span>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="location.hash='#/checkout'">Proceder al Pago</button>
                     <button class="btn btn-secondary" style="width: 100%;" onclick="location.hash='#/catalogo'">Seguir Comprando</button>
@@ -2213,7 +2220,7 @@
             }
 
             let subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-            let shipping = subtotal > 150 ? 0 : 15.00;
+            let shipping = subtotal > 150000 ? 0 : 15000;
             let total = subtotal * 1.19 + shipping;
 
             let stepsHtml = `
@@ -2298,22 +2305,22 @@
                         ${cart.map(item => `
                             <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
                                 <span>${item.product.name} (x${item.quantity})</span>
-                                <span>$${(item.product.price * item.quantity).toFixed(2)}</span>
+                                <span>$${(item.product.price * item.quantity).toLocaleString('es-CO')}</span>
                             </div>
                         `).join('')}
                     </div>
                     <div style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
                         <div class="summary-row">
                             <span>Subtotal</span>
-                            <span>$${subtotal.toFixed(2)}</span>
+                            <span>$${subtotal.toLocaleString('es-CO')}</span>
                         </div>
                         <div class="summary-row">
                             <span>Envío</span>
-                            <span>$${shipping.toFixed(2)}</span>
+                            <span>$${shipping.toLocaleString('es-CO')}</span>
                         </div>
                         <div class="summary-row total-row">
                             <span>Total</span>
-                            <span>$${total.toFixed(2)}</span>
+                            <span>$${total.toLocaleString('es-CO')}</span>
                         </div>
                     </div>
                     <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processOrder()">Confirmar y Pagar</button>

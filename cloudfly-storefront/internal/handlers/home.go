@@ -137,62 +137,16 @@ func Home(c *fiber.Ctx) error {
 	// Default/Mock metadata fallbacks
 	company := Company{
 		ID:          companyID,
-		Name:        "CloudFly Storefront",
+		Name:        "",
 		Logo:        "",
-		Description: "Plataforma de ecommerce premium de alta velocidad. Productos de alta calidad y envíos inmediatos.",
+		Description: "",
 	}
 	theme := Theme{
 		PrimaryColor:   "#6366f1",
 		SecondaryColor: "#10b981",
 	}
-	categories := []Category{
-		{Name: "Electrónica", Slug: "electronica", Icon: "fa-solid fa-laptop"},
-		{Name: "Accesorios", Slug: "accesorios", Icon: "fa-solid fa-clock"},
-		{Name: "Estilo & Moda", Slug: "estilo", Icon: "fa-solid fa-shirt"},
-		{Name: "Deportes", Slug: "deportes", Icon: "fa-solid fa-dumbbell"},
-	}
-	products := []Product{
-		{
-			Name:        "Auriculares Cancelación Ruido Pro",
-			Description: "Auriculares inalámbricos premium con cancelación activa de ruido premium y 40h de autonomía.",
-			Price:       129.99,
-			Category:    "electronica",
-			Brand:       "SonyPlus",
-			Image:       "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80",
-			Rating:      4.9,
-			Available:   true,
-		},
-		{
-			Name:        "Reloj Inteligente Fit Sport v2",
-			Description: "Monitor de salud avanzado, GPS incorporado y resistente al agua hasta 50 metros.",
-			Price:       189.50,
-			Category:    "accesorios",
-			Brand:       "FitMax",
-			Image:       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80",
-			Rating:      4.7,
-			Available:   true,
-		},
-		{
-			Name:        "Cargador Rápido GaN 100W",
-			Description: "Carga hasta 3 dispositivos simultáneamente a máxima velocidad.",
-			Price:       45.00,
-			Category:    "electronica",
-			Brand:       "AnkerTech",
-			Image:       "https://images.unsplash.com/photo-1622445262465-2481c8573296?w=500&q=80",
-			Rating:      4.5,
-			Available:   true,
-		},
-		{
-			Name:        "Mochila Impermeable Urban Tech",
-			Description: "Diseño ergonómico con puerto USB de carga externa y compartimiento para laptop de 16 pulgadas.",
-			Price:       75.00,
-			Category:    "estilo",
-			Brand:       "Urbanite",
-			Image:       "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80",
-			Rating:      4.6,
-			Available:   true,
-		},
-	}
+	var categories []Category
+	var products []Product
 
 	// 2. Fetch Company metadata from companies table if available
 	if resolved && database.DB != nil {
@@ -232,7 +186,7 @@ func Home(c *fiber.Ctx) error {
 		}
 
 		// Load actual products from `productos` table
-		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, inventory_status FROM productos WHERE company_id = ? AND status = 'ACTIVE'", companyID)
+		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
 		if err == nil {
 			var dbProds []Product
 			for pRows.Next() {
@@ -255,7 +209,7 @@ func Home(c *fiber.Ctx) error {
 					}
 
 					var isAvailable = true
-					if pInvStatus.Valid && strings.ToUpper(pInvStatus.String) != "IN_STOCK" {
+					if pInvStatus.Valid && pInvStatus.String != "" && strings.ToUpper(pInvStatus.String) != "IN_STOCK" {
 						isAvailable = false
 					}
 
