@@ -37,7 +37,9 @@ export const mediaService = {
   uploadMedia: async (file: File): Promise<Media> => {
     const user = userMethods.getUserLogin()
     const tenantId = user?.customerId || user?.tenant_id
-    const companyId = user?.activeCompanyId || user?.company_id
+    // Get companyId from localStorage (saved as separate item by authManager)
+    // or fallback to userData fields
+    const companyId = localStorage.getItem('activeCompanyId') || user?.activeCompanyId || user?.company_id
     const formData = new FormData()
     formData.append('file', file)
 

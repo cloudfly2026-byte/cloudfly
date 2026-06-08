@@ -43,8 +43,10 @@ public class FileSystemStorageService implements StorageService {
         }
         
         String filename = UUID.randomUUID().toString() + extension;
-        // New path structure: /uploads/{tenantId}/{companyId}/{filename}
-        Path companyPath = rootLocation.resolve(tenantId.toString()).resolve(companyId.toString());
+        // Path structure: /uploads/{tenantId}/{companyId}/{filename}
+        // Fallback to tenantId only if companyId is null (backward compat)
+        Long effectiveCompanyId = (companyId != null && companyId > 0) ? companyId : 1L;
+        Path companyPath = rootLocation.resolve(tenantId.toString()).resolve(effectiveCompanyId.toString());
 
         try {
             if (!Files.exists(companyPath)) {
@@ -62,13 +64,15 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public Path load(String filename, Long tenantId, Long companyId) {
-        return rootLocation.resolve(tenantId.toString()).resolve(companyId.toString()).resolve(filename);
+        Long effectiveCompanyId = (companyId != null && companyId > 0) ? companyId : 1L;
+        return rootLocation.resolve(tenantId.toString()).resolve(effectiveCompanyId.toString()).resolve(filename);
     }
 
     @Override
     public Mono<Void> delete(String filename, Long tenantId, Long companyId) {
         try {
-            Files.deleteIfExists(load(filename, tenantId, companyId));
+            Long effectiveCompanyId = (companyId != null && companyId > 0) ? companyId : 1L;
+            Files.deleteIfExists(load(filename, tenantId, effectiveCompanyId));
             return Mono.empty();
         } catch (IOException e) {
             return Mono.error(new RuntimeException("Could not delete file", e));

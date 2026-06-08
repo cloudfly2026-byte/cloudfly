@@ -32,14 +32,17 @@ public class MediaService {
                 file.headers().getContentType().toString() : "application/octet-stream";
         long size = file.headers().getContentLength() > 0 ? file.headers().getContentLength() : 0;
 
-        return storageService.store(file, tenantId, companyId)
+        // Default companyId to 1 if not provided (backward compatibility)
+        Long effectiveCompanyId = (companyId != null && companyId > 0) ? companyId : 1L;
+
+        return storageService.store(file, tenantId, effectiveCompanyId)
                 .flatMap(filename -> {
-                    // New URL structure: /media/{tenantId}/{companyId}/{filename}
-                    String url = "/media/" + tenantId + "/" + companyId + "/" + filename;
+                    // URL structure: /media/{tenantId}/{companyId}/{filename}
+                    String url = "/media/" + tenantId + "/" + effectiveCompanyId + "/" + filename;
                     
                     Media media = Media.builder()
                             .tenantId(tenantId)
-                            .companyId(companyId)
+                            .companyId(effectiveCompanyId)
                             .filename(filename)
                             .originalName(originalFilename)
                             .contentType(contentType)
