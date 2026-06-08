@@ -1872,53 +1872,85 @@
             container.innerHTML = heroHtml + catsHtml + prodsHtml + benefitsHtml + testimonialsHtml + newsletterHtml;
         }
 
+        // Catalog State
+        let catalogState = {
+            filtered: [],
+            page: 1,
+            perPage: 10,
+            totalPages: 1,
+            activeFilters: {
+                categories: [],
+                priceRange: 'all',
+                inStockOnly: false,
+                search: ''
+            }
+        };
+
         function renderCatalog(container, searchParams) {
-            const searchVal = searchParams.get('search') || '';
-            
+            const searchVal = searchParams ? (searchParams.get('search') || '') : '';
+
+            // Initialize filters from URL
+            if (searchVal && catalogState.activeFilters.search === '') {
+                catalogState.activeFilters.search = searchVal;
+            }
+
+            // Build sidebar with functional filters
             let sidebarHtml = `
                 <aside class="catalog-sidebar">
                     <div class="sidebar-widget">
                         <h4 class="widget-title">Categorías</h4>
                         <ul class="filter-list">
                             ${dynamicCategories.map(cat => `
-                                <li class="filter-item"><label><input type="checkbox" checked> ${cat.name}</label></li>
+                                <li class="filter-item">
+                                    <label>
+                                        <input type="checkbox" value="${cat.slug}" onchange="applyFilters()" ${catalogState.activeFilters.categories.includes(cat.slug) ? 'checked' : ''}>
+                                        ${cat.name}
+                                    </label>
+                                </li>
                             `).join('')}
                         </ul>
                     </div>
                     <div class="sidebar-widget">
                         <h4 class="widget-title">Rango de Precios</h4>
                         <ul class="filter-list">
-                            <li class="filter-item"><label><input type="radio" name="price" checked> Todos</label></li>
-                            <li class="filter-item"><label><input type="radio" name="price"> Menor a $50</label></li>
-                            <li class="filter-item"><label><input type="radio" name="price"> $50 a $150</label></li>
-                            <li class="filter-item"><label><input type="radio" name="price"> Mayor a $150</label></li>
+                            <li class="filter-item"><label><input type="radio" name="price" value="all" onchange="applyFilters()" ${catalogState.activeFilters.priceRange === 'all' ? 'checked' : ''}> Todos</label></li>
+                            <li class="filter-item"><label><input type="radio" name="price" value="0-50000" onchange="applyFilters()" ${catalogState.activeFilters.priceRange === '0-50000' ? 'checked' : ''}> Menor a $50.000</label></li>
+                            <li class="filter-item"><label><input type="radio" name="price" value="50000-150000" onchange="applyFilters()" ${catalogState.activeFilters.priceRange === '50000-150000' ? 'checked' : ''}> $50.000 a $150.000</label></li>
+                            <li class="filter-item"><label><input type="radio" name="price" value="150000-999999999" onchange="applyFilters()" ${catalogState.activeFilters.priceRange === '150000-999999999' ? 'checked' : ''}> Mayor a $150.000</label></li>
                         </ul>
                     </div>
                     <div class="sidebar-widget">
                         <h4 class="widget-title">Disponibilidad</h4>
                         <ul class="filter-list">
-                            <li class="filter-item"><label><input type="checkbox" checked> En Stock</label></li>
-                            <li class="filter-item"><label><input type="checkbox"> Ver sin Stock</label></li>
+                            <li class="filter-item"><label><input type="checkbox" id="filter-stock" onchange="applyFilters()" ${catalogState.activeFilters.inStockOnly ? 'checked' : ''}> Solo en Stock</label></li>
                         </ul>
+                    </div>
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">Buscar</h4>
+                        <input type="text" class="input-text" placeholder="Buscar productos..." value="${catalogState.activeFilters.search}" oninput="debounceSearch(this.value)" style="width: 100%;">
                     </div>
                 </aside>
             `;
 
-            let filtered = dynamicProducts;
-            if (searchVal) {
-                filtered = dynamicProducts.filter(p => p.name.toLowerCase().includes(searchVal.toLowerCase()) || p.description.toLowerCase().includes(searchVal.toLowerCase()));
-            }
+            // Apply filters
+            applyFilters(false); // false = don't reset page
+
+            const totalFiltered = catalogState.filtered.length;
+            const startIdx = 0;
+            const endIdx = catalogState.page * catalogState.perPage;
+            const visibleProducts = catalogState.filtered.slice(0, endIdx);
+            const hasMore = endIdx < totalFiltered;
 
             let cardsHtml = '';
-            if (filtered.length === 0) {
-                cardsHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No se encontraron productos coincidentes.</div>`;
+            if (visibleProducts.length === 0) {
+                cardsHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-magnifying-glass" style="font-size: 2rem; margin-bottom: 1rem;"></i><br>No se encontraron productos con los filtros seleccionados.</div>`;
             } else {
-                filtered.forEach(prod => {
+                visibleProducts.forEach(prod => {
                     const imgSrc = prod.image || productPlaceholder;
                     cardsHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
-                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
+                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
                                 ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                             </div>
                             <div class="product-card-content">
@@ -1934,24 +1966,36 @@
                 });
             }
 
+            // Infinite scroll trigger + Load more button
+            let paginationHtml = '';
+            if (hasMore) {
+                paginationHtml = `
+                    <div class="load-more-container" id="load-more-container">
+                        <button class="btn btn-secondary" onclick="loadMore()" id="load-more-btn">
+                            <i class="fa-solid fa-plus"></i> Cargar más productos (${visibleProducts.length} de ${totalFiltered})
+                        </button>
+                    </div>
+                `;
+            }
+
             let contentHtml = `
                 <div class="catalog-content">
                     <div class="catalog-controls">
-                        <div>Mostrando <strong>${filtered.length}</strong> productos ${searchVal ? `para "${searchVal}"` : ''}</div>
-                        <select class="select-sort" onchange="showToast('Ordenamiento cambiado')">
-                            <option value="populares">Más Populares</option>
-                            <option value="precio-asc">Precio: Bajo a Alto</option>
-                            <option value="precio-desc">Precio: Alto a Bajo</option>
-                        </select>
+                        <div>Mostrando <strong>${visibleProducts.length}</strong> de <strong>${totalFiltered}</strong> productos ${searchVal ? `para "${searchVal}"` : ''}</div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Ordenar:</span>
+                            <select class="select-sort" onchange="sortProducts(this.value)">
+                                <option value="default">Relevancia</option>
+                                <option value="price-asc">Precio: Bajo a Alto</option>
+                                <option value="price-desc">Precio: Alto a Bajo</option>
+                                <option value="name-asc">Nombre: A-Z</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="products-grid">
+                    <div class="products-grid" id="catalog-grid">
                         ${cardsHtml}
                     </div>
-                    <div class="pagination-container">
-                        <button class="page-btn active">1</button>
-                        <button class="page-btn" onclick="showToast('Página 2 cargada')">2</button>
-                        <button class="page-btn"><i class="fa-solid fa-angle-right"></i></button>
-                    </div>
+                    ${paginationHtml}
                 </div>
             `;
 
@@ -1962,480 +2006,230 @@
                     ${contentHtml}
                 </div>
             `;
+
+            // Setup infinite scroll observer
+            setupInfiniteScroll();
         }
 
-        function renderCategoryPage(container, slug) {
-            // Find matching category name from dynamicCategories
-            const matchedCat = dynamicCategories.find(c => c.slug === slug);
-            let catName = matchedCat ? matchedCat.name : slug.charAt(0).toUpperCase() + slug.slice(1);
-
-            let filtered = dynamicProducts.filter(p => p.category.toLowerCase() === slug.toLowerCase());
-            // Also try matching by category name if slug didn't match
-            if (filtered.length === 0 && matchedCat) {
-                filtered = dynamicProducts.filter(p => p.category.toLowerCase() === matchedCat.name.toLowerCase());
-            }
-
-            let gridHtml = '';
-            if (filtered.length === 0) {
-                gridHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No hay productos en esta categoría por ahora.</div>`;
-            } else {
-                filtered.forEach(prod => {
-                    const imgSrc = prod.image || productPlaceholder;
-                    gridHtml += `
-                        <div class="product-card">
-                            <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
-                                <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
-                                ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
-                            </div>
-                            <div class="product-card-content">
-                                ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
-                                <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
-                                <div class="product-card-price-row">
-                                    <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
-                                    ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            container.innerHTML = `
-                <div class="category-header-banner">
-                    <h1 class="category-banner-title">${catName}</h1>
-                    <p class="category-banner-desc">Mostrando ${filtered.length} producto${filtered.length !== 1 ? 's' : ''} en ${catName}</p>
-                </div>
-                <div class="products-grid" style="margin-top: 2rem;">
-                    ${gridHtml}
-                </div>
-            `;
+        // Debounce search input
+        let searchTimeout;
+        function debounceSearch(value) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                catalogState.activeFilters.search = value;
+                catalogState.page = 1;
+                applyFilters(true);
+            }, 300);
         }
 
-        function renderProductPage(container, id) {
-            const prod = dynamicProducts.find(p => p.id == id);
-            if (!prod) {
-                container.innerHTML = `<div style="text-align: center; padding: 4rem 1rem;"><h2>Producto no encontrado</h2><button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="location.hash='#/catalogo'">Ver Catálogo</button></div>`;
-                return;
-            }
+        // Apply all filters
+        function applyFilters(resetPage = true) {
+            // Collect filter values
+            const checkedCats = Array.from(document.querySelectorAll('.catalog-sidebar input[type="checkbox"]:checked'))
+                .map(cb => cb.value)
+                .filter(v => v !== 'on');
 
-            const imgSrc = prod.image || productPlaceholder;
+            const priceRadio = document.querySelector('.catalog-sidebar input[name="price"]:checked');
+            const priceRange = priceRadio ? priceRadio.value : 'all';
+            const inStockOnly = document.getElementById('filter-stock')?.checked || false;
+            const searchInput = document.querySelector('.catalog-sidebar input[type="text"]');
+            const searchVal = searchInput ? searchInput.value : catalogState.activeFilters.search;
 
-            // Build specs table only with non-empty values
-            const specsEntries = prod.specs ? Object.entries(prod.specs).filter(([k, v]) => v && v.trim() !== '') : [];
+            catalogState.activeFilters = {
+                categories: checkedCats,
+                priceRange: priceRange,
+                inStockOnly: inStockOnly,
+                search: searchVal
+            };
 
-            let tabsHtml = `
-                <div class="product-tab-section">
-                    <div class="tabs-header">
-                        ${prod.description ? `<button class="tab-btn active" onclick="switchTab(event, 'tab-desc')">Descripción</button>` : ''}
-                        ${specsEntries.length > 0 ? `<button class="tab-btn${!prod.description ? ' active' : ''}" onclick="switchTab(event, 'tab-specs')">Especificaciones</button>` : ''}
-                    </div>
-                    ${prod.description ? `<div class="tab-content active" id="tab-desc"><p>${prod.description}</p></div>` : ''}
-                    ${specsEntries.length > 0 ? `
-                        <div class="tab-content${!prod.description ? ' active' : ''}" id="tab-specs">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                                ${specsEntries.map(([key, val]) => `
-                                    <tr style="border-bottom: 1px solid var(--border-color);">
-                                        <td style="padding: 0.5rem; font-weight: 600; color: var(--text-main);">${key}</td>
-                                        <td style="padding: 0.5rem;">${val}</td>
-                                    </tr>
-                                `).join('')}
-                            </table>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+            if (resetPage) catalogState.page = 1;
 
-            // Related products: same category, excluding current product
-            let relatedProds = dynamicProducts.filter(rp => rp.id !== prod.id && rp.category === prod.category);
-            if (relatedProds.length === 0) {
-                relatedProds = dynamicProducts.filter(rp => rp.id !== prod.id).slice(0, 3);
-            } else {
-                relatedProds = relatedProds.slice(0, 3);
-            }
+            // Filter products
+            let filtered = dynamicProducts.filter(p => {
+                // Category filter
+                if (checkedCats.length > 0) {
+                    const prodCatSlug = p.category.toLowerCase().replace(/\s+/g, '-');
+                    const matches = checkedCats.some(slug =>
+                        prodCatSlug === slug ||
+                        p.category.toLowerCase().includes(slug.replace(/-/g, ' '))
+                    );
+                    if (!matches) return false;
+                }
 
-            let relatedHtml = '';
-            if (relatedProds.length > 0) {
-                relatedHtml = `
-                    <div style="margin-top: 3rem;">
-                        <h3 class="section-title" style="margin-bottom: 1.5rem;">Productos Relacionados</h3>
-                        <div class="products-grid">
-                            ${relatedProds.map(rp => {
-                                const rpImg = rp.image || productPlaceholder;
-                                return `
-                                    <div class="product-card">
-                                        <div class="product-card-image-box" onclick="location.hash='#/producto/${rp.id}'">
-                                            <img class="product-card-img" src="${rpImg}" alt="${rp.name}">
-                                        </div>
-                                        <div class="product-card-content">
-                                            <h4 class="product-card-title" onclick="location.hash='#/producto/${rp.id}'">${rp.name}</h4>
-                                            <div class="product-card-price-row">
-                                                <span class="product-card-price">$${rp.price.toLocaleString('es-CO')}</span>
-                                                ${rp.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${rp.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
-                                            </div>
+                // Price range filter
+                if (priceRange !== 'all') {
+                    const [min, max] = priceRange.split('-').map(Number);
+                    if (p.price < min || p.price >= max) return false;
+                }
+
+                // Stock filter
+                if (inStockOnly && !p.available) return false;
+
+                // Search filter
+                if (searchVal) {
+                    const q = searchVal.toLowerCase();
+                    if (!p.name.toLowerCase().includes(q) &&
+                        !p.description.toLowerCase().includes(q) &&
+                        !p.brand.toLowerCase().includes(q) &&
+                        !p.category.toLowerCase().includes(q)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            catalogState.filtered = filtered;
+            catalogState.totalPages = Math.ceil(filtered.length / catalogState.perPage);
+
+            // Re-render if container exists
+            const container = document.getElementById('main-content');
+            if (container && location.hash.startsWith('#/catalogo')) {
+                // Only re-render the content part to preserve scroll
+                const grid = document.getElementById('catalog-grid');
+                if (grid) {
+                    const endIdx = catalogState.page * catalogState.perPage;
+                    const visible = filtered.slice(0, endIdx);
+                    const hasMore = endIdx < filtered.length;
+
+                    if (visible.length === 0) {
+                        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-magnifying-glass" style="font-size: 2rem; margin-bottom: 1rem;"></i><br>No se encontraron productos con los filtros seleccionados.</div>`;
+                    } else {
+                        grid.innerHTML = visible.map(prod => {
+                            const imgSrc = prod.image || productPlaceholder;
+                            return `
+                                <div class="product-card">
+                                    <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                                        <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
+                                        ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
+                                    </div>
+                                    <div class="product-card-content">
+                                        ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
+                                        <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                                        <div class="product-card-price-row">
+                                            <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
+                                            ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
                                         </div>
                                     </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = `
-                <div class="product-detail-container">
-                    <div class="product-gallery">
-                        <div class="main-image-wrapper">
-                            <img class="main-product-img" src="${imgSrc}" alt="${prod.name}" id="main-product-image">
-                        </div>
-                    </div>
-
-                    <div class="product-info-panel">
-                        <div class="product-meta-top">
-                            ${prod.brand ? `<span class="product-brand-tag">${prod.brand}</span>` : ''}
-                            <h1 class="product-name-title">${prod.name}</h1>
-                            <div class="product-price-large">$${prod.price.toLocaleString('es-CO')}</div>
-                            ${!prod.available ? '<span style="color: var(--danger); font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-circle-xmark"></i> Agotado</span>' : '<span style="color: var(--success); font-weight: 600; font-size: 0.9rem;"><i class="fa-solid fa-circle-check"></i> Disponible</span>'}
-                        </div>
-
-                        ${prod.description ? `<p class="product-short-desc">${prod.description}</p>` : ''}
-
-                        ${prod.available ? `
-                        <div class="product-actions-box">
-                            <div>
-                                <div class="qty-label">Cantidad</div>
-                                <div class="qty-selector">
-                                    <button class="qty-btn" onclick="adjustDetailQty(-1)">-</button>
-                                    <span class="qty-value" id="detail-qty-val">1</span>
-                                    <button class="qty-btn" onclick="adjustDetailQty(1)">+</button>
                                 </div>
-                            </div>
+                            `;
+                        }).join('');
+                    }
 
-                            <div class="purchase-buttons-row">
-                                <button class="btn btn-primary" onclick="addToCart(${prod.id}, document.getElementById('detail-qty-val').innerText)">Agregar al Carrito</button>
-                                <button class="btn btn-secondary" onclick="buyNow(${prod.id})">Comprar Ahora</button>
-                            </div>
+                    // Update load more button
+                    const loadMoreContainer = document.getElementById('load-more-container');
+                    if (hasMore) {
+                        if (!loadMoreContainer) {
+                            const content = document.querySelector('.catalog-content');
+                            content.insertAdjacentHTML('beforeend', `
+                                <div class="load-more-container" id="load-more-container">
+                                    <button class="btn btn-secondary" onclick="loadMore()" id="load-more-btn">
+                                        <i class="fa-solid fa-plus"></i> Cargar más productos (${visible.length} de ${filtered.length})
+                                    </button>
+                                </div>
+                            `);
+                        } else {
+                            document.getElementById('load-more-btn').innerHTML = `<i class="fa-solid fa-plus"></i> Cargar más productos (${visible.length} de ${filtered.length})`;
+                        }
+                    } else if (loadMoreContainer) {
+                        loadMoreContainer.remove();
+                    }
 
-                            <a href="https://wa.me/?text=${encodeURIComponent('Hola! Me interesa el producto: ' + prod.name)}" target="_blank" class="btn btn-secondary" style="border-color: #25d366; color: #25d366; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;">
-                                <i class="fa-brands fa-whatsapp"></i> Preguntar por WhatsApp
-                            </a>
-                        </div>
-                        ` : `
-                        <div class="product-actions-box">
-                            <p style="color: var(--text-muted); font-size: 0.9rem;">Este producto no está disponible actualmente.</p>
-                            <a href="https://wa.me/?text=${encodeURIComponent('Hola! Quiero saber cuándo estará disponible: ' + prod.name)}" target="_blank" class="btn btn-secondary" style="border-color: #25d366; color: #25d366; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                <i class="fa-brands fa-whatsapp"></i> Consultar Disponibilidad
-                            </a>
-                        </div>
-                        `}
+                    // Update count
+                    const countEl = document.querySelector('.catalog-controls strong:first-child');
+                    if (countEl) countEl.textContent = visible.length;
+                    const totalEl = document.querySelector('.catalog-controls strong:nth-child(2)');
+                    if (totalEl) totalEl.textContent = filtered.length;
 
-                        ${tabsHtml}
-                    </div>
-                </div>
-
-                ${relatedHtml}
-            `;
-        }
-
-        function swapGalleryImage(src, element) {
-            document.getElementById('main-product-image').src = src;
-            document.querySelectorAll('.thumbnail-img-box').forEach(box => box.classList.remove('active'));
-            element.classList.add('active');
-        }
-
-        function adjustDetailQty(delta) {
-            const val = document.getElementById('detail-qty-val');
-            let current = parseInt(val.innerText) + delta;
-            if (current < 1) current = 1;
-            val.innerText = current;
-        }
-
-        function buyNow(productId) {
-            const qty = document.getElementById('detail-qty-val').innerText;
-            addToCart(productId, qty);
-            location.hash = '#/carrito';
-        }
-
-        function switchTab(e, tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        function renderCart(container) {
-            if (cart.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 4rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
-                        <i class="fa-solid fa-basket-shopping" style="font-size: 3rem; color: var(--text-muted);"></i>
-                        <h2 class="cart-title">Tu bolsa de compras está vacía</h2>
-                        <p style="color: var(--text-muted); max-width: 320px;">Explora nuestros productos y agrega lo que más te guste para proceder con tu orden.</p>
-                        <button class="btn btn-primary" onclick="location.hash='#/catalogo'">Ir a la Tienda</button>
-                    </div>
-                `;
-                return;
-            }
-
-            let itemsHtml = '';
-            let subtotal = 0;
-            cart.forEach(item => {
-                const totalItemPrice = item.product.price * item.quantity;
-                subtotal += totalItemPrice;
-                const imgSrc = item.product.image || productPlaceholder;
-                itemsHtml += `
-                    <div class="cart-item-card">
-                        <div class="cart-item-img-box">
-                            <img class="cart-item-img" src="${imgSrc}" alt="${item.product.name}">
-                        </div>
-                        <div class="cart-item-details">
-                            <span class="cart-item-name">${item.product.name}</span>
-                            <span class="cart-item-price-unit">$${item.product.price.toLocaleString('es-CO')} cada uno</span>
-                        </div>
-                        <div class="qty-selector" style="transform: scale(0.85);">
-                            <button class="qty-btn" onclick="updateCartQty(${item.product.id}, -1)">-</button>
-                            <span class="qty-value">${item.quantity}</span>
-                            <button class="qty-btn" onclick="updateCartQty(${item.product.id}, 1)">+</button>
-                        </div>
-                        <div class="cart-item-actions">
-                            <span class="cart-item-total">$${totalItemPrice.toLocaleString('es-CO')}</span>
-                            <button class="btn-remove-item" onclick="removeFromCart(${item.product.id})"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            const taxes = subtotal * 0.19;
-            const shipping = subtotal > 150000 ? 0 : 15000;
-            const total = subtotal + taxes + shipping;
-
-            let summaryHtml = `
-                <div class="cart-summary-panel">
-                    <h3 class="summary-title">Resumen de Compra</h3>
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>$${subtotal.toLocaleString('es-CO')}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>IVA (19%)</span>
-                        <span>$${taxes.toLocaleString('es-CO')}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Envío</span>
-                        <span>${shipping === 0 ? '<strong style="color: var(--success);">Gratis</strong>' : `$${shipping.toLocaleString('es-CO')}`}</span>
-                    </div>
-                    <div class="summary-row total-row">
-                        <span>Total</span>
-                        <span>$${total.toLocaleString('es-CO')}</span>
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="location.hash='#/checkout'">Proceder al Pago</button>
-                    <button class="btn btn-secondary" style="width: 100%;" onclick="location.hash='#/catalogo'">Seguir Comprando</button>
-                </div>
-            `;
-
-            container.innerHTML = `
-                <div class="cart-layout">
-                    <div>
-                        <h2 class="cart-title">Bolsa de Compras (${cart.length} ítems)</h2>
-                        <div class="cart-items-panel">${itemsHtml}</div>
-                    </div>
-                    ${summaryHtml}
-                </div>
-            `;
-        }
-
-        function renderCheckout(container) {
-            if (cart.length === 0) {
-                location.hash = '#/carrito';
-                return;
-            }
-
-            let subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-            let shipping = subtotal > 150000 ? 0 : 15000;
-            let total = subtotal * 1.19 + shipping;
-
-            let stepsHtml = `
-                <div class="checkout-steps-panel">
-                    <div class="checkout-step-card">
-                        <div class="step-header">
-                            <div class="step-number">1</div>
-                            <h3 class="step-title">Información Personal</h3>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="c-name">Nombre Completo</label>
-                                <input type="text" id="c-name" class="input-text" placeholder="Ej. Juan Pérez">
-                            </div>
-                            <div class="form-group">
-                                <label for="c-email">Correo Electrónico</label>
-                                <input type="email" id="c-email" class="input-text" placeholder="ejemplo@correo.com">
-                            </div>
-                            <div class="form-group span-full">
-                                <label for="c-phone">Teléfono / Celular</label>
-                                <input type="tel" id="c-phone" class="input-text" placeholder="Ej. +57 300 123 4567">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="checkout-step-card">
-                        <div class="step-header">
-                            <div class="step-number">2</div>
-                            <h3 class="step-title">Dirección de Envío</h3>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="c-country">País</label>
-                                <input type="text" id="c-country" class="input-text" value="Colombia">
-                            </div>
-                            <div class="form-group">
-                                <label for="c-state">Departamento / Estado</label>
-                                <input type="text" id="c-state" class="input-text" placeholder="Ej. Cundinamarca">
-                            </div>
-                            <div class="form-group">
-                                <label for="c-city">Ciudad</label>
-                                <input type="text" id="c-city" class="input-text" placeholder="Ej. Bogotá">
-                            </div>
-                            <div class="form-group">
-                                <label for="c-address">Dirección</label>
-                                <input type="text" id="c-address" class="input-text" placeholder="Ej. Calle 100 #15-30">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="checkout-step-card">
-                        <div class="step-header">
-                            <div class="step-number">3</div>
-                            <h3 class="step-title">Método de Pago</h3>
-                        </div>
-                        <div class="payment-methods-grid">
-                            <div class="payment-method-card active" onclick="selectPaymentMethod(this)">
-                                <div class="payment-method-icon"><i class="fa-solid fa-credit-card"></i></div>
-                                <span>Tarjeta de Crédito</span>
-                            </div>
-                            <div class="payment-method-card" onclick="selectPaymentMethod(this)">
-                                <div class="payment-method-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                                <span>PSE</span>
-                            </div>
-                            <div class="payment-method-card" onclick="selectPaymentMethod(this)">
-                                <div class="payment-method-icon"><i class="fa-solid fa-wallet"></i></div>
-                                <span>Nequi</span>
-                            </div>
-                            <div class="payment-method-card" onclick="selectPaymentMethod(this)">
-                                <div class="payment-method-icon"><i class="fa-solid fa-building-columns"></i></div>
-                                <span>Wompi</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            let orderSummaryHtml = `
-                <aside class="cart-summary-panel">
-                    <h3 class="summary-title">Tu Pedido</h3>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
-                        ${cart.map(item => `
-                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                                <span>${item.product.name} (x${item.quantity})</span>
-                                <span>$${(item.product.price * item.quantity).toLocaleString('es-CO')}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <div class="summary-row">
-                            <span>Subtotal</span>
-                            <span>$${subtotal.toLocaleString('es-CO')}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Envío</span>
-                            <span>$${shipping.toLocaleString('es-CO')}</span>
-                        </div>
-                        <div class="summary-row total-row">
-                            <span>Total</span>
-                            <span>$${total.toLocaleString('es-CO')}</span>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processOrder()">Confirmar y Pagar</button>
-                    <button class="btn btn-secondary" style="width: 100%;" onclick="location.hash='#/carrito'">Editar Carrito</button>
-                </aside>
-            `;
-
-            container.innerHTML = `
-                <div style="margin: var(--space-md) 0;"><h2 class="section-title">Finalizar Compra</h2></div>
-                <div class="checkout-layout">
-                    ${stepsHtml}
-                    ${orderSummaryHtml}
-                </div>
-            `;
-        }
-
-        function selectPaymentMethod(element) {
-            document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('active'));
-            element.classList.add('active');
-        }
-
-        function processOrder() {
-            const name = document.getElementById('c-name').value;
-            const email = document.getElementById('c-email').value;
-            if (!name || !email) {
-                alert("Por favor completa los campos de nombre y correo.");
-                return;
-            }
-            alert("¡Pedido completado con éxito! Recibirás los detalles a tu correo electrónico.");
-            cart = [];
-            saveCart();
-            location.hash = '#/';
-        }
-
-        function renderRoute() {
-            const hash = location.hash || '#/';
-            const main = document.getElementById('main-content');
-            
-            const panel = document.getElementById('mobile-nav-panel');
-            if (panel.classList.contains('open')) {
-                toggleMobileMenu();
-            }
-
-            document.querySelectorAll('.nav-link-item').forEach(item => {
-                const targetRoute = item.getAttribute('data-route');
-                if (hash === '#/' && targetRoute === '') {
-                    item.classList.add('active');
-                } else if (hash.startsWith('#/' + targetRoute) && targetRoute !== '') {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
+                    setupInfiniteScroll();
                 }
-            });
-
-            if (hash === '#/' || hash === '') {
-                renderHome(main);
-            } else if (hash.startsWith('#/catalogo')) {
-                const url = new URL(hash.replace('#/', '/'), window.location.origin);
-                renderCatalog(main, url.searchParams);
-            } else if (hash.startsWith('#/categoria/')) {
-                const slug = hash.replace('#/categoria/', '');
-                renderCategoryPage(main, slug);
-            } else if (hash.startsWith('#/producto/')) {
-                const id = hash.replace('#/producto/', '');
-                renderProductPage(main, id);
-            } else if (hash === '#/carrito') {
-                renderCart(main);
-            } else if (hash === '#/checkout') {
-                renderCheckout(main);
-            } else {
-                main.innerHTML = `
-                    <div style="padding: 4rem 1rem; text-align: center;">
-                        <h2 class="section-title">Página informativa: ${hash.replace('#/', '').toUpperCase()}</h2>
-                        <p style="color: var(--text-muted); margin-top: 1rem;">Esta es una plantilla de página estática para demostración.</p>
-                        <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="location.hash='#/'">Volver al Inicio</button>
-                    </div>
-                `;
             }
-            window.scrollTo(0, 0);
         }
 
-        window.addEventListener('hashchange', renderRoute);
-        window.addEventListener('load', () => {
-            updateCartBadge();
-            renderRoute();
-        });
+        // Sort products
+        function sortProducts(sortBy) {
+            const s = catalogState.activeFilters;
+            let products = [...catalogState.filtered];
+
+            switch(sortBy) {
+                case 'price-asc':
+                    products.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    products.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name-asc':
+                    products.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+            }
+
+            catalogState.filtered = products;
+            catalogState.page = 1;
+            applyFilters(false);
+        }
+
+        // Load more products (infinite scroll)
+        function loadMore() {
+            catalogState.page++;
+            const endIdx = catalogState.page * catalogState.perPage;
+            const visible = catalogState.filtered.slice(0, endIdx);
+            const hasMore = endIdx < catalogState.filtered.length;
+
+            const grid = document.getElementById('catalog-grid');
+            const newProducts = catalogState.filtered.slice((catalogState.page - 1) * catalogState.perPage, endIdx);
+
+            newProducts.forEach(prod => {
+                const imgSrc = prod.image || productPlaceholder;
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                        <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
+                        ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
+                    </div>
+                    <div class="product-card-content">
+                        ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
+                        <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                        <div class="product-card-price-row">
+                            <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
+                            ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Update or remove load more button
+            const loadMoreContainer = document.getElementById('load-more-container');
+            if (hasMore) {
+                document.getElementById('load-more-btn').innerHTML = `<i class="fa-solid fa-plus"></i> Cargar más productos (${visible.length} de ${catalogState.filtered.length})`;
+            } else if (loadMoreContainer) {
+                loadMoreContainer.remove();
+            }
+
+            // Update count
+            const countEl = document.querySelector('.catalog-controls strong:first-child');
+            if (countEl) countEl.textContent = visible.length;
+
+            setupInfiniteScroll();
+        }
+
+        // Infinite scroll observer
+        let scrollObserver = null;
+        function setupInfiniteScroll() {
+            if (scrollObserver) scrollObserver.disconnect();
+
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if (!loadMoreBtn) return;
+
+            scrollObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            }, { rootMargin: '200px' });
+
+            scrollObserver.observe(loadMoreBtn);
+        }
     </script>
 </body>
 </html>`
