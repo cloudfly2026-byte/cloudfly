@@ -11,6 +11,8 @@ import (
 func main() {
 	// Initialize Redis Connection
 	database.InitRedis()
+	// Initialize MySQL Connection
+	database.InitMySQL()
 
 	app := fiber.New()
 
