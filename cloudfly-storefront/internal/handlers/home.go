@@ -215,10 +215,18 @@ func Home(c *fiber.Ctx) error {
 						isAvailable = false
 					}
 
-					// Query media image URL
-					var imgURL = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
+					// Query actual category name from database
+					var catName = "general"
+					var cName sql.NullString
+					err := database.DB.QueryRow("SELECT c.name FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1", prodID).Scan(&cName)
+					if err == nil && cName.Valid {
+						catName = cName.String
+					}
+
+					// Query media image URL (default to empty so front-end can show its placeholder)
+					var imgURL = ""
 					var mediaURL sql.NullString
-					err := database.DB.QueryRow("SELECT m.url FROM product_images pi JOIN media m ON pi.media_id = m.id WHERE pi.product_id = ? LIMIT 1", prodID).Scan(&mediaURL)
+					err = database.DB.QueryRow("SELECT m.url FROM product_images pi JOIN media m ON pi.media_id = m.id WHERE pi.product_id = ? LIMIT 1", prodID).Scan(&mediaURL)
 					if err == nil && mediaURL.Valid {
 						imgURL = mediaURL.String
 					}
@@ -227,7 +235,7 @@ func Home(c *fiber.Ctx) error {
 						Name:        pName,
 						Description: descStr,
 						Price:       pPrice,
-						Category:    "general",
+						Category:    catName,
 						Brand:       brandStr,
 						Image:       imgURL,
 						Rating:      4.8,
@@ -242,12 +250,26 @@ func Home(c *fiber.Ctx) error {
 		}
 	}
 
+	// 3. Redis Caching: Index by Tenant and Company ID
+	var cacheKey string
+	if resolved && database.RedisClient != nil {
+		// e.g. storefront:html:1:1
+		cacheKey = "storefront:html:" + strconv.FormatInt(tenantID, 10) + ":" + strconv.FormatInt(companyID, 10)
+		cachedHTML, err := database.RedisClient.Get(database.Ctx, cacheKey).Result()
+		if err == nil && cachedHTML != "" {
+			c.Set("Content-Type", "text/html")
+			c.Set("X-Cache", "HIT")
+			return c.SendString(cachedHTML)
+		}
+	}
+
 	// Try resolving template index.html path
 	tmplPaths := []string{
 		filepath.Join("/webTemplates", "default", "index.html"),
 		filepath.Join("webTemplates", "default", "index.html"),
 		filepath.Join("../webTemplates", "default", "index.html"),
 		filepath.Join("../../webTemplates", "default", "index.html"),
+		filepath.Join("..", "..", "webTemplates", "default", "index.html"),
 		filepath.Join("..", "..", "webTemplates", "default", "index.html"),
 	}
 
@@ -285,6 +307,13 @@ func Home(c *fiber.Ctx) error {
 		return c.Status(500).SendString("Error rendering storefront template: " + err.Error())
 	}
 
+	renderedHTML := buf.String()
+	if cacheKey != "" && database.RedisClient != nil {
+		// Cache page for 10 minutes
+		_ = database.RedisClient.Set(database.Ctx, cacheKey, renderedHTML, 10*time.Minute).Err()
+	}
+
 	c.Set("Content-Type", "text/html")
+	c.Set("X-Cache", "MISS")
 	return c.Send(buf.Bytes())
 }

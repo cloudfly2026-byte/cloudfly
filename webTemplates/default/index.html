@@ -1622,6 +1622,8 @@
             {{end}}
         ];
 
+        const productPlaceholder = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80';
+
         // Global Cart State
         let cart = JSON.parse(localStorage.getItem('cloudfly_cart')) || [];
 
@@ -1756,7 +1758,7 @@
             if (dynamicProducts.length > 0) {
                 prodsHtml = `<div class="section-header"><h3 class="section-title">Productos Destacados</h3><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="location.hash='#/catalogo'">Ver Todo</button></div><div class="products-grid">`;
                 dynamicProducts.slice(0, 4).forEach(prod => {
-                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                    const imgSrc = prod.image || productPlaceholder;
                     prodsHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
@@ -1885,7 +1887,7 @@
                 cardsHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No se encontraron productos coincidentes.</div>`;
             } else {
                 filtered.forEach(prod => {
-                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                    const imgSrc = prod.image || productPlaceholder;
                     cardsHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
@@ -1951,7 +1953,7 @@
                 gridHtml = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No hay productos en esta categoría por ahora.</div>`;
             } else {
                 filtered.forEach(prod => {
-                    const imgSrc = prod.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                    const imgSrc = prod.image || productPlaceholder;
                     gridHtml += `
                         <div class="product-card">
                             <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
@@ -1989,7 +1991,7 @@
                 return;
             }
 
-            const imgSrc = prod.image || 'https://via.placeholder.com/600x600?text=Sin+Imagen';
+            const imgSrc = prod.image || productPlaceholder;
 
             // Build specs table only with non-empty values
             const specsEntries = prod.specs ? Object.entries(prod.specs).filter(([k, v]) => v && v.trim() !== '') : [];
@@ -2031,7 +2033,7 @@
                         <h3 class="section-title" style="margin-bottom: 1.5rem;">Productos Relacionados</h3>
                         <div class="products-grid">
                             ${relatedProds.map(rp => {
-                                const rpImg = rp.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                                const rpImg = rp.image || productPlaceholder;
                                 return `
                                     <div class="product-card">
                                         <div class="product-card-image-box" onclick="location.hash='#/producto/${rp.id}'">
@@ -2151,7 +2153,7 @@
             cart.forEach(item => {
                 const totalItemPrice = item.product.price * item.quantity;
                 subtotal += totalItemPrice;
-                const imgSrc = item.product.image || 'https://via.placeholder.com/500x500?text=Sin+Imagen';
+                const imgSrc = item.product.image || productPlaceholder;
                 itemsHtml += `
                     <div class="cart-item-card">
                         <div class="cart-item-img-box">
