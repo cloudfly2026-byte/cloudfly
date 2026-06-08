@@ -50,6 +50,35 @@ type StorefrontData struct {
 	Products   []Product
 }
 
+func slugify(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, " ", "-")
+	var res []rune
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			res = append(res, r)
+		}
+	}
+	return string(res)
+}
+
+func getCategoryIcon(name string) string {
+	nameLower := strings.ToLower(name)
+	if strings.Contains(nameLower, "comput") || strings.Contains(nameLower, "electr") || strings.Contains(nameLower, "tecnol") {
+		return "fa-solid fa-laptop"
+	}
+	if strings.Contains(nameLower, "reloj") || strings.Contains(nameLower, "accesor") {
+		return "fa-solid fa-clock"
+	}
+	if strings.Contains(nameLower, "ropa") || strings.Contains(nameLower, "vestir") || strings.Contains(nameLower, "moda") || strings.Contains(nameLower, "estilo") {
+		return "fa-solid fa-shirt"
+	}
+	if strings.Contains(nameLower, "deport") || strings.Contains(nameLower, "fit") {
+		return "fa-solid fa-dumbbell"
+	}
+	return "fa-solid fa-tag"
+}
+
 func Home(c *fiber.Ctx) error {
 	host := c.Hostname()
 
@@ -167,20 +196,33 @@ func Home(c *fiber.Ctx) error {
 
 	// 2. Fetch Company metadata from companies table if available
 	if resolved && database.DB != nil {
-		err := database.DB.QueryRow("SELECT name, logo, description, primary_color, secondary_color FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
-			&company.Name, &company.Logo, &company.Description, &theme.PrimaryColor, &theme.SecondaryColor)
-		if err != nil {
-			log.Printf("ℹ️  [Database Notice]: companies query failed or not initialized: %v. Using defaults.", err)
+		var logoURL sql.NullString
+		var compDesc sql.NullString
+		err := database.DB.QueryRow("SELECT name, logo_url, company_description FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
+			&company.Name, &logoURL, &compDesc)
+		if err == nil {
+			if logoURL.Valid {
+				company.Logo = logoURL.String
+			}
+			if compDesc.Valid {
+				company.Description = compDesc.String
+			}
+		} else {
+			log.Printf("ℹ️  [Database Notice]: companies query failed: %v.", err)
 		}
 		
-		// Load actual categories
-		rows, err := database.DB.Query("SELECT name, slug, icon FROM categories WHERE company_id = ?", companyID)
+		// Load actual categories from `categorias` table
+		rows, err := database.DB.Query("SELECT name FROM categorias WHERE company_id = ? AND status = 1", companyID)
 		if err == nil {
 			var dbCats []Category
 			for rows.Next() {
-				var cat Category
-				if err := rows.Scan(&cat.Name, &cat.Slug, &cat.Icon); err == nil {
-					dbCats = append(dbCats, cat)
+				var catName string
+				if err := rows.Scan(&catName); err == nil {
+					dbCats = append(dbCats, Category{
+						Name: catName,
+						Slug: slugify(catName),
+						Icon: getCategoryIcon(catName),
+					})
 				}
 			}
 			rows.Close()
@@ -189,14 +231,52 @@ func Home(c *fiber.Ctx) error {
 			}
 		}
 
-		// Load actual products
-		pRows, err := database.DB.Query("SELECT name, description, price, category, brand, image, rating, available FROM products WHERE company_id = ?", companyID)
+		// Load actual products from `productos` table
+		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, inventory_status FROM productos WHERE company_id = ? AND status = 'ACTIVE'", companyID)
 		if err == nil {
 			var dbProds []Product
 			for pRows.Next() {
-				var prod Product
-				if err := pRows.Scan(&prod.Name, &prod.Description, &prod.Price, &prod.Category, &prod.Brand, &prod.Image, &prod.Rating, &prod.Available); err == nil {
-					dbProds = append(dbProds, prod)
+				var prodID int64
+				var pName string
+				var pDesc sql.NullString
+				var pPrice float64
+				var pBrand sql.NullString
+				var pInvStatus sql.NullString
+
+				if err := pRows.Scan(&prodID, &pName, &pDesc, &pPrice, &pBrand, &pInvStatus); err == nil {
+					var brandStr = "Generico"
+					if pBrand.Valid {
+						brandStr = pBrand.String
+					}
+
+					var descStr = ""
+					if pDesc.Valid {
+						descStr = pDesc.String
+					}
+
+					var isAvailable = true
+					if pInvStatus.Valid && strings.ToUpper(pInvStatus.String) != "IN_STOCK" {
+						isAvailable = false
+					}
+
+					// Query media image URL
+					var imgURL = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
+					var mediaURL sql.NullString
+					err := database.DB.QueryRow("SELECT m.url FROM product_images pi JOIN media m ON pi.media_id = m.id WHERE pi.product_id = ? LIMIT 1", prodID).Scan(&mediaURL)
+					if err == nil && mediaURL.Valid {
+						imgURL = mediaURL.String
+					}
+
+					dbProds = append(dbProds, Product{
+						Name:        pName,
+						Description: descStr,
+						Price:       pPrice,
+						Category:    "general",
+						Brand:       brandStr,
+						Image:       imgURL,
+						Rating:      4.8,
+						Available:   isAvailable,
+					})
 				}
 			}
 			pRows.Close()
