@@ -2233,6 +2233,143 @@
 
             scrollObserver.observe(loadMoreBtn);
         }
+
+        // ── SPA Router ──────────────────────────────────────────────────────────
+        function renderCart(container) {
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <section style="padding: 4rem 0; text-align: center;">
+                        <i class="fa-solid fa-cart-shopping" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                        <h2 style="font-family:'Outfit',sans-serif; margin-bottom: 0.5rem;">Tu carrito está vacío</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Agrega productos para continuar con tu compra.</p>
+                        <button class="btn btn-primary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>
+                    </section>`;
+                return;
+            }
+            const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+            const rows = cart.map(item => `
+                <div style="display:flex; align-items:center; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--border-color);">
+                    <img src="${item.product.image || productPlaceholder}" alt="${item.product.name}"
+                         style="width:70px;height:70px;object-fit:cover;border-radius:var(--radius-sm);">
+                    <div style="flex:1;">
+                        <p style="font-weight:600;">${item.product.name}</p>
+                        <p style="color:var(--text-muted);font-size:0.85rem;">${item.product.brand}</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <button class="action-btn" onclick="updateCartQty(${item.product.id},-1)" style="font-size:0.8rem;"><i class="fa-solid fa-minus"></i></button>
+                        <span style="font-weight:600;min-width:24px;text-align:center;">${item.quantity}</span>
+                        <button class="action-btn" onclick="updateCartQty(${item.product.id},1)" style="font-size:0.8rem;"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <span style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--success);min-width:100px;text-align:right;">${(item.product.price * item.quantity).toLocaleString('es-CO')}</span>
+                    <button class="action-btn" onclick="removeFromCart(${item.product.id})" style="color:var(--danger);"><i class="fa-solid fa-trash"></i></button>
+                </div>`).join('');
+
+            const phone = "{{.Company.Phone}}";
+            const waMsg = encodeURIComponent(`Hola! Quiero hacer un pedido:\n${cart.map(i => `- ${i.product.name} x${i.quantity}: ${(i.product.price*i.quantity).toLocaleString('es-CO')}`).join('\n')}\nTotal: ${total.toLocaleString('es-CO')}`);
+
+            container.innerHTML = `
+                <section style="padding: var(--space-lg) 0;">
+                    <div class="section-header"><h2 class="section-title">Carrito de Compras</h2></div>
+                    <div style="display:grid;grid-template-columns:1fr;gap:2rem;">
+                        <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1.5rem;">
+                            ${rows}
+                        </div>
+                        <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+                            <h3 style="font-family:'Outfit',sans-serif;">Resumen del Pedido</h3>
+                            <div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span style="font-weight:700;">${total.toLocaleString('es-CO')}</span></div>
+                            <hr style="border-color:var(--border-color);">
+                            <div style="display:flex;justify-content:space-between;font-size:1.1rem;"><span style="font-weight:700;">Total</span><span style="font-weight:800;color:var(--success);">${total.toLocaleString('es-CO')}</span></div>
+                            ${phone ? `<a href="https://wa.me/${phone.replace(/\D/g,'')}?text=${waMsg}" target="_blank" class="btn btn-primary" style="text-align:center;margin-top:0.5rem;"><i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp</a>` : ''}
+                            <button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Seguir Comprando</button>
+                        </div>
+                    </div>
+                </section>`;
+        }
+
+        function renderProduct(container, productId) {
+            const prod = dynamicProducts.find(p => p.id == productId);
+            if (!prod) {
+                container.innerHTML = `<section style="padding:4rem 0;text-align:center;"><h2>Producto no encontrado</h2><button class="btn btn-secondary" onclick="location.hash='#/catalogo'" style="margin-top:1rem;">Volver al Catálogo</button></section>`;
+                return;
+            }
+            container.innerHTML = `
+                <section style="padding: var(--space-lg) 0;">
+                    <button class="btn btn-secondary" onclick="history.back()" style="margin-bottom:1.5rem;padding:0.5rem 1rem;font-size:0.85rem;"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                    <div style="display:grid;grid-template-columns:1fr;gap:2rem;">
+                        <div style="border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:1/1;background:var(--bg-surface);">
+                            <img src="${prod.image || productPlaceholder}" alt="${prod.name}" style="width:100%;height:100%;object-fit:cover;">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1rem;">
+                            ${prod.brand ? `<span style="color:var(--text-muted);font-size:0.85rem;">${prod.brand}</span>` : ''}
+                            <h1 style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;">${prod.name}</h1>
+                            <p style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;color:var(--success);">${prod.price.toLocaleString('es-CO')}</p>
+                            ${prod.description ? `<p style="color:var(--text-muted);line-height:1.7;">${prod.description}</p>` : ''}
+                            <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+                                ${prod.available ? `<button class="btn btn-primary" onclick="addToCart(${prod.id});location.hash='#/carrito'"><i class="fa-solid fa-cart-shopping"></i> Agregar al Carrito</button>` : `<span style="color:var(--danger);font-weight:600;">Agotado</span>`}
+                            </div>
+                            <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1.25rem;margin-top:0.5rem;">
+                                <p style="font-weight:600;margin-bottom:0.75rem;">Especificaciones</p>
+                                ${Object.entries(prod.specs).map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border-color);font-size:0.9rem;"><span style="color:var(--text-muted);">${k}</span><span>${v||'-'}</span></div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </section>`;
+        }
+
+        // Main SPA router
+        function renderRoute() {
+            const container = document.getElementById('main-content');
+            if (!container) return;
+
+            const hash = location.hash || '#/';
+            // Update active nav
+            document.querySelectorAll('.nav-link-item, .mobile-link-item').forEach(li => {
+                li.classList.toggle('active',
+                    (hash.startsWith('#/catalogo') && li.dataset.route === 'catalogo') ||
+                    (hash === '#/' && li.dataset.route === 'inicio') ||
+                    (hash === '' && li.dataset.route === 'inicio')
+                );
+            });
+            updateCartBadge();
+
+            if (hash === '#/' || hash === '') {
+                renderHome(container);
+            } else if (hash.startsWith('#/catalogo')) {
+                const search = hash.includes('?') ? new URLSearchParams(hash.split('?')[1]) : null;
+                renderCatalog(container, search);
+            } else if (hash.startsWith('#/categoria/')) {
+                const slug = hash.replace('#/categoria/', '');
+                const cat = dynamicCategories.find(c => c.slug === slug);
+                const search = cat ? new URLSearchParams(`cat=${encodeURIComponent(cat.name)}`) : null;
+                renderCatalog(container, search);
+            } else if (hash.startsWith('#/producto/')) {
+                const id = hash.replace('#/producto/', '').split('?')[0];
+                renderProduct(container, id);
+            } else if (hash === '#/carrito') {
+                renderCart(container);
+            } else if (hash === '#/nosotros') {
+                container.innerHTML = `<section style="padding:var(--space-xl) 0;max-width:700px;"><h1 class="section-title">Nosotros</h1><p style="color:var(--text-muted);margin-top:1rem;line-height:1.8;">{{if .Company.Description}}{{.Company.Description}}{{else}}Somos una tienda comprometida con ofrecerte los mejores productos al mejor precio.{{end}}</p></section>`;
+            } else if (hash === '#/contacto') {
+                const phone = "{{.Company.Phone}}";
+                const email = "{{.Company.Email}}";
+                const address = "{{.Company.Address}}";
+                container.innerHTML = `
+                    <section style="padding:var(--space-xl) 0;">
+                        <h1 class="section-title" style="margin-bottom:2rem;">Contacto</h1>
+                        <div style="display:grid;gap:1.5rem;max-width:500px;">
+                            ${email ? `<div style="display:flex;gap:1rem;align-items:center;"><i class="fa-solid fa-envelope" style="color:var(--primary);font-size:1.25rem;"></i><span>${email}</span></div>` : ''}
+                            ${address ? `<div style="display:flex;gap:1rem;align-items:center;"><i class="fa-solid fa-location-dot" style="color:var(--primary);font-size:1.25rem;"></i><span>${address}</span></div>` : ''}
+                            ${phone ? `<a href="https://wa.me/${phone.replace(/\D/g,'')}" target="_blank" class="btn btn-primary" style="margin-top:0.5rem;"><i class="fa-brands fa-whatsapp"></i> Contáctanos por WhatsApp</a>` : ''}
+                        </div>
+                    </section>`;
+            } else {
+                renderHome(container);
+            }
+        }
+
+        // Boot router
+        window.addEventListener('hashchange', renderRoute);
+        document.addEventListener('DOMContentLoaded', renderRoute);
     </script>
 </body>
 </html>`

@@ -55,6 +55,44 @@ type StorefrontData struct {
 	Products   []Product
 }
 
+// stripMarkdown removes common markdown syntax for plain-text rendering
+func stripMarkdown(s string) string {
+	// Remove headings (## Title -> Title)
+	var lines []string
+	for _, line := range strings.Split(s, "\n") {
+		line = strings.TrimLeft(line, "# ")
+		// Remove list markers
+		if strings.HasPrefix(line, "* ") {
+			line = line[2:]
+		}
+		if strings.HasPrefix(line, "- ") {
+			line = line[2:]
+		}
+		// Remove inline links [text](url) -> text
+		for strings.Contains(line, "](") {
+			start := strings.Index(line, "[")
+			end := strings.Index(line, "]")
+			if start >= 0 && end > start {
+				paren := strings.Index(line[end:], ")")
+				if paren >= 0 {
+					line = line[:start] + line[start+1:end] + line[end+1+paren+1:]
+					continue
+				}
+			}
+			break
+		}
+		line = strings.TrimSpace(line)
+		if line != "" {
+			lines = append(lines, line)
+		}
+	}
+	// Return first 3 sentences/lines as short description
+	if len(lines) > 3 {
+		lines = lines[:3]
+	}
+	return strings.Join(lines, " ")
+}
+
 func slugify(s string) string {
 	s = strings.ToLower(s)
 	s = strings.ReplaceAll(s, " ", "-")
@@ -193,7 +231,7 @@ func Home(c *fiber.Ctx) error {
 				company.Logo = normalizeImageURL(logoURL.String)
 			}
 			if compDesc.Valid {
-				company.Description = compDesc.String
+				company.Description = stripMarkdown(compDesc.String)
 			}
 			if compPhone.Valid {
 				company.Phone = compPhone.String
