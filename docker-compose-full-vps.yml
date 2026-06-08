@@ -519,7 +519,7 @@ services:
       - app-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.storefront.rule=HostRegexp(`^[a-z0-9-]+\\.cloudfly\\.com\\.co$`)"
+      - "traefik.http.routers.storefront.rule=Host(`cloudflyshop.cloudfly.com.co`) || HostRegexp(`^[a-z0-9-]+\\.cloudfly\\.com\\.co$`)"
       - "traefik.http.routers.storefront.entrypoints=websecure"
       - "traefik.http.routers.storefront.tls=true"
       - "traefik.http.routers.storefront.tls.certresolver=le"
