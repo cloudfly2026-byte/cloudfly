@@ -84,6 +84,7 @@ public class ProductService {
         product.setStatus(dto.getStatus());
         product.setBrand(dto.getBrand());
         product.setModel(dto.getModel());
+        product.setSlug(dto.getSlug());
 
         // ----------------- Categorías -----------------
         if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
@@ -174,6 +175,7 @@ public class ProductService {
                 .status(p.getStatus())
                 .brand(p.getBrand())
                 .model(p.getModel())
+                .slug(p.getSlug())
                 .categoryIds(categoryIds)
                 .imageIds(imageIds)
                 .createdAt(p.getCreatedAt())

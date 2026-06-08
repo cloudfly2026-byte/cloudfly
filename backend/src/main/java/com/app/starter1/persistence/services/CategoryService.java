@@ -21,6 +21,7 @@ public class CategoryService {
     public CategoryResponse createCategory(CategoryCreateRequest request) {
         Category category = Category.builder()
                 .categoryName(request.nombreCategoria())
+                .slug(request.slug())
                 .description(request.description())
                 .parentCategory(request.parentCategory())
                 .tenantId(request.tenantId())
@@ -60,6 +61,7 @@ public class CategoryService {
                 .orElseThrow(() -> new RuntimeException("Category no encontrado con ID: " + id));
 
         category.setCategoryName(request.nombreCategoria());
+        category.setSlug(request.slug());
         category.setDescription(request.description());
         category.setParentCategory(request.parentCategory());
         category.setStatus(request.status());
@@ -90,10 +92,11 @@ public class CategoryService {
         return new CategoryResponse(
                 category.getId(),
                 category.getCategoryName(),
+                category.getSlug(),
                 category.getDescription(),
                 category.getParentCategory(),
-                category.getStatus(), 
-                category.getTenantId(), 
+                category.getStatus(),
+                category.getTenantId(),
                 category.getCreatedAt(),
                 category.getUpdatedAt()
         );

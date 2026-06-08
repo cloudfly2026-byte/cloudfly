@@ -25,6 +25,9 @@ public class Category {
     @Column(nullable = false, unique = true, name = "name")
     private String categoryName;
 
+    @Column(length = 200, unique = true)
+    private String slug;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

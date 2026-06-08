@@ -73,6 +73,9 @@ public class Product {
     @Column(length = 100)
     private String model;
 
+    @Column(length = 200, unique = true)
+    private String slug;
+
     // ⬇️ ManyToMany con Category (NO con CategoriaProducto)
     @ManyToMany
     @JoinTable(
@@ -290,6 +293,14 @@ public class Product {
 
     public void setModel(String model) {
         this.model = model;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 
     public LocalDateTime getCreatedAt() {

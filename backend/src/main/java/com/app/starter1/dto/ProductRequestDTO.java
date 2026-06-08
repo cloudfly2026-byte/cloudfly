@@ -48,6 +48,7 @@ public class ProductRequestDTO {
 
     private String brand;
     private String model;
+    private String slug;
 
     // IDs que vienen del front
     private List<Long> categoryIds;

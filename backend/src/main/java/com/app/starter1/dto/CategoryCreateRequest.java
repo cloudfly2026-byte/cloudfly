@@ -7,6 +7,8 @@ public record CategoryCreateRequest(
         @NotBlank(message = "El nombre del categoria es requerido") 
         String nombreCategoria,
         
+        String slug,
+        
         String description,
         
         Long parentCategory,

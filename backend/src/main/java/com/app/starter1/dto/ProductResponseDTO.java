@@ -47,6 +47,7 @@ public class ProductResponseDTO {
 
     private String brand;
     private String model;
+    private String slug;
 
     // Devolvemos los IDs para que el front sepa qué hay asociado
     private List<Long> categoryIds;
