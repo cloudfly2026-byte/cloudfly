@@ -20,6 +20,9 @@ type Company struct {
 	Name        string `json:"name"`
 	Logo        string `json:"logo"`
 	Description string `json:"description"`
+	Phone       string `json:"phone"`
+	Email       string `json:"email"`
+	Address     string `json:"address"`
 }
 
 type Theme struct {
@@ -143,6 +146,9 @@ func Home(c *fiber.Ctx) error {
 		Name:        "",
 		Logo:        "",
 		Description: "",
+		Phone:       "",
+		Email:       "",
+		Address:     "",
 	}
 	theme := Theme{
 		PrimaryColor:   "#6366f1",
@@ -155,8 +161,11 @@ func Home(c *fiber.Ctx) error {
 	if resolved && database.DB != nil {
 		var logoURL sql.NullString
 		var compDesc sql.NullString
-		err := database.DB.QueryRow("SELECT name, logo_url, company_description FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
-			&company.Name, &logoURL, &compDesc)
+		var compPhone sql.NullString
+		var compEmail sql.NullString
+		var compAddress sql.NullString
+		err := database.DB.QueryRow("SELECT name, logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
+			&company.Name, &logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
 		if err == nil {
 			if logoURL.Valid {
 				company.Logo = logoURL.String
@@ -164,10 +173,19 @@ func Home(c *fiber.Ctx) error {
 			if compDesc.Valid {
 				company.Description = compDesc.String
 			}
+			if compPhone.Valid {
+				company.Phone = compPhone.String
+			}
+			if compEmail.Valid {
+				company.Email = compEmail.String
+			}
+			if compAddress.Valid {
+				company.Address = compAddress.String
+			}
 		} else {
 			log.Printf("ℹ️  [Database Notice]: companies query failed: %v.", err)
 		}
-		
+
 		// Load actual categories from `categorias` table
 		rows, err := database.DB.Query("SELECT name FROM categorias WHERE company_id = ? AND status = 1", companyID)
 		if err == nil {

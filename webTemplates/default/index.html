@@ -1502,7 +1502,7 @@
                     <i class="fa-solid fa-bag-shopping"></i>
                     <span class="cart-badge" id="cart-badge-count">0</span>
                 </button>
-                <a href="https://wa.me/573000000000?text=Hola!%20Me%20interesa%20comprar%20en%20{{.Company.Name}}" target="_blank" class="whatsapp-btn-header">
+                <a href="https://wa.me/{{if .Company.Phone}}{{.Company.Phone}}{{else}}573000000000{{end}}?text=Hola!%20Me%20interesa%20comprar%20en%20{{.Company.Name}}" target="_blank" class="whatsapp-btn-header">
                     <i class="fa-brands fa-whatsapp"></i>
                     <span>Comprar</span>
                 </a>
@@ -1522,7 +1522,7 @@
             <li class="mobile-link-item"><a href="#/nosotros" onclick="toggleMobileMenu()">Nosotros</a></li>
             <li class="mobile-link-item"><a href="#/contacto" onclick="toggleMobileMenu()">Contacto</a></li>
         </ul>
-        <a href="https://wa.me/573000000000?text=Hola!" target="_blank" class="whatsapp-btn-header" style="justify-content: center; width: 100%; padding: 0.85rem;">
+        <a href="https://wa.me/{{if .Company.Phone}}{{.Company.Phone}}{{else}}573000000000{{end}}?text=Hola!" target="_blank" class="whatsapp-btn-header" style="justify-content: center; width: 100%; padding: 0.85rem;">
             <i class="fa-brands fa-whatsapp"></i>
             <span>WhatsApp Directo</span>
         </a>
@@ -1556,8 +1556,13 @@
                     {{else}}
                     <div class="logo-placeholder"><i class="fa-solid fa-store"></i></div>
                     {{end}}
-                    {{if .Company.Name}}<span>{{.Company.Name}}</span>{{end}}
+                    {{if .Company.Name}}<span>{{.Company.Name}}</span>{{else}}<span>Tienda Online</span>{{end}}
                 </div>
+                {{if .Company.Description}}
+                <p class="footer-desc">{{.Company.Description}}</p>
+                {{else}}
+                <p class="footer-desc">Tu tienda en línea de confianza. Encuentra los mejores productos al mejor precio con envío a todo el país.</p>
+                {{end}}
             </div>
             
             <div class="footer-column">
@@ -1565,6 +1570,9 @@
                 <ul class="footer-links">
                     <li><a href="#/">Inicio</a></li>
                     <li><a href="#/catalogo">Catálogo</a></li>
+                    {{if .Company.Phone}}
+                    <li><a href="https://wa.me/{{.Company.Phone}}">WhatsApp</a></li>
+                    {{end}}
                 </ul>
             </div>
 
@@ -1573,6 +1581,24 @@
                 <ul class="footer-links">
                     <li><a href="#/privacidad">Políticas de Privacidad</a></li>
                     <li><a href="#/terminos">Términos y Condiciones</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4 class="footer-title">Contacto</h4>
+                <ul class="contact-info-list">
+                    {{if .Company.Phone}}
+                    <li><i class="fa-solid fa-phone"></i> <a href="https://wa.me/{{.Company.Phone}}" target="_blank">{{.Company.Phone}}</a></li>
+                    {{end}}
+                    {{if .Company.Email}}
+                    <li><i class="fa-solid fa-envelope"></i> <a href="mailto:{{.Company.Email}}">{{.Company.Email}}</a></li>
+                    {{end}}
+                    {{if .Company.Address}}
+                    <li><i class="fa-solid fa-location-dot"></i> {{.Company.Address}}</li>
+                    {{end}}
+                    {{if not .Company.Phone}}
+                    <li><i class="fa-solid fa-phone"></i> Contáctanos por WhatsApp</li>
+                    {{end}}
                 </ul>
             </div>
         </div>
@@ -1729,6 +1755,7 @@
                     <div class="hero-text">
                         ${companyLogo ? `<img class="hero-company-logo" src="${companyLogo}" alt="Logo">` : ''}
                         <h1 class="hero-title">${companyName ? companyName : 'Bienvenido a Nuestra Tienda'}</h1>
+                        <p class="hero-subtitle">{{if .Company.Description}}{{.Company.Description}}{{else}}Descubre nuestra amplia variedad de productos con los mejores precios y envío a todo el país.{{end}}</p>
                         <div class="hero-ctas">
                             ${dynamicProducts.length > 0 ? `<button class="btn btn-primary" onclick="location.hash='#/catalogo'">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>` : ''}
                             ${dynamicCategories.length > 0 ? `<button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>` : ''}
@@ -2411,4 +2438,4 @@
         });
     </script>
 </body>
-</html>
+</html>`
