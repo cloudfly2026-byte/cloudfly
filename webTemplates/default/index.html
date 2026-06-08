@@ -1477,7 +1477,7 @@
                 <img class="logo-img" src="{{.Company.Logo}}" alt="{{.Company.Name}}">
                 {{else}}
                 <div class="logo-placeholder">
-                    <span>{{slice .Company.Name 0 1}}</span>
+                    <i class="fa-solid fa-store"></i>
                 </div>
                 {{end}}
                 <span class="company-name">{{.Company.Name}}</span>
@@ -1554,7 +1554,7 @@
                     {{if .Company.Logo}}
                     <img class="logo-img" src="{{.Company.Logo}}" alt="{{.Company.Name}}">
                     {{else}}
-                    <div class="logo-placeholder"><span>{{slice .Company.Name 0 1}}</span></div>
+                    <div class="logo-placeholder"><i class="fa-solid fa-store"></i></div>
                     {{end}}
                     <span>{{.Company.Name}}</span>
                 </div>
