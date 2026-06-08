@@ -17,15 +17,21 @@ func main() {
 	app := fiber.New()
 
 	app.Get("/health", handlers.Health)
-	// Serve uploaded media files from the shared /uploads volume — PUBLIC, no auth required.
-	// Files are stored as /uploads/{tenantId}/{companyId}/{filename}
-	// and served at /media/{tenantId}/{companyId}/{filename}
+	// Serve uploaded media files
 	app.Static("/media", "/uploads", fiber.Static{
 		Compress:  true,
 		ByteRange: true,
 		Browse:    false,
 	})
 	app.Get("/", handlers.Home)
+	// Static pages
+	app.Get("/catalogo", handlers.CatalogoPage)
+	app.Get("/carrito", handlers.CarritoPage)
+	app.Get("/nosotros", handlers.NosotrosPage)
+	app.Get("/contacto", handlers.ContactoPage)
+	// SEO-friendly routes: /categoria  and  /categoria/producto
+	app.Get("/:categorySlug", handlers.CategoryPage)
+	app.Get("/:categorySlug/:productSlug", handlers.ProductPage)
 
 	log.Println("CloudFly StoreFront listening on :8080")
 	log.Fatal(app.Listen(":8080"))

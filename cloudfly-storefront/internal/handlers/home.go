@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -37,10 +38,13 @@ type Category struct {
 }
 
 type Product struct {
+	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Category    string  `json:"category"`
+	CategorySlug string `json:"category_slug"`
 	Brand       string  `json:"brand"`
 	SKU         string  `json:"sku"`
 	Image       string  `json:"image"`
@@ -49,10 +53,13 @@ type Product struct {
 }
 
 type StorefrontData struct {
-	Company    Company
-	Theme      Theme
-	Categories []Category
-	Products   []Product
+	Company     Company
+	Theme       Theme
+	Categories  []Category
+	Products    []Product
+	CurrentPath string   // e.g. "/" "/chatbots" "/chatbots/producto-name"
+	ActiveCat   string   // active category slug
+	ActiveProduct *Product // set when viewing a single product
 }
 
 // stripMarkdown removes common markdown syntax for plain-text rendering
@@ -319,15 +326,18 @@ func Home(c *fiber.Ctx) error {
 					}
 
 					dbProds = append(dbProds, Product{
-						Name:        pName,
-						Description: descStr,
-						Price:       pPrice,
-						Category:    catName,
-						Brand:       brandStr,
+						ID:           prodID,
+						Name:         pName,
+						Slug:         slugify(pName),
+						Description:  descStr,
+						Price:        pPrice,
+						Category:     catName,
+						CategorySlug: slugify(catName),
+						Brand:        brandStr,
 						SKU:          skuStr,
-						Image:       imgURL,
-						Rating:      4.8,
-						Available:   isAvailable,
+						Image:        imgURL,
+						Rating:       4.8,
+						Available:    isAvailable,
 					})
 				}
 			}
@@ -341,8 +351,7 @@ func Home(c *fiber.Ctx) error {
 	// 3. Redis Caching: Index by Tenant and Company ID
 	var cacheKey string
 	if resolved && database.RedisClient != nil {
-		// e.g. storefront:html:1:1
-		cacheKey = "storefront:html:" + strconv.FormatInt(tenantID, 10) + ":" + strconv.FormatInt(companyID, 10)
+		cacheKey = "storefront:html:" + strconv.FormatInt(tenantID, 10) + ":" + strconv.FormatInt(companyID, 10) + ":home"
 		cachedHTML, err := database.RedisClient.Get(database.Ctx, cacheKey).Result()
 		if err == nil && cachedHTML != "" {
 			c.Set("Content-Type", "text/html")
@@ -351,16 +360,34 @@ func Home(c *fiber.Ctx) error {
 		}
 	}
 
-	// Try resolving template index.html path
+	renderedHTML, err := renderStorefront(StorefrontData{
+		Company:     company,
+		Theme:       theme,
+		Categories:  categories,
+		Products:    products,
+		CurrentPath: "/",
+	})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	if cacheKey != "" && database.RedisClient != nil {
+		_ = database.RedisClient.Set(database.Ctx, cacheKey, renderedHTML, 10*time.Minute).Err()
+	}
+	c.Set("Content-Type", "text/html")
+	c.Set("X-Cache", "MISS")
+	return c.SendString(renderedHTML)
+}
+
+// renderStorefront parses and executes the index.html template with the given data.
+func renderStorefront(data StorefrontData) (string, error) {
 	tmplPaths := []string{
 		filepath.Join("/webTemplates", "default", "index.html"),
 		filepath.Join("webTemplates", "default", "index.html"),
 		filepath.Join("../webTemplates", "default", "index.html"),
 		filepath.Join("../../webTemplates", "default", "index.html"),
 		filepath.Join("..", "..", "webTemplates", "default", "index.html"),
-		filepath.Join("..", "..", "webTemplates", "default", "index.html"),
 	}
-
 	var indexTemplatePath string
 	for _, p := range tmplPaths {
 		if _, err := os.Stat(p); err == nil {
@@ -368,40 +395,16 @@ func Home(c *fiber.Ctx) error {
 			break
 		}
 	}
-
 	if indexTemplatePath == "" {
-		return c.JSON(fiber.Map{
-			"message":    "Storefront template HTML not found",
-			"company":    company,
-			"theme":      theme,
-			"categories": categories,
-			"products":   products,
-		})
+		return "", fmt.Errorf("storefront template not found")
 	}
-
 	tmpl, err := template.ParseFiles(indexTemplatePath)
 	if err != nil {
-		return c.Status(500).SendString("Error parsing template: " + err.Error())
+		return "", fmt.Errorf("error parsing template: %w", err)
 	}
-
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, StorefrontData{
-		Company:    company,
-		Theme:      theme,
-		Categories: categories,
-		Products:   products,
-	})
-	if err != nil {
-		return c.Status(500).SendString("Error rendering storefront template: " + err.Error())
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("error rendering template: %w", err)
 	}
-
-	renderedHTML := buf.String()
-	if cacheKey != "" && database.RedisClient != nil {
-		// Cache page for 10 minutes
-		_ = database.RedisClient.Set(database.Ctx, cacheKey, renderedHTML, 10*time.Minute).Err()
-	}
-
-	c.Set("Content-Type", "text/html")
-	c.Set("X-Cache", "MISS")
-	return c.Send(buf.Bytes())
+	return buf.String(), nil
 }
