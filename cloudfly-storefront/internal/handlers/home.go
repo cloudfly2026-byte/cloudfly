@@ -83,6 +83,32 @@ func getCategoryIcon(name string) string {
 	return "fa-solid fa-tag"
 }
 
+// normalizeImageURL ensures the image URL is absolute.
+// If the URL starts with "/" or "uploads/", it is prefixed with the backend API base URL
+// so the browser can load it from the correct origin.
+// If the URL is empty or whitespace-only, it returns "" so the JS placeholder kicks in.
+func normalizeImageURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	// Already absolute (http:// or https://)
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+	// Relative path — prefix with the backend API base URL
+	backendBase := os.Getenv("BACKEND_API_URL")
+	if backendBase == "" {
+		backendBase = "https://api.cloudfly.com.co"
+	}
+	// Ensure no double slash
+	backendBase = strings.TrimRight(backendBase, "/")
+	if !strings.HasPrefix(raw, "/") {
+		raw = "/" + raw
+	}
+	return backendBase + raw
+}
+
 func Home(c *fiber.Ctx) error {
 	host := c.Hostname()
 
@@ -168,7 +194,7 @@ func Home(c *fiber.Ctx) error {
 			&company.Name, &logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
 		if err == nil {
 			if logoURL.Valid {
-				company.Logo = logoURL.String
+				company.Logo = normalizeImageURL(logoURL.String)
 			}
 			if compDesc.Valid {
 				company.Description = compDesc.String
@@ -242,12 +268,14 @@ func Home(c *fiber.Ctx) error {
 						catName = cName.String
 					}
 
-					// Query media image URL (default to empty so front-end can show its placeholder)
+					// Query media image URL — normalize to absolute URL so the browser
+					// can load it regardless of which domain the storefront is served from.
+					// An empty string signals the JS template to show the placeholder image.
 					var imgURL = ""
 					var mediaURL sql.NullString
 					err = database.DB.QueryRow("SELECT m.url FROM product_images pi JOIN media m ON pi.media_id = m.id WHERE pi.product_id = ? LIMIT 1", prodID).Scan(&mediaURL)
 					if err == nil && mediaURL.Valid {
-						imgURL = mediaURL.String
+						imgURL = normalizeImageURL(mediaURL.String)
 					}
 
 					dbProds = append(dbProds, Product{

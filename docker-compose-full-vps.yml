@@ -515,11 +515,22 @@ services:
       - "8087:8080"
     volumes:
       - ./webTemplates:/webTemplates
+    environment:
+      - BACKEND_API_URL=https://api.cloudfly.com.co
     networks:
       - app-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.storefront.rule=Host(`cloudflyshop.cloudfly.com.co`) || HostRegexp(`^[a-z0-9-]+\\.cloudfly\\.com\\.co$`)"
+      # ----------------------------------------------------------------
+      # Wildcard catch-all: cualquier *.cloudfly.com.co que NO tenga
+      # un router mas especifico llega aqui (cloudflyshop incluido).
+      # Todos los subdominios de servicios propios tienen prioridad
+      # por defecto > 1, por lo que siempre ganan sobre este wildcard.
+      # Subdominios reservados (no deben llegar al storefront):
+      #   api | calendar | dashboard | eapi | chat | autobot
+      # ----------------------------------------------------------------
+      - "traefik.http.routers.storefront.rule=HostRegexp(`^[a-z0-9-]+\\.cloudfly\\.com\\.co$`)"
+      - "traefik.http.routers.storefront.priority=1"
       - "traefik.http.routers.storefront.entrypoints=websecure"
       - "traefik.http.routers.storefront.tls=true"
       - "traefik.http.routers.storefront.tls.certresolver=le"
