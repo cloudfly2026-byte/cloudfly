@@ -2,11 +2,15 @@ package com.app.controllers;
 
 import com.app.dto.rbac.MenuItemDTO;
 import com.app.dto.rbac.UserPermissionsDTO;
+import com.app.persistence.entity.ModuleEntity;
 import com.app.services.RbacService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -74,7 +78,37 @@ public class RbacController {
      * Devuelve la lista completa de módulos (admin only)
      */
     @GetMapping("/modules-list")
-    public Flux<com.app.persistence.entity.ModuleEntity> getModulesList() {
+    public Flux<ModuleEntity> getModulesList() {
         return rbacService.getModulesList();
+    }
+
+    /**
+     * Crea un nuevo módulo (admin only)
+     */
+    @PostMapping("/modules")
+    public Mono<ResponseEntity<ModuleEntity>> createModule(@RequestBody ModuleEntity module) {
+        return rbacService.createModule(module)
+                .map(m -> ResponseEntity.status(HttpStatus.CREATED).body(m))
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    }
+
+    /**
+     * Actualiza un módulo existente (admin only)
+     */
+    @PutMapping("/modules/{id}")
+    public Mono<ResponseEntity<ModuleEntity>> updateModule(@PathVariable Long id, @RequestBody ModuleEntity module) {
+        return rbacService.updateModule(id, module)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    /**
+     * Elimina un módulo (admin only)
+     */
+    @DeleteMapping("/modules/{id}")
+    public Mono<ResponseEntity<Void>> deleteModule(@PathVariable Long id) {
+        return rbacService.deleteModule(id)
+                .then(Mono.just(ResponseEntity.noContent().<Void>build()))
+                .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
     }
 }

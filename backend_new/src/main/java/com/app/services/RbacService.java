@@ -114,4 +114,44 @@ public class RbacService {
         return moduleRepository.findAll()
                 .sort(Comparator.comparingInt(m -> m.getDisplayOrder() != null ? m.getDisplayOrder() : 0));
     }
+
+    public Mono<com.app.persistence.entity.ModuleEntity> createModule(com.app.persistence.entity.ModuleEntity module) {
+        return moduleRepository.existsByCode(module.getCode())
+                .flatMap(exists -> {
+                    if (Boolean.TRUE.equals(exists)) {
+                        return Mono.error(new IllegalArgumentException("Ya existe un módulo con el código: " + module.getCode()));
+                    }
+                    if (module.getCreatedAt() == null) {
+                        module.setCreatedAt(java.time.LocalDateTime.now());
+                    }
+                    module.setUpdatedAt(java.time.LocalDateTime.now());
+                    if (module.getIsActive() == null) {
+                        module.setIsActive(true);
+                    }
+                    return moduleRepository.save(module);
+                });
+    }
+
+    public Mono<com.app.persistence.entity.ModuleEntity> updateModule(Long id, com.app.persistence.entity.ModuleEntity moduleData) {
+        return moduleRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Módulo no encontrado con ID: " + id)))
+                .flatMap(existing -> {
+                    existing.setCode(moduleData.getCode());
+                    existing.setName(moduleData.getName());
+                    existing.setDescription(moduleData.getDescription());
+                    existing.setIcon(moduleData.getIcon());
+                    existing.setMenuPath(moduleData.getMenuPath());
+                    existing.setDisplayOrder(moduleData.getDisplayOrder());
+                    existing.setIsActive(moduleData.getIsActive());
+                    existing.setMenuItems(moduleData.getMenuItems());
+                    existing.setUpdatedAt(java.time.LocalDateTime.now());
+                    return moduleRepository.save(existing);
+                });
+    }
+
+    public Mono<Void> deleteModule(Long id) {
+        return moduleRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Módulo no encontrado con ID: " + id)))
+                .flatMap(moduleRepository::delete);
+    }
 }
