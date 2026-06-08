@@ -93,6 +93,65 @@ from crewai import Crew, Process
 # Load environment variables (API keys)
 load_dotenv()
 
+# Proactive Throttling Rate Limiter to respect API rate limits (e.g. NVIDIA 40 RPM limit)
+import threading
+import time
+
+class LLMRateLimiter:
+    def __init__(self, requests_per_minute=25):
+        self.delay = 60.0 / requests_per_minute if requests_per_minute > 0 else 0.0
+        self.last_call_time = 0.0
+        self.lock = threading.Lock()
+
+    def wait(self, model_name=""):
+        if self.delay <= 0.0:
+            return
+        with self.lock:
+            now = time.time()
+            elapsed = now - self.last_call_time
+            if elapsed < self.delay:
+                wait_time = self.delay - elapsed
+                print(f"⏱️ [Throttler]: Espaciando solicitud para respetar el rate limit de {model_name} (esperando {wait_time:.2f}s)...")
+                time.sleep(wait_time)
+            self.last_call_time = time.time()
+
+# Default to 25 RPM (well under the 40 RPM free tier NVIDIA limit)
+rpm_limit = int(os.getenv("LLM_RPM_LIMIT", "25"))
+global_rate_limiter = LLMRateLimiter(requests_per_minute=rpm_limit)
+
+# Monkeypatch litellm if present
+try:
+    import litellm
+    original_completion = litellm.completion
+    def throttled_completion(*args, **kwargs):
+        model = kwargs.get("model", "")
+        global_rate_limiter.wait(model)
+        return original_completion(*args, **kwargs)
+    litellm.completion = throttled_completion
+except ImportError:
+    pass
+
+# Monkeypatch openai for native calls
+try:
+    import openai
+    if hasattr(openai, "resources") and hasattr(openai.resources.chat.completions.Completions, "create"):
+        original_openai_create = openai.resources.chat.completions.Completions.create
+        def throttled_openai_create(self, *args, **kwargs):
+            model = kwargs.get("model", "")
+            global_rate_limiter.wait(model)
+            return original_openai_create(self, *args, **kwargs)
+        openai.resources.chat.completions.Completions.create = throttled_openai_create
+
+    if hasattr(openai, "resources") and hasattr(openai.resources.chat.completions.AsyncCompletions, "create"):
+        original_openai_acreate = openai.resources.chat.completions.AsyncCompletions.create
+        async def throttled_openai_acreate(self, *args, **kwargs):
+            model = kwargs.get("model", "")
+            global_rate_limiter.wait(model)
+            return await original_openai_acreate(self, *args, **kwargs)
+        openai.resources.chat.completions.AsyncCompletions.create = throttled_openai_acreate
+except Exception as patch_err:
+    print(f"⚠️ [Throttler]: No se pudo parchar openai: {patch_err}")
+
 # Set required environment variable for CrewAI Embeddings (NVIDIA Llama Nemotron Embed VL 1B V2 - free)
 os.environ["EMBEDDINGS_OLLAMA_MODEL_NAME"] = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
 
@@ -579,16 +638,92 @@ def run_sprint():
                 pass
         return "openrouter/owl-alpha"
 
+    def mark_model_unhealthy(model_name, error_msg="Crew encountered error"):
+        import json
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        status_path = os.path.join(base_dir, "model_health_status.json")
+        if os.path.exists(status_path):
+            try:
+                with open(status_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        else:
+            data = {}
+            
+        if "models_status" not in data:
+            data["models_status"] = {}
+            
+        # Mark current model down
+        data["models_status"][model_name] = {
+            "status": "rate_limited" if "429" in error_msg or "rate limit" in error_msg.lower() else "unhealthy",
+            "latency": 9.9,
+            "error": error_msg[:100]
+        }
+        
+        # Recalculate healthiest model
+        best_model = None
+        best_latency = float("inf")
+        for model, info in data.get("models_status", {}).items():
+            if info.get("status") == "healthy" and info.get("latency", 9.9) < best_latency:
+                best_latency = info.get("latency", 9.9)
+                best_model = model
+                
+        if not best_model:
+            # Try to get any model that is NOT the currently failing one
+            for model in data.get("models_status", {}).keys():
+                if model != model_name:
+                    best_model = model
+                    break
+                    
+        if not best_model:
+            best_model = "openrouter/owl-alpha"
+            
+        data["healthiest_model"] = best_model
+        data["last_check"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        
+        try:
+            with open(status_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"🚨 [Model Router]: Marcando {model_name} como temporalmente inactivo. Nuevo modelo router asignado: {best_model}")
+        except Exception as e:
+            print(f"[!] Error al actualizar estado de modelos: {e}")
+
     def configure_agent_llm(agent, active_key, model_name):
-        """Configure agent LLM. All models go through OpenRouter."""
+        """Configure agent LLM. Support multiple providers."""
         if not hasattr(agent, 'llm') or not agent.llm:
             return
         from crewai import LLM as CrewLLM
+        
+        prov = "openrouter"
+        m_name = model_name
+        if "/" in model_name:
+            parts = model_name.split("/", 1)
+            if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                prov = parts[0]
+                m_name = parts[1]
+                
+        extra_kwargs = {}
+        if prov == "nvidia":
+            base_url = "https://integrate.api.nvidia.com/v1"
+            full_model_name = f"openai/{m_name}"
+            extra_kwargs["extra_body"] = {"chat_template_kwargs": {"thinking": True}}
+        elif prov == "openai":
+            base_url = "https://api.openai.com/v1"
+            full_model_name = f"openai/{m_name}" if not m_name.startswith("openai/") else m_name
+        elif prov == "groq":
+            base_url = "https://api.groq.com/openai/v1"
+            full_model_name = f"openai/{m_name}"
+        else:
+            base_url = "https://openrouter.ai/api/v1"
+            full_model_name = f"openai/{m_name}"
+            
         agent.llm = CrewLLM(
-            model=model_name,
+            model=full_model_name,
             api_key=active_key,
-            base_url="https://openrouter.ai/api/v1",
-            temperature=0.2
+            base_url=base_url,
+            temperature=0.2 if agent.role != 'Senior Software Developer' and agent.role != 'Senior Frontend Developer' else 0.1,
+            **extra_kwargs
         )
 
     if not connector.connect():
@@ -622,14 +757,31 @@ def run_sprint():
                 print(f"[!] Error al limpiar Redis al iniciar: {e}")
         
     # Balanceador dinámico de cuentas y tokens por worker al iniciar (Ejecutar siempre, incluso en standalone)
-    active_key = connector.get_healthy_api_key()
-    if active_key:
-        current_model = get_healthiest_model()
-        print(f"\n🔑 [Balanceador de Cuentas]: Clave primaria asignada desde el pool: ...{active_key[-8:]}")
-        print(f"📡 [Model Router]: Modelo más saludable asignado: {current_model}")
-        os.environ["OPENROUTER_API_KEY"] = active_key
-        os.environ["OPENAI_API_KEY"] = active_key
+    current_model = get_healthiest_model()
+    prov = "openrouter"
+    if "/" in current_model:
+        parts = current_model.split("/", 1)
+        if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+            prov = parts[0]
+            
+    if prov == "nvidia":
+        active_key = os.getenv("NVIDIA_API_KEY")
+    elif prov == "openai":
+        active_key = os.getenv("OPENAI_API_KEY")
+    elif prov == "groq":
+        active_key = os.getenv("GROQ_API_KEY") or connector.get_healthy_api_key()
+    else:
+        active_key = connector.get_healthy_api_key()
         
+    if active_key:
+        print(f"\n🔑 [Balanceador de Cuentas]: Clave asignada para {prov.upper()}: ...{active_key[-8:] if len(active_key) > 8 else active_key}")
+        print(f"📡 [Model Router]: Modelo más saludable asignado: {current_model}")
+        if prov == "openrouter":
+            os.environ["OPENROUTER_API_KEY"] = active_key
+            os.environ["OPENAI_API_KEY"] = active_key
+        elif prov == "nvidia":
+            os.environ["NVIDIA_API_KEY"] = active_key
+            
         # Actualizar todos los agentes en memoria con la clave activa y el modelo más saludable
         for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
             configure_agent_llm(agent, active_key, current_model)
@@ -682,23 +834,37 @@ def run_sprint():
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise e
-                    current_key = os.environ.get("OPENROUTER_API_KEY")
                     print(f"\n⚠️ [{task_label} - Intento {retry_count}/{max_retries}]: Error LLM: {err_msg[:120]}")
-                    new_key = connector.get_healthy_api_key(current_key=current_key, mark_rate_limited=True)
-                    if new_key and new_key != current_key:
-                        os.environ["OPENROUTER_API_KEY"] = new_key
-                        os.environ["OPENAI_API_KEY"] = new_key
-                        active_key = new_key
-                        current_model = get_healthiest_model()
-                        print(f"🔄 [{task_label}]: Rotando API key: ...{active_key[-8:]} y reconfigurando con modelo: {current_model}")
-                        for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
-                            configure_agent_llm(agent, active_key, current_model)
-                    else:
-                        # Reconfigure with healthiest model anyway even if key remains same
-                        current_model = get_healthiest_model()
+                    
+                    # Mark current model unhealthy and fetch new healthiest model
+                    current_model = get_healthiest_model()
+                    mark_model_unhealthy(current_model, err_msg)
+                    current_model = get_healthiest_model()
+                    
+                    prov = "openrouter"
+                    if "/" in current_model:
+                        parts = current_model.split("/", 1)
+                        if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                            prov = parts[0]
+                            
+                    rotated = False
+                    if prov == "openrouter":
+                        current_key = os.environ.get("OPENROUTER_API_KEY")
+                        new_key = connector.get_healthy_api_key(current_key=current_key, mark_rate_limited=True)
+                        if new_key and new_key != current_key:
+                            os.environ["OPENROUTER_API_KEY"] = new_key
+                            os.environ["OPENAI_API_KEY"] = new_key
+                            active_key = new_key
+                            print(f"🔄 [{task_label}]: Rotando API key: ...{active_key[-8:]} y reconfigurando con modelo: {current_model}")
+                            for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
+                                configure_agent_llm(agent, active_key, current_model)
+                            rotated = True
+                            
+                    if not rotated:
+                        active_key = os.getenv("NVIDIA_API_KEY") if prov == "nvidia" else (os.getenv("OPENAI_API_KEY") if prov == "openai" else os.environ.get("OPENROUTER_API_KEY"))
                         print(f"🔄 [{task_label}]: Reconfigurando agentes con modelo saludable: {current_model}")
                         for agent in [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]:
-                            configure_agent_llm(agent, current_key, current_model)
+                            configure_agent_llm(agent, active_key, current_model)
                         
                         # Extraer dinámicamente Retry-After si existe, o usar backoff exponencial
                         wait_time = 10
@@ -757,10 +923,26 @@ def run_sprint():
         This reduces total sprint time by ~60% compared to fully sequential execution.
         """
         logs_dir = r"C:\apps\cloudfly\ai_scrum_team\logs"
-        os.environ["OPENAI_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "sk-or-...")
-        os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
-        os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
-        os.environ["OPENAI_MODEL_NAME"] = "openrouter/owl-alpha"
+        
+        current_model = get_healthiest_model()
+        prov = "openrouter"
+        m_name = current_model
+        if "/" in current_model:
+            parts = current_model.split("/", 1)
+            if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                prov = parts[0]
+                m_name = parts[1]
+                
+        if prov == "nvidia":
+            os.environ["OPENAI_API_KEY"] = os.environ.get("NVIDIA_API_KEY", "")
+            os.environ["OPENAI_API_BASE"] = "https://integrate.api.nvidia.com/v1"
+            os.environ["OPENAI_BASE_URL"] = "https://integrate.api.nvidia.com/v1"
+            os.environ["OPENAI_MODEL_NAME"] = f"openai/{m_name}"
+        else:
+            os.environ["OPENAI_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "sk-or-...")
+            os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
+            os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
+            os.environ["OPENAI_MODEL_NAME"] = f"openai/{m_name}"
 
         # Clear shared results from previous sprint
         with _parallel_lock:
@@ -1079,10 +1261,25 @@ def run_sprint():
         """
         Original sequential execution. Used as fallback or when parallel mode is disabled.
         """
-        os.environ["OPENAI_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "sk-or-...")
-        os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
-        os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
-        os.environ["OPENAI_MODEL_NAME"] = "openrouter/owl-alpha"
+        current_model = get_healthiest_model()
+        prov = "openrouter"
+        m_name = current_model
+        if "/" in current_model:
+            parts = current_model.split("/", 1)
+            if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                prov = parts[0]
+                m_name = parts[1]
+                
+        if prov == "nvidia":
+            os.environ["OPENAI_API_KEY"] = os.environ.get("NVIDIA_API_KEY", "")
+            os.environ["OPENAI_API_BASE"] = "https://integrate.api.nvidia.com/v1"
+            os.environ["OPENAI_BASE_URL"] = "https://integrate.api.nvidia.com/v1"
+            os.environ["OPENAI_MODEL_NAME"] = f"openai/{m_name}"
+        else:
+            os.environ["OPENAI_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "sk-or-...")
+            os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
+            os.environ["OPENAI_BASE_URL"] = "https://openrouter.ai/api/v1"
+            os.environ["OPENAI_MODEL_NAME"] = f"openai/{m_name}"
         
         # Check if DevOps should be excluded based on Jira or Sprint goal comments
         exclude_devops = False
@@ -1142,25 +1339,39 @@ def run_sprint():
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise e
-                    current_key = os.environ.get("OPENROUTER_API_KEY")
                     print(f"\n⚠️ [Rotación de API Key - Intento {retry_count}/{max_retries}]: Error LLM: {err_msg[:120]}")
                     
-                    # Mark current key as limited and get a healthy one
-                    new_key = connector.get_healthy_api_key(current_key=current_key, mark_rate_limited=True)
-                    if new_key and new_key != current_key:
-                        print(f"🔄 Rotando automáticamente a una nueva clave saludable del pool: ...{new_key[-8:]}")
-                        os.environ["OPENROUTER_API_KEY"] = new_key
-                        os.environ["OPENAI_API_KEY"] = new_key
-                        
-                        # Update all agents' LLM objects in-place with the healthiest model
-                        current_model = get_healthiest_model()
-                        print(f"📡 [Model Router]: Cambiando al modelo más saludable: {current_model}")
+                    # Mark current model unhealthy and fetch new healthiest model
+                    current_model = get_healthiest_model()
+                    mark_model_unhealthy(current_model, err_msg)
+                    current_model = get_healthiest_model()
+                    
+                    prov = "openrouter"
+                    if "/" in current_model:
+                        parts = current_model.split("/", 1)
+                        if parts[0] in ["openai", "groq", "nvidia", "openrouter"]:
+                            prov = parts[0]
+                            
+                    rotated = False
+                    if prov == "openrouter":
+                        current_key = os.environ.get("OPENROUTER_API_KEY")
+                        new_key = connector.get_healthy_api_key(current_key=current_key, mark_rate_limited=True)
+                        if new_key and new_key != current_key:
+                            print(f"🔄 Rotando automáticamente a una nueva clave saludable del pool: ...{new_key[-8:]}")
+                            os.environ["OPENROUTER_API_KEY"] = new_key
+                            os.environ["OPENAI_API_KEY"] = new_key
+                            all_agents = [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]
+                            for agent in all_agents:
+                                configure_agent_llm(agent, new_key, current_model)
+                            print("🔄 Reintentando ejecución del Crew con la nueva clave saludable...")
+                            rotated = True
+                            
+                    if not rotated:
+                        active_key = os.getenv("NVIDIA_API_KEY") if prov == "nvidia" else (os.getenv("OPENAI_API_KEY") if prov == "openai" else os.environ.get("OPENROUTER_API_KEY"))
                         all_agents = [product_owner, system_architect, software_developer, frontend_developer, devops_engineer, technical_writer, qa_engineer]
                         for agent in all_agents:
-                            configure_agent_llm(agent, new_key, current_model)
-                                    
-                        print("🔄 Reintentando ejecución del Crew con la nueva clave saludable...")
-                    else:
+                            configure_agent_llm(agent, active_key, current_model)
+                        
                         # Extraer dinámicamente Retry-After si existe, o usar backoff exponencial
                         wait_time = 10
                         import re

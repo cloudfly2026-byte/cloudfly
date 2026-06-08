@@ -504,6 +504,28 @@ services:
       - kafka
       - db
 
+  storefront:
+    image: ghcr.io/cloudfly2026-byte/cloudfly/storefront:latest
+    container_name: storefront
+    build:
+      context: ./cloudfly-storefront
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8087:8080"
+    volumes:
+      - ./webTemplates:/webTemplates
+    networks:
+      - app-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storefront.rule=HostRegexp(`^[a-z0-9-]+\\.cloudfly\\.com\\.co$`)"
+      - "traefik.http.routers.storefront.entrypoints=websecure"
+      - "traefik.http.routers.storefront.tls=true"
+      - "traefik.http.routers.storefront.tls.certresolver=le"
+      - "traefik.http.services.storefront.loadbalancer.server.port=8080"
+      - "traefik.docker.network=cloudfly_app-net"
+
   traefik:
     image: traefik:v3.6.7
     container_name: traefik

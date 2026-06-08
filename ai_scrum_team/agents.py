@@ -36,28 +36,39 @@ else:
 # Configurar según proveedor
 if provider == "openai":
     # OpenAI directo
-    llm_model = model_name
+    llm_model = f"openai/{model_name}" if not model_name.startswith("openai/") else model_name
     llm_base_url = "https://api.openai.com/v1"
     llm_api_key = os.getenv("OPENAI_API_KEY") or OPENROUTER_KEY
 elif provider == "groq":
     # Groq
-    llm_model = f"groq/{model_name}"
+    llm_model = f"openai/{model_name}"
     llm_base_url = OPENROUTER_BASE
     llm_api_key = os.getenv("GROQ_API_KEY") or OPENROUTER_KEY
+elif provider == "nvidia":
+    # NVIDIA API Catalog
+    llm_model = f"openai/{model_name}"
+    llm_base_url = "https://integrate.api.nvidia.com/v1"
+    llm_api_key = os.getenv("NVIDIA_API_KEY") or ""
 else:
     # OpenRouter (default)
-    llm_model = f"openrouter/{model_name}"
+    llm_model = f"openai/{model_name}"
     llm_base_url = OPENROUTER_BASE
     llm_api_key = OPENROUTER_KEY
 
 print(f"🤖 [Model Config]: Usando {llm_model} via {provider}")
+
+# Extra parameters for specific providers (e.g. nvidia thinking)
+extra_kwargs = {}
+if provider == "nvidia":
+    extra_kwargs["extra_body"] = {"chat_template_kwargs": {"thinking": True}}
 
 # General-purpose LLM (Product Owner, QA, DevOps, Architect, Technical Writer, Scrum Master)
 owl_alpha_llm = LLM(
     model=llm_model,
     base_url=llm_base_url,
     api_key=llm_api_key,
-    temperature=0.2
+    temperature=0.2,
+    **extra_kwargs
 )
 
 # Developer LLM (Software Developer, Frontend Developer)
@@ -65,7 +76,8 @@ glm_coder_llm = LLM(
     model=llm_model,
     base_url=llm_base_url,
     api_key=llm_api_key,
-    temperature=0.1
+    temperature=0.1,
+    **extra_kwargs
 )
 
 # Alias for backward compatibility
