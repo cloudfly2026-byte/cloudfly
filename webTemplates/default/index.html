@@ -1558,9 +1558,6 @@
                     {{end}}
                     <span>{{.Company.Name}}</span>
                 </div>
-                <p class="footer-desc">
-                    {{if .Company.Description}}{{.Company.Description}}{{else}}Plataforma de ecommerce premium de alta velocidad. Productos de alta calidad y envíos inmediatos.{{end}}
-                </p>
             </div>
             
             <div class="footer-column">
@@ -1618,11 +1615,6 @@
                 slug: "{{.Slug}}",
                 icon: "{{if .Icon}}{{.Icon}}{{else}}fa-solid fa-tag{{end}}"
             },
-            {{else}}
-            { name: "Electrónica", slug: "electronica", icon: "fa-solid fa-laptop" },
-            { name: "Accesorios", slug: "accesorios", icon: "fa-solid fa-clock" },
-            { name: "Estilo & Moda", slug: "estilo", icon: "fa-solid fa-shirt" },
-            { name: "Deportes", slug: "deportes", icon: "fa-solid fa-dumbbell" }
             {{end}}
         ];
 
@@ -1645,71 +1637,6 @@
                     "Material": "Premium Composite"
                 }
             },
-            {{else}}
-            {
-                id: 1,
-                name: "Auriculares Cancelación Ruido Pro",
-                description: "Auriculares inalámbricos premium con cancelación activa de ruido premium y 40h de autonomía.",
-                price: 129.99,
-                category: "electronica",
-                brand: "SonyPlus",
-                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80",
-                rating: 4.9,
-                available: true,
-                specs: {
-                    "Conectividad": "Bluetooth 5.2",
-                    "Autonomía": "Hasta 40 horas",
-                    "Peso": "250 gramos"
-                }
-            },
-            {
-                id: 2,
-                name: "Reloj Inteligente Fit Sport v2",
-                description: "Monitor de salud avanzado, GPS incorporado y resistente al agua hasta 50 metros.",
-                price: 189.50,
-                category: "accesorios",
-                brand: "FitMax",
-                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80",
-                rating: 4.7,
-                available: true,
-                specs: {
-                    "Pantalla": "AMOLED 1.43 pulgadas",
-                    "Sensores": "Frecuencia cardíaca, SpO2",
-                    "Batería": "14 días de uso"
-                }
-            },
-            {
-                id: 3,
-                name: "Cargador Rápido GaN 100W",
-                description: "Carga hasta 3 dispositivos simultáneamente a máxima velocidad.",
-                price: 45.00,
-                category: "electronica",
-                brand: "AnkerTech",
-                image: "https://images.unsplash.com/photo-1622445262465-2481c8573296?w=500&q=80",
-                rating: 4.5,
-                available: true,
-                specs: {
-                    "Puertos": "2x USB-C, 1x USB-A",
-                    "Tecnología": "Gallium Nitride",
-                    "Compatibilidad": "Universal"
-                }
-            },
-            {
-                id: 4,
-                name: "Mochila Impermeable Urban Tech",
-                description: "Diseño ergonómico con puerto USB de carga externa y compartimiento para laptop de 16 pulgadas.",
-                price: 75.00,
-                category: "estilo",
-                brand: "Urbanite",
-                image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80",
-                rating: 4.6,
-                available: true,
-                specs: {
-                    "Capacidad": "25 Litros",
-                    "Material": "Nailon balístico impermeable",
-                    "Seguridad": "Cremalleras antirrobo"
-                }
-            }
             {{end}}
         ];
 
