@@ -34,7 +34,7 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public Mono<String> store(FilePart file, Long tenantId) {
+    public Mono<String> store(FilePart file, Long tenantId, Long companyId) {
         String originalFilename = file.filename();
         String extension = "";
         int i = originalFilename.lastIndexOf('.');
@@ -43,31 +43,32 @@ public class FileSystemStorageService implements StorageService {
         }
         
         String filename = UUID.randomUUID().toString() + extension;
-        Path tenantPath = rootLocation.resolve(tenantId.toString());
+        // New path structure: /uploads/{tenantId}/{companyId}/{filename}
+        Path companyPath = rootLocation.resolve(tenantId.toString()).resolve(companyId.toString());
 
         try {
-            if (!Files.exists(tenantPath)) {
-                Files.createDirectories(tenantPath);
+            if (!Files.exists(companyPath)) {
+                Files.createDirectories(companyPath);
             }
         } catch (IOException e) {
-            return Mono.error(new RuntimeException("Could not create tenant directory", e));
+            return Mono.error(new RuntimeException("Could not create company directory", e));
         }
 
-        Path destinationFile = tenantPath.resolve(filename);
+        Path destinationFile = companyPath.resolve(filename);
         
         return file.transferTo(destinationFile)
                 .then(Mono.just(filename));
     }
 
     @Override
-    public Path load(String filename, Long tenantId) {
-        return rootLocation.resolve(tenantId.toString()).resolve(filename);
+    public Path load(String filename, Long tenantId, Long companyId) {
+        return rootLocation.resolve(tenantId.toString()).resolve(companyId.toString()).resolve(filename);
     }
 
     @Override
-    public Mono<Void> delete(String filename, Long tenantId) {
+    public Mono<Void> delete(String filename, Long tenantId, Long companyId) {
         try {
-            Files.deleteIfExists(load(filename, tenantId));
+            Files.deleteIfExists(load(filename, tenantId, companyId));
             return Mono.empty();
         } catch (IOException e) {
             return Mono.error(new RuntimeException("Could not delete file", e));

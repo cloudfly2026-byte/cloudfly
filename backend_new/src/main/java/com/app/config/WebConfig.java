@@ -13,6 +13,7 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Serve /media/{tenantId}/{companyId}/** from /uploads/{tenantId}/{companyId}/
         registry.addResourceHandler("/media/**")
                 .addResourceLocations("file:" + storageLocation + "/");
     }

@@ -84,9 +84,9 @@ func getCategoryIcon(name string) string {
 }
 
 // normalizeImageURL ensures the image URL is absolute.
-// If the URL starts with "/" or "uploads/", it is prefixed with the backend API base URL
-// so the browser can load it from the correct origin.
 // If the URL is empty or whitespace-only, it returns "" so the JS placeholder kicks in.
+// URLs starting with / are kept as-is (relative) so the browser resolves them against
+// the current domain (e.g. cloudflyshop.cloudfly.com.co/media/...).
 func normalizeImageURL(raw string) string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -96,17 +96,12 @@ func normalizeImageURL(raw string) string {
 	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
 		return raw
 	}
-	// Relative path — prefix with the backend API base URL
-	backendBase := os.Getenv("BACKEND_API_URL")
-	if backendBase == "" {
-		backendBase = "https://api.cloudfly.com.co"
-	}
-	// Ensure no double slash
-	backendBase = strings.TrimRight(backendBase, "/")
+	// Relative path — keep as-is so browser resolves against current domain
+	// The storefront serves /media/** from the shared /uploads volume
 	if !strings.HasPrefix(raw, "/") {
 		raw = "/" + raw
 	}
-	return backendBase + raw
+	return raw
 }
 
 func Home(c *fiber.Ctx) error {

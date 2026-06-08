@@ -35,6 +35,11 @@ public class JwtAuthenticationFilter implements WebFilter {
         log.info("🚀 [JWT-FILTER] Hitting path: {}", path);
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+         // Allow public access to media files (served statically from /uploads)
+        if (path.startsWith("/media/")) {
+            log.debug("🛡️ [JWT-FILTER] Public media access: {}", path);
+            return chain.filter(exchange);
+        }
 
         exchange.getRequest().getHeaders().forEach((name, values) -> {
             log.info("🔍 [HEADER] {}: {}", name, values);

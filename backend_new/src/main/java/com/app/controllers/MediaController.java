@@ -31,8 +31,9 @@ public class MediaController {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Media> upload(
             @RequestPart("file") Mono<FilePart> filePartMono,
-            @RequestParam("tenantId") Long tenantId) {
-        return filePartMono.flatMap(filePart -> mediaService.uploadMedia(filePart, tenantId));
+            @RequestParam("tenantId") Long tenantId,
+            @RequestParam("companyId") Long companyId) {
+        return filePartMono.flatMap(filePart -> mediaService.uploadMedia(filePart, tenantId, companyId));
     }
 
     @DeleteMapping("/{id}")

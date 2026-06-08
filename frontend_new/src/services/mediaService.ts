@@ -6,6 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 export interface Media {
   id: number
   tenantId: number
+  companyId: number
   filename: string
   originalName: string
   contentType: string
@@ -36,11 +37,12 @@ export const mediaService = {
   uploadMedia: async (file: File): Promise<Media> => {
     const user = userMethods.getUserLogin()
     const tenantId = user?.customerId || user?.tenant_id
+    const companyId = user?.activeCompanyId || user?.company_id
     const formData = new FormData()
     formData.append('file', file)
-    
+
     const response = await axiosInstance.post(`/api/v1/media`, formData, {
-      params: { tenantId },
+      params: { tenantId, companyId },
       headers: {
         'Content-Type': 'multipart/form-data'
       }

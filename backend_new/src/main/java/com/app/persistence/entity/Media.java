@@ -23,6 +23,9 @@ public class Media {
     @Column("tenant_id")
     private Long tenantId;
 
+    @Column("company_id")
+    private Long companyId;
+
     @Column("filename")
     private String filename;
 

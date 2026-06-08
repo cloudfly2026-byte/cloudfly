@@ -26,18 +26,20 @@ public class MediaService {
         return mediaRepository.findAllByTenantIdAndFilenameContainingIgnoreCase(tenantId, query);
     }
 
-    public Mono<Media> uploadMedia(FilePart file, Long tenantId) {
+    public Mono<Media> uploadMedia(FilePart file, Long tenantId, Long companyId) {
         String originalFilename = file.filename();
         String contentType = file.headers().getContentType() != null ? 
                 file.headers().getContentType().toString() : "application/octet-stream";
         long size = file.headers().getContentLength() > 0 ? file.headers().getContentLength() : 0;
 
-        return storageService.store(file, tenantId)
+        return storageService.store(file, tenantId, companyId)
                 .flatMap(filename -> {
-                    String url = "/media/" + tenantId + "/" + filename;
+                    // New URL structure: /media/{tenantId}/{companyId}/{filename}
+                    String url = "/media/" + tenantId + "/" + companyId + "/" + filename;
                     
                     Media media = Media.builder()
                             .tenantId(tenantId)
+                            .companyId(companyId)
                             .filename(filename)
                             .originalName(originalFilename)
                             .contentType(contentType)
@@ -53,7 +55,7 @@ public class MediaService {
     public Mono<Void> deleteMedia(Long id, Long tenantId) {
         return mediaRepository.findById(id)
                 .filter(media -> media.getTenantId().equals(tenantId))
-                .flatMap(media -> storageService.delete(media.getFilename(), tenantId)
+                .flatMap(media -> storageService.delete(media.getFilename(), tenantId, media.getCompanyId())
                         .then(mediaRepository.delete(media)));
     }
 }

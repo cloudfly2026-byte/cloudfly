@@ -10,6 +10,8 @@ FROM alpine:latest
 
 WORKDIR /app
 COPY --from=builder /app/storefront .
+# Create the uploads directory for shared media files
+RUN mkdir -p /uploads
 
 EXPOSE 8080
 

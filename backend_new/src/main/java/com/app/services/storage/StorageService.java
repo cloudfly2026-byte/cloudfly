@@ -7,7 +7,7 @@ import java.nio.file.Path;
 
 public interface StorageService {
     void init();
-    Mono<String> store(FilePart file, Long tenantId);
-    Path load(String filename, Long tenantId);
-    Mono<Void> delete(String filename, Long tenantId);
+    Mono<String> store(FilePart file, Long tenantId, Long companyId);
+    Path load(String filename, Long tenantId, Long companyId);
+    Mono<Void> delete(String filename, Long tenantId, Long companyId);
 }

@@ -34,13 +34,13 @@ interface MediaLibraryDialogProps {
   initialSelectedIds?: number[]
 }
 
-const MediaLibraryDialog = ({ 
-  open, 
-  onClose, 
-  onSelect, 
+const MediaLibraryDialog = ({
+  open,
+  onClose,
+  onSelect,
   onSelectMultiple,
-  multiple = false, 
-  initialSelectedIds = [] 
+  multiple = false,
+  initialSelectedIds = []
 }: MediaLibraryDialogProps) => {
   const [tab, setTab] = useState(0)
   const [mediaList, setMediaList] = useState<Media[]>([])
@@ -89,7 +89,7 @@ const MediaLibraryDialog = ({
   const handleSearch = async () => {
     try {
       setLoading(true)
-      const data = searchQuery 
+      const data = searchQuery
         ? await mediaService.searchMedia(searchQuery)
         : await mediaService.getMedia()
       setMediaList(data || [])
@@ -161,6 +161,13 @@ const MediaLibraryDialog = ({
     }
   }
 
+  // Resolve image URL: if relative, prefix with API_URL
+  const resolveImageUrl = (url: string) => {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    return `${API_URL}${url}`
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" scroll="paper">
       <DialogTitle sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -169,7 +176,7 @@ const MediaLibraryDialog = ({
           <Icon icon="tabler:x" />
         </IconButton>
       </DialogTitle>
-      
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 4 }}>
         <Tabs value={tab} onChange={(_, v) => setTab(v)}>
           <Tab label="Biblioteca" sx={{ py: 3 }} />
@@ -237,8 +244,8 @@ const MediaLibraryDialog = ({
               <Grid container spacing={2}>
                 {mediaList.map((media) => (
                   <Grid item xs={6} sm={4} md={3} key={media.id}>
-                    <Card 
-                      sx={{ 
+                    <Card
+                      sx={{
                         position: 'relative',
                         border: (multiple ? selectedMediaList.some(m => m.id === media.id) : selectedMedia?.id === media.id) ? '2px solid' : '1px solid',
                         borderColor: (multiple ? selectedMediaList.some(m => m.id === media.id) : selectedMedia?.id === media.id) ? 'primary.main' : 'divider',
@@ -249,17 +256,17 @@ const MediaLibraryDialog = ({
                         <CardMedia
                           component="img"
                           height="140"
-                          image={`${API_URL}${media.url}`}
+                          image={resolveImageUrl(media.url)}
                           alt={media.originalName}
                           sx={{ objectFit: 'cover' }}
                         />
                       </CardActionArea>
                       {(multiple ? selectedMediaList.some(m => m.id === media.id) : selectedMedia?.id === media.id) && (
-                        <Box sx={{ 
-                          position: 'absolute', 
-                          top: 5, 
-                          right: 5, 
-                          bgcolor: 'primary.main', 
+                        <Box sx={{
+                          position: 'absolute',
+                          top: 5,
+                          right: 5,
+                          bgcolor: 'primary.main',
                           borderRadius: '50%',
                           display: 'flex',
                           p: 0.5
@@ -267,8 +274,8 @@ const MediaLibraryDialog = ({
                           <Icon icon="tabler:check" color="white" />
                         </Box>
                       )}
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         color="error"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -289,9 +296,9 @@ const MediaLibraryDialog = ({
 
       <DialogActions sx={{ p: 4, borderTop: 1, borderColor: 'divider' }}>
         <Button onClick={onClose} color="inherit">Cancelar</Button>
-        <Button 
-          variant="contained" 
-          disabled={multiple ? selectedMediaList.length === 0 : !selectedMedia} 
+        <Button
+          variant="contained"
+          disabled={multiple ? selectedMediaList.length === 0 : !selectedMedia}
           onClick={handleConfirmAction}
           startIcon={<Icon icon="tabler:check" />}
         >
