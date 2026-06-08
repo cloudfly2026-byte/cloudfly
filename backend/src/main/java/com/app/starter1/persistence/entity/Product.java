@@ -76,6 +76,19 @@ public class Product {
     @Column(length = 200, unique = true)
     private String slug;
 
+    // ===== SEO Fields =====
+    @Column(length = 255)
+    private String metaTitle;
+
+    @Column(length = 500)
+    private String metaDescription;
+
+    @Column(length = 255)
+    private String shortDescription;
+
+    @Column(length = 500)
+    private String seoKeywords;
+
     // ⬇️ ManyToMany con Category (NO con CategoriaProducto)
     @ManyToMany
     @JoinTable(
@@ -301,6 +314,38 @@ public class Product {
 
     public void setSlug(String slug) {
         this.slug = slug;
+    }
+
+    public String getMetaTitle() {
+        return metaTitle;
+    }
+
+    public void setMetaTitle(String metaTitle) {
+        this.metaTitle = metaTitle;
+    }
+
+    public String getMetaDescription() {
+        return metaDescription;
+    }
+
+    public void setMetaDescription(String metaDescription) {
+        this.metaDescription = metaDescription;
+    }
+
+    public String getShortDescription() {
+        return shortDescription;
+    }
+
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
+    }
+
+    public String getSeoKeywords() {
+        return seoKeywords;
+    }
+
+    public void setSeoKeywords(String seoKeywords) {
+        this.seoKeywords = seoKeywords;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -22,6 +22,12 @@ export interface Product {
   status: string;
   brand?: string;
   model?: string;
+  slug?: string;
+  // SEO
+  metaTitle?: string;
+  metaDescription?: string;
+  shortDescription?: string;
+  seoKeywords?: string;
   categoryIds?: number[];
   imageUrls?: string[]; // Para la visualización frontend
   imageIds?: number[];
@@ -39,4 +45,3 @@ export interface Category {
   description?: string;
   status?: boolean | string;
 }
-

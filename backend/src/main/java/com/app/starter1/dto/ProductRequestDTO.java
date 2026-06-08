@@ -50,6 +50,12 @@ public class ProductRequestDTO {
     private String model;
     private String slug;
 
+    // SEO
+    private String metaTitle;
+    private String metaDescription;
+    private String shortDescription;
+    private String seoKeywords;
+
     // IDs que vienen del front
     private List<Long> categoryIds;
     private List<Long> imageIds;

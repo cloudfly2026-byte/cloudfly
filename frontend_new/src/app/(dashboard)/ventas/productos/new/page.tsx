@@ -44,7 +44,12 @@ export default function CreateProductPage() {
     productType: 'PRODUCT',
     categoryIds: [] as number[],
     imageUrls: [] as string[],
-    imageIds: [] as number[]
+    imageIds: [] as number[],
+    slug: '',
+    metaTitle: '',
+    metaDescription: '',
+    shortDescription: '',
+    seoKeywords: ''
   })
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false)
 
@@ -75,7 +80,7 @@ export default function CreateProductPage() {
       setLoading(true)
       const user = userMethods.getUserLogin()
       const tenantId = user?.customerId || user?.tenant_id
-      
+
       const payload = {
         ...formData,
         tenantId: Number(tenantId),
@@ -83,7 +88,7 @@ export default function CreateProductPage() {
         salePrice: Number(formData.salePrice),
         inventoryQty: Number(formData.inventoryQty)
       }
-      
+
       await productService.createProduct(payload)
       router.push('/ventas/productos/list')
     } catch (e) {
@@ -96,8 +101,8 @@ export default function CreateProductPage() {
   return (
     <Box sx={{ p: 6 }}>
       <Box sx={{ mb: 6, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button 
-          variant="outlined" 
+        <Button
+          variant="outlined"
           onClick={() => router.back()}
           startIcon={<Icon icon="tabler:arrow-left" />}
           sx={{ borderRadius: 2 }}
@@ -138,7 +143,7 @@ export default function CreateProductPage() {
                 </Grid>
 
                 <Divider sx={{ my: 6 }} />
-                
+
                 <Typography variant="h6" sx={{ mb: 4 }}>Precios e Inventario</Typography>
                 <Grid container spacing={4}>
                   <Grid item xs={12} sm={6}>
@@ -212,12 +217,12 @@ export default function CreateProductPage() {
             <Card sx={{ borderRadius: 2, boxShadow: 3, mb: 6 }}>
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 4 }}>Imágenes del Producto</Typography>
-                
+
                 <Grid container spacing={2}>
                   {formData.imageUrls.map((url, idx) => (
                     <Grid item xs={6} sm={4} key={idx}>
-                      <Box 
-                        sx={{ 
+                      <Box
+                        sx={{
                           position: 'relative',
                           borderRadius: 2,
                           overflow: 'hidden',
@@ -227,10 +232,10 @@ export default function CreateProductPage() {
                           '&:hover .delete-btn': { opacity: 1 }
                         }}
                       >
-                        <img 
-                          src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`} 
-                          alt={`Preview ${idx + 1}`} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`}
+                          alt={`Preview ${idx + 1}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                         <IconButton
                           className="delete-btn"
@@ -244,14 +249,14 @@ export default function CreateProductPage() {
                               imageIds: prev.imageIds.filter((_, i) => i !== idx)
                             }))
                           }}
-                          sx={{ 
-                            position: 'absolute', 
-                            top: 5, 
-                            right: 5, 
-                            bgcolor: 'background.paper', 
+                          sx={{
+                            position: 'absolute',
+                            top: 5,
+                            right: 5,
+                            bgcolor: 'background.paper',
                             opacity: { xs: 1, md: 0 },
                             transition: 'opacity 0.2s',
-                            '&:hover': { bgcolor: 'error.light', color: 'white' } 
+                            '&:hover': { bgcolor: 'error.light', color: 'white' }
                           }}
                         >
                           <Icon icon="tabler:trash" fontSize={16} />
@@ -275,13 +280,13 @@ export default function CreateProductPage() {
                       </Box>
                     </Grid>
                   ))}
-                  
+
                   <Grid item xs={6} sm={4}>
-                    <Box 
-                      sx={{ 
-                        border: '2px dashed', 
-                        borderColor: 'divider', 
-                        borderRadius: 2, 
+                    <Box
+                      sx={{
+                        border: '2px dashed',
+                        borderColor: 'divider',
+                        borderRadius: 2,
                         height: 120,
                         display: 'flex',
                         flexDirection: 'column',
@@ -290,7 +295,7 @@ export default function CreateProductPage() {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         bgcolor: 'background.paper',
-                        '&:hover': { 
+                        '&:hover': {
                           bgcolor: 'action.hover',
                           borderColor: 'primary.main',
                           color: 'primary.main'
@@ -383,7 +388,7 @@ export default function CreateProductPage() {
         </Grid>
       </form>
 
-      <MediaLibraryDialog 
+      <MediaLibraryDialog
         open={mediaDialogOpen}
         onClose={() => setMediaDialogOpen(false)}
         multiple={true}

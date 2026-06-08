@@ -33,7 +33,7 @@ export default function EditProductPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
-  
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
@@ -51,7 +51,12 @@ export default function EditProductPage() {
     productType: 'PRODUCT',
     categoryIds: [] as number[],
     imageUrls: [] as string[],
-    imageIds: [] as number[]
+    imageIds: [] as number[],
+    slug: '',
+    metaTitle: '',
+    metaDescription: '',
+    shortDescription: '',
+    seoKeywords: ''
   })
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -69,7 +74,7 @@ export default function EditProductPage() {
         productService.getProductById(Number(id)),
         categoryService.getAllCategories()
       ])
-      
+
       setCategories(cats || [])
       if (product) {
         setFormData({
@@ -86,7 +91,12 @@ export default function EditProductPage() {
           productType: product.productType || 'PRODUCT',
           categoryIds: (product as any).categoryIds || [],
           imageUrls: product.imageUrls || [],
-          imageIds: (product as any).imageIds || []
+          imageIds: (product as any).imageIds || [],
+          slug: product.slug || '',
+          metaTitle: product.metaTitle || '',
+          metaDescription: product.metaDescription || '',
+          shortDescription: product.shortDescription || '',
+          seoKeywords: product.seoKeywords || ''
         })
       }
     } catch (e) {
@@ -110,7 +120,7 @@ export default function EditProductPage() {
       setSaving(true)
       const user = userMethods.getUserLogin()
       const tenantId = user?.customerId || user?.tenant_id
-      
+
       const payload = {
         ...formData,
         tenantId: Number(tenantId),
@@ -118,7 +128,7 @@ export default function EditProductPage() {
         salePrice: Number(formData.salePrice),
         inventoryQty: Number(formData.inventoryQty)
       }
-      
+
       await productService.updateProduct(payload as any)
       router.push('/ventas/productos/list')
     } catch (e) {
@@ -139,8 +149,8 @@ export default function EditProductPage() {
   return (
     <Box sx={{ p: 6 }}>
       <Box sx={{ mb: 6, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button 
-          variant="outlined" 
+        <Button
+          variant="outlined"
           onClick={() => router.push('/ventas/productos/list')}
           startIcon={<Icon icon="tabler:arrow-left" />}
           sx={{ borderRadius: 2 }}
@@ -181,7 +191,7 @@ export default function EditProductPage() {
                 </Grid>
 
                 <Divider sx={{ my: 6 }} />
-                
+
                 <Typography variant="h6" sx={{ mb: 4 }}>Precios e Inventario</Typography>
                 <Grid container spacing={4}>
                   <Grid item xs={12} sm={6}>
@@ -255,12 +265,12 @@ export default function EditProductPage() {
             <Card sx={{ borderRadius: 2, boxShadow: 3, mb: 6 }}>
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 4 }}>Imágenes del Producto</Typography>
-                
+
                 <Grid container spacing={2}>
                   {formData.imageUrls && formData.imageUrls.map((url, idx) => (
                     <Grid item xs={6} sm={4} key={idx}>
-                      <Box 
-                        sx={{ 
+                      <Box
+                        sx={{
                           position: 'relative',
                           borderRadius: 2,
                           overflow: 'hidden',
@@ -270,10 +280,10 @@ export default function EditProductPage() {
                           '&:hover .delete-btn': { opacity: 1 }
                         }}
                       >
-                        <img 
-                          src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`} 
-                          alt={`Preview ${idx + 1}`} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}${url}`}
+                          alt={`Preview ${idx + 1}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                         <IconButton
                           className="delete-btn"
@@ -287,14 +297,14 @@ export default function EditProductPage() {
                               imageIds: prev.imageIds.filter((_, i) => i !== idx)
                             }))
                           }}
-                          sx={{ 
-                            position: 'absolute', 
-                            top: 5, 
-                            right: 5, 
-                            bgcolor: 'background.paper', 
+                          sx={{
+                            position: 'absolute',
+                            top: 5,
+                            right: 5,
+                            bgcolor: 'background.paper',
                             opacity: { xs: 1, md: 0 },
                             transition: 'opacity 0.2s',
-                            '&:hover': { bgcolor: 'error.light', color: 'white' } 
+                            '&:hover': { bgcolor: 'error.light', color: 'white' }
                           }}
                         >
                           <Icon icon="tabler:trash" fontSize={16} />
@@ -318,13 +328,13 @@ export default function EditProductPage() {
                       </Box>
                     </Grid>
                   ))}
-                  
+
                   <Grid item xs={6} sm={4}>
-                    <Box 
-                      sx={{ 
-                        border: '2px dashed', 
-                        borderColor: 'divider', 
-                        borderRadius: 2, 
+                    <Box
+                      sx={{
+                        border: '2px dashed',
+                        borderColor: 'divider',
+                        borderRadius: 2,
                         height: 120,
                         display: 'flex',
                         flexDirection: 'column',
@@ -333,7 +343,7 @@ export default function EditProductPage() {
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         bgcolor: 'background.paper',
-                        '&:hover': { 
+                        '&:hover': {
                           bgcolor: 'action.hover',
                           borderColor: 'primary.main',
                           color: 'primary.main'
@@ -365,7 +375,7 @@ export default function EditProductPage() {
                               const checked = e.target.checked
                               setFormData(prev => ({
                                 ...prev,
-                                categoryIds: checked 
+                                categoryIds: checked
                                   ? [...prev.categoryIds, cat.id]
                                   : prev.categoryIds.filter(id => id !== cat.id)
                               }))
@@ -377,7 +387,7 @@ export default function EditProductPage() {
                     </Box>
                   ))}
                 </Box>
-                
+
                 {addingCategory ? (
                   <Box sx={{ display: 'flex', gap: 2, mt: 4, alignItems: 'center' }}>
                     <TextField
@@ -418,10 +428,10 @@ export default function EditProductPage() {
                     >
                       {creatingCategory ? <CircularProgress size={20} color="inherit" /> : <Icon icon="tabler:device-floppy" fontSize={20} />}
                     </Button>
-                    <Button 
-                      variant="text" 
-                      color="secondary" 
-                      size="small" 
+                    <Button
+                      variant="text"
+                      color="secondary"
+                      size="small"
                       onClick={() => setAddingCategory(false)}
                       disabled={creatingCategory}
                     >
@@ -479,6 +489,73 @@ export default function EditProductPage() {
               </CardContent>
             </Card>
 
+            <Card sx={{ borderRadius: 2, boxShadow: 3, mb: 6 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 4 }}>SEO</Typography>
+                <Grid container spacing={4}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Slug (URL amigable)"
+                      name="slug"
+                      value={formData.slug}
+                      onChange={handleChange}
+                      placeholder="mi-producto-ejemplo"
+                      helperText="URL amigable para el producto. Se genera automáticamente si se deja vacío."
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Meta Título"
+                      name="metaTitle"
+                      value={formData.metaTitle}
+                      onChange={handleChange}
+                      placeholder="Título para motores de búsqueda"
+                      helperText="Título que aparece en los resultados de búsqueda (máx. 60 caracteres)"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Meta Descripción"
+                      name="metaDescription"
+                      value={formData.metaDescription}
+                      onChange={handleChange}
+                      placeholder="Descripción para motores de búsqueda"
+                      helperText="Descripción que aparece en los resultados de búsqueda (máx. 160 caracteres)"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Descripción Corta"
+                      name="shortDescription"
+                      value={formData.shortDescription}
+                      onChange={handleChange}
+                      placeholder="Breve resumen del producto"
+                      helperText="Descripción corta para listados y previews"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Palabras Clave SEO"
+                      name="seoKeywords"
+                      value={formData.seoKeywords}
+                      onChange={handleChange}
+                      placeholder="palabra1, palabra2, palabra3"
+                      helperText="Palabras clave separadas por comas"
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
             <Box sx={{ display: 'flex', gap: 3 }}>
               <Button
                 fullWidth
@@ -505,7 +582,7 @@ export default function EditProductPage() {
         </Grid>
       </form>
 
-      <MediaLibraryDialog 
+      <MediaLibraryDialog
         open={mediaDialogOpen}
         onClose={() => setMediaDialogOpen(false)}
         multiple={true}

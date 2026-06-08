@@ -86,6 +86,12 @@ public class ProductService {
         product.setModel(dto.getModel());
         product.setSlug(dto.getSlug());
 
+        // SEO
+        product.setMetaTitle(dto.getMetaTitle());
+        product.setMetaDescription(dto.getMetaDescription());
+        product.setShortDescription(dto.getShortDescription());
+        product.setSeoKeywords(dto.getSeoKeywords());
+
         // ----------------- Categorías -----------------
         if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
             List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds());
@@ -176,6 +182,10 @@ public class ProductService {
                 .brand(p.getBrand())
                 .model(p.getModel())
                 .slug(p.getSlug())
+                .metaTitle(p.getMetaTitle())
+                .metaDescription(p.getMetaDescription())
+                .shortDescription(p.getShortDescription())
+                .seoKeywords(p.getSeoKeywords())
                 .categoryIds(categoryIds)
                 .imageIds(imageIds)
                 .createdAt(p.getCreatedAt())
