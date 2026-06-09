@@ -86,6 +86,16 @@ public class RbacController {
     }
 
     /**
+     * Obtiene un módulo por su ID (admin only)
+     */
+    @GetMapping("/modules/{id}")
+    public Mono<ResponseEntity<ModuleEntity>> getModuleById(@PathVariable Long id) {
+        return rbacService.getById(id)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
+    }
+
+    /**
      * Crea un nuevo módulo (admin only)
      */
     @PostMapping("/modules")

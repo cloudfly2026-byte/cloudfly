@@ -1,6 +1,7 @@
 package com.app.services;
 
 import com.app.dto.rbac.MenuItemDTO;
+import com.app.persistence.entity.ModuleEntity;
 import com.app.persistence.repository.ModuleRepository;
 import com.app.persistence.repository.SubscriptionRepository;
 import com.app.persistence.repository.SubscriptionModuleRepository;
@@ -29,6 +30,11 @@ public class RbacService {
     private final SubscriptionModuleRepository subscriptionModuleRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public Mono<ModuleEntity> getById(Long id) {
+        return moduleRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Módulo no encontrado con ID: " + id)));
+    }
 
     public Mono<List<MenuItemDTO>> generateMenuForRoles(List<String> roles, Long customerId, String username) {
         boolean isManager = roles != null && roles.contains("MANAGER");
