@@ -266,7 +266,7 @@ public class WebsiteService {
                         return Mono.empty();
                     }
                     WebNotificationEntity notification = WebNotificationEntity.builder()
-                            .uuid(UUID.randomUUID().toString())
+                            .id(UUID.randomUUID().toString())
                             .tenantId(tenantId)
                             .userId(adminUserId)
                             .title(title)
