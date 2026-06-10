@@ -1909,6 +1909,11 @@ Historial de Comentarios:
         print(f"🔄 INICIANDO SPRINT #{sprint_number}")
         print(f"==================================================")
         
+        # ── Reset deduplication state at the start of each sprint ──────────
+        from tools import reset_dedup_state
+        reset_dedup_state()
+        print("🧹 [Dedup]: Estado de deduplicación reiniciado para nuevo sprint.")
+        
         # Si estamos en modo distribuido y somos el Master, vigilar los latidos y re-encolar tareas caídas
         if use_distributed and connector.is_master:
             connector.heal_workers_and_tasks()

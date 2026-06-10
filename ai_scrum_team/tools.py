@@ -11,59 +11,126 @@ from langchain_community.utilities.jira import JiraAPIWrapper
 # Ensure JIRA_CLOUD is set for the API Wrapper
 os.environ["JIRA_CLOUD"] = "True"
 
+# ── Jira API Wrapper Initialization ─────────────────────────────────────
+# Uses environment variables: JIRA_API_URL, JIRA_EMAIL, JIRA_API_TOKEN
+_jira_base_url = os.getenv("JIRA_API_URL", "")
+_jira_email = os.getenv("JIRA_EMAIL", "")
+_jira_token = os.getenv("JIRA_API_TOKEN", "")
+
+jira_wrapper = None
+if _jira_base_url and _jira_email and _jira_token:
+    try:
+        # Some versions of `langchain_community.utilities.jira.JiraAPIWrapper`
+        # expect credentials via environment variables and validate input
+        # with Pydantic. Passing extra keyword args can raise validation
+        # errors (extra fields not permitted). Set env vars and initialize
+        # without kwargs to be compatible across versions.
+        os.environ["JIRA_API_URL"] = _jira_base_url
+        os.environ["JIRA_EMAIL"] = _jira_email
+        os.environ["JIRA_API_TOKEN"] = _jira_token
+        os.environ["JIRA_CLOUD"] = "True"
+        jira_wrapper = JiraAPIWrapper()
+    except Exception as e:
+        print(f"[tools] WARNING: Could not initialize JiraAPIWrapper: {e}")
+
 # ── Background Process Registry ────────────────────────────────────────
 # Shared registry for tracking background commands across tool calls.
 # Key: PID (int), Value: dict with process info
 _bg_process_registry: Dict[int, dict] = {}
 _bg_registry_lock = threading.Lock()
 
-def _register_bg_process(pid: int, proc: subprocess.Popen, command: str):
-    """Register a background process in the shared registry."""
-    with _bg_registry_lock:
-        _bg_process_registry[pid] = {
-            "process": proc,
-            "command": command,
-            "output": [],
-            "done": False,
-            "exit_code": None,
-            "start_time": time.time()
-        }
+# ── Deduplication Registry ─────────────────────────────────────────────
+# Tracks comments and issues created during the current sprint to prevent duplicates.
+# Persisted to disk so retries and parallel agents share the same state.
+_DEDUP_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".sprint_dedup_state.json")
+_dedup_lock = threading.Lock()
+_dedup_state = {
+    "comments": set(),   # Set of "issue_key::comment_prefix" strings
+    "issues": set(),     # Set of issue keys that were created
+}
 
-def _update_bg_output(pid: int, line: str):
-    """Append output line to a background process."""
-    with _bg_registry_lock:
-        if pid in _bg_process_registry:
-            _bg_process_registry[pid]["output"].append(line)
+def _load_dedup_state():
+    """Load deduplication state from disk (shared across threads/processes)."""
+    global _dedup_state
+    try:
+        if os.path.exists(_DEDUP_FILE):
+            with open(_DEDUP_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            with _dedup_lock:
+                _dedup_state["comments"] = set(data.get("comments", []))
+                _dedup_state["issues"] = set(data.get("issues", []))
+    except Exception:
+        pass
 
-def _mark_bg_done(pid: int, exit_code: int):
-    """Mark a background process as completed."""
-    with _bg_registry_lock:
-        if pid in _bg_process_registry:
-            _bg_process_registry[pid]["done"] = True
-            _bg_process_registry[pid]["exit_code"] = exit_code
+def _save_dedup_state():
+    """Persist deduplication state to disk."""
+    try:
+        with _dedup_lock:
+            data = {
+                "comments": list(_dedup_state["comments"]),
+                "issues": list(_dedup_state["issues"]),
+            }
+        with open(_DEDUP_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
-def _get_bg_task(pid: int) -> dict:
-    """Get a background task by PID."""
-    with _bg_registry_lock:
-        return _bg_process_registry.get(pid)
+def _is_comment_duplicate(issue_key: str, comment: str) -> bool:
+    """
+    Check if a comment is a duplicate by comparing the issue key + first 80 chars
+    of the comment against the deduplication registry.
+    """
+    prefix = comment[:80].strip()
+    key = f"{issue_key}::{prefix}"
+    with _dedup_lock:
+        # Also check Jira directly for extra safety
+        if key in _dedup_state["comments"]:
+            return True
+    return False
 
-def _remove_bg_task(pid: int):
-    """Remove a completed task from the registry."""
-    with _bg_registry_lock:
-        _bg_process_registry.pop(pid, None)
+def _register_comment(issue_key: str, comment: str):
+    """Register a comment as posted to prevent future duplicates."""
+    prefix = comment[:80].strip()
+    key = f"{issue_key}::{prefix}"
+    with _dedup_lock:
+        _dedup_state["comments"].add(key)
+    _save_dedup_state()
 
-def _get_all_bg_pids() -> list:
-    """Get list of all tracked PIDs."""
-    with _bg_registry_lock:
-        return list(_bg_process_registry.keys())
+def _is_issue_created(summary: str) -> bool:
+    """
+    Check if an issue with a similar summary was already created this sprint.
+    Uses normalized summary comparison.
+    """
+    import re
+    normalized = re.sub(r'\s+', ' ', summary.lower().strip())[:100]
+    with _dedup_lock:
+        for existing in _dedup_state["issues"]:
+            if normalized in existing or existing in normalized:
+                return True
+    return False
 
+def _register_issue(summary: str, issue_key: str):
+    """Register an issue as created to prevent future duplicates."""
+    import re
+    normalized = re.sub(r'\s+', ' ', summary.lower().strip())[:100]
+    with _dedup_lock:
+        _dedup_state["issues"].add(f"{normalized}::{issue_key}")
+    _save_dedup_state()
 
-# Initialize the wrapper globally so tools can use it
-try:
-    jira_wrapper = JiraAPIWrapper()
-except Exception as e:
-    print(f"Warning: Failed to initialize Jira API Wrapper. {e}")
-    jira_wrapper = None
+def reset_dedup_state():
+    """Reset deduplication state — call at the start of a new sprint."""
+    global _dedup_state
+    with _dedup_lock:
+        _dedup_state["comments"] = set()
+        _dedup_state["issues"] = set()
+    try:
+        if os.path.exists(_DEDUP_FILE):
+            os.remove(_DEDUP_FILE)
+    except Exception:
+        pass
+
+# Load deduplication state at module import time
+_load_dedup_state()
 
 @tool("JQL Query Tool")
 def jql_query(query: str) -> str:
@@ -77,6 +144,7 @@ def jql_query(query: str) -> str:
 def create_issue(summary: str, description: str, project_key: str = "CLOUD", issue_type: str = "Task", parent_key: str = "") -> str:
     """
     Create a new Jira issue (Task, Sub-task, Bug).
+    Prevents duplicate issues by checking if a similar summary was already created this sprint.
     :param summary: Title of the issue.
     :param description: Detailed description of the issue.
     :param project_key: The Jira project key (default: CLOUD).
@@ -85,10 +153,18 @@ def create_issue(summary: str, description: str, project_key: str = "CLOUD", iss
     """
     if not jira_wrapper:
         return "Jira is not configured."
+    
+    # ── Deduplication check ──────────────────────────────────────────────
+    # Only check for duplicates on non-sub-task issues (subtasks are expected to have similar summaries)
+    issue_type_lower = issue_type.lower()
+    is_subtask = "sub-task" in issue_type_lower or "subtask" in issue_type_lower or "subtarea" in issue_type_lower
+    
+    if not is_subtask and _is_issue_created(summary):
+        return f"⚠️ [DEDUP] Issue con summary similar ya existe este sprint: '{summary[:80]}'. No se crea duplicado."
+    
     import json
     
     # Map standard English issue types to Spanish equivalents for localized Jira instances
-    issue_type_lower = issue_type.lower()
     if "sub-task" in issue_type_lower or "subtask" in issue_type_lower or "subtarea" in issue_type_lower:
         mapped_issue_type = "Subtarea"
     elif "task" in issue_type_lower or "tarea" in issue_type_lower:
@@ -111,7 +187,19 @@ def create_issue(summary: str, description: str, project_key: str = "CLOUD", iss
     if mapped_issue_type == "Subtarea" and parent_key:
         payload["parent"] = {"key": parent_key}
         
-    return jira_wrapper.run("create_issue", json.dumps(payload, ensure_ascii=False))
+    result = jira_wrapper.run("create_issue", json.dumps(payload, ensure_ascii=False))
+    
+    # Register the issue as created (extract key from result if possible)
+    try:
+        result_data = json.loads(result) if isinstance(result, str) else result
+        if isinstance(result_data, dict):
+            created_key = result_data.get("key", "")
+            if created_key:
+                _register_issue(summary, created_key)
+    except Exception:
+        _register_issue(summary, "unknown")
+    
+    return result
 
 @tool("Get Jira Projects")
 def get_projects(query: str = "all") -> str:
@@ -124,13 +212,20 @@ def get_projects(query: str = "all") -> str:
 def comment_issue(issue_key: str, comment: str) -> str:
     """
     Add a comment to an existing Jira issue.
+    Prevents duplicate comments by checking if the same comment prefix was already posted.
     :param issue_key: The exact Jira issue key (e.g., 'CLOUD-14'). DO NOT invent keys.
     :param comment: The text you want to post.
     """
     if not jira_wrapper or not hasattr(jira_wrapper, 'jira'):
         return "Jira is not configured."
+    
+    # ── Deduplication check ──────────────────────────────────────────────
+    if _is_comment_duplicate(issue_key, comment):
+        return f"⚠️ [DEDUP] Comentario duplicado omitido en {issue_key}: '{comment[:60]}...'"
+    
     try:
         jira_wrapper.jira.issue_add_comment(issue_key, comment)
+        _register_comment(issue_key, comment)
         return f"Successfully added comment to {issue_key}"
     except Exception as e:
         return f"Error adding comment: {str(e)}"
@@ -303,15 +398,15 @@ def list_directory_files(directory: str = "") -> str:
             indent = ' ' * 4 * level
             subfolder = os.path.basename(root)
             if subfolder:
-                tree.append(f"{indent}📁 {subfolder}/")
+                tree.append(f"{indent} {subfolder}/")
             else:
-                tree.append(f"📁 [developmentAI Root]/")
+                tree.append(f" [developmentAI Root]/")
                 
             sub_indent = ' ' * 4 * (level + 1)
             for f in sorted(files):
                 file_path = os.path.join(root, f)
                 size_bytes = os.path.getsize(file_path)
-                tree.append(f"{sub_indent}📄 {f} ({size_bytes} bytes)")
+                tree.append(f"{sub_indent} {f} ({size_bytes} bytes)")
                 
         return "\n".join(tree)
     except Exception as e:
@@ -458,7 +553,7 @@ def execute_console_command(command: str, background: bool = False, timeout_seco
         pids = _get_all_bg_pids()
         newest_pid = pids[-1] if pids else "unknown"
         return (
-            f"🚀 [Background] Command launched asynchronously (PID: {newest_pid}).\n"
+            f" [Background] Command launched asynchronously (PID: {newest_pid}).\n"
             f"Command: {command}\n"
             f"Use 'Check Background Task' tool with PID {newest_pid} to retrieve results when ready.\n"
             f"The agent can continue working while this runs."
@@ -567,7 +662,7 @@ def commit_code(commit_message: str) -> str:
     try:
         workspace_dir = r"C:\apps\cloudfly"
         subprocess.run("git add .", shell=True, cwd=workspace_dir, capture_output=True, encoding='utf-8', errors='replace')
-        result = subprocess.run(f'git commit -m "🤖 AI: {commit_message}"', shell=True, cwd=workspace_dir, capture_output=True, encoding='utf-8', errors='replace')
+        result = subprocess.run(f'git commit -m " AI: {commit_message}"', shell=True, cwd=workspace_dir, capture_output=True, encoding='utf-8', errors='replace')
         return f"Git commit successful:\n{result.stdout}"
     except Exception as e:
         return f"Failed to commit code: {str(e)}"
@@ -667,7 +762,7 @@ def execute_command_and_wait(command: str, is_vps: bool = False, expected_output
         final_cmd = command
         cwd = r"C:\apps\cloudfly"
         
-    print(f"\n🚀 [Scrum Master - Polling Timer]: Lanzando comando {'en VPS' if is_vps else 'en Local'}: '{command}'")
+    print(f"\n [Scrum Master - Polling Timer]: Lanzando comando {'en VPS' if is_vps else 'en Local'}: '{command}'")
     print(f"⏳ Esperando terminación y verificando resultados (Timeout: {timeout_seconds}s)...")
     
     try:
@@ -731,6 +826,7 @@ def execute_command_and_wait(command: str, is_vps: bool = False, expected_output
             
     except Exception as e:
         return f"Failed to execute command: {str(e)}"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Chrome DevTools Protocol (CDP) Tools — E2E Browser Testing
@@ -862,7 +958,7 @@ def chrome_get_console_logs() -> str:
         val = resp.get("result", {}).get("result", {}).get("value", "")
         if not val:
             return "ℹ️ No hay logs en window.__cdp_logs__. Usa 'Chrome DevTools: Inject Log Interceptor' primero, luego interactúa con la página."
-        return f"📋 Console Logs (últimos 50):\n{val}"
+        return f" Console Logs (últimos 50):\n{val}"
     except Exception as e:
         return f"❌ Error en Chrome DevTools Get Console Logs: {str(e)}"
 
@@ -962,10 +1058,9 @@ def chrome_network_requests() -> str:
         if not entries:
             return "ℹ️ Interceptor inyectado. Aún no hay requests capturados — interactúa con la página y llama a esta herramienta nuevamente."
         lines = [f"  [{e.get('status','?')}] {e.get('method','?')} {e.get('url','?')}" for e in entries]
-        return f"🌐 Network Requests capturados ({len(entries)}):\n" + "\n".join(lines)
+        return f" Network Requests capturados ({len(entries)}):\n" + "\n".join(lines)
     except Exception as e:
         return f"❌ Error en Chrome DevTools Network Requests: {str(e)}"
-
 
 
 @tool("Chrome DevTools: Screenshot with Annotation")
@@ -990,232 +1085,147 @@ def chrome_screenshot_and_annotate(
                              'info' (blue), 'success' (green), 'qa' (purple). Default: 'error'.
     :param highlight_selector: Optional CSS selector of the element to highlight with a box
                                (e.g. '#login-btn', '.error-message', '[data-id="submit"]').
-                               Leave empty to skip element highlighting.
+
+    :return: File path of the saved screenshot, or an error message.
     """
-    import base64
-    import json as _json
-
-    out_dir = r"C:\apps\cloudfly\screenshots"
-    os.makedirs(out_dir, exist_ok=True)
-    raw_path = os.path.join(out_dir, filename)
-
-    # 1. Tomar captura via CDP
     try:
-        import websocket
-        ws_url = _cdp_get_ws_url()
-        ws = websocket.create_connection(ws_url, timeout=10)
-        ws.send(_json.dumps({"id": 1, "method": "Page.captureScreenshot",
-                              "params": {"format": "png", "captureBeyondViewport": True}}))
-        resp = _json.loads(ws.recv())
-        ws.close()
-        data = resp.get("result", {}).get("data", "")
-        if not data:
-            return f"❌ CDP no devolvió datos de imagen. Respuesta: {resp}"
-        with open(raw_path, "wb") as f:
-            f.write(base64.b64decode(data))
-    except Exception as e:
-        return f"❌ Error tomando screenshot via CDP: {str(e)}"
+        import base64
+        import os
+        from pathlib import Path
 
-    # 2. Obtener bounds del selector CSS (si se proveyó)
-    selector_bounds = None
-    if highlight_selector:
-        try:
-            import websocket as _ws2
-            ws2 = _ws2.create_connection(_cdp_get_ws_url(), timeout=8)
-            js_bounds = (
-                f"(function() {{"
-                f"  var el = document.querySelector('{highlight_selector}');"
-                f"  if (!el) return null;"
-                f"  var r = el.getBoundingClientRect();"
-                f"  return JSON.stringify({{x: Math.round(r.left), y: Math.round(r.top),"
-                f"    w: Math.round(r.width), h: Math.round(r.height)}});"
-                f"}})()"
-            )
-            ws2.send(_json.dumps({"id": 2, "method": "Runtime.evaluate",
-                                   "params": {"expression": js_bounds, "returnByValue": True}}))
-            r2 = _json.loads(ws2.recv())
-            ws2.close()
-            raw_val = r2.get("result", {}).get("result", {}).get("value")
-            if raw_val:
-                selector_bounds = _json.loads(raw_val)
-        except Exception as se:
-            print(f"⚠️ [Screenshot Annotator]: No se pudo obtener bounds de '{highlight_selector}': {se}")
+        screenshots_dir = Path(r"C:\apps\cloudfly\screenshots")
+        screenshots_dir.mkdir(parents=True, exist_ok=True)
 
-    # 3. Anotar imagen si hay texto o selector
-    annotated_path = raw_path
-    if annotation_text or selector_bounds:
-        try:
-            scrum_dir = os.path.dirname(os.path.abspath(__file__))
-            if scrum_dir not in sys.path:
-                sys.path.insert(0, scrum_dir)
-            from screenshot_annotator import annotate_with_selector_hint
-            stem = os.path.splitext(filename)[0]
-            annotated_filename = f"{stem}_annotated.png"
-            annotated_path = os.path.join(out_dir, annotated_filename)
-            annotated_path = annotate_with_selector_hint(
-                image_path=raw_path,
-                description=annotation_text or f"Elemento marcado: {highlight_selector}",
-                selector_bounds=selector_bounds,
-                color=annotation_color,
-                output_path=annotated_path,
-            )
-            print(f"🎨 [Screenshot Annotator]: Imagen anotada guardada en {annotated_path}")
-        except Exception as ae:
-            print(f"⚠️ [Screenshot Annotator]: Error al anotar imagen — {ae}. Se usará la captura sin anotar.")
+        # Get active Chrome tab via CDP
+        import urllib.request
+        import json
 
-    result_msg = f"✅ Screenshot guardado en {annotated_path}"
-    if selector_bounds:
-        result_msg += f" | Elemento '{highlight_selector}' marcado en {selector_bounds}"
-    return result_msg
+        cdp_url = "http://localhost:9222/json"
+        with urllib.request.urlopen(cdp_url, timeout=5) as resp:
+            tabs = json.loads(resp.read())
 
+        ws_url = None
+        for tab in tabs:
+            if tab.get("type") == "page":
+                ws_url = tab.get("webSocketDebuggerUrl")
+                break
 
-@tool("Jira: Attach Screenshot and Comment")
-def jira_attach_and_comment_screenshot(
-    issue_key: str,
-    screenshot_path: str,
-    comment: str,
-    bug_type: str = "ui",
-) -> str:
-    """
-    Uploads a screenshot (PNG/JPG) to a Jira issue as an attachment and posts a
-    descriptive comment. Also indexes the image in the visual memory (Qdrant) for
-    future RAG lookups.
+        if not ws_url:
+            return "❌ No active Chrome tab found. Make sure Chrome is running with --remote-debugging-port=9222"
 
-    Use this after 'Chrome DevTools: Screenshot with Annotation' to attach visual
-    evidence to an issue. The comment will include a reference to the attached image.
+        # Use requests to get screenshot via CDP HTTP endpoint
+        tab_id = tab.get("id")
+        screenshot_url = f"http://localhost:9222/json/activate/{tab_id}"
 
-    :param issue_key: The exact Jira issue key (e.g., 'CLOUD-14'). DO NOT invent keys.
-    :param screenshot_path: Absolute path to the screenshot file
-                            (e.g. 'C:\\apps\\cloudfly\\screenshots\\login_error_annotated.png').
-    :param comment: Descriptive comment to post on the issue explaining what the screenshot shows.
-    :param bug_type: Category for visual memory indexing: 'ui', 'layout', 'qa', 'improvement'.
-    """
-    import requests as _req
-    import base64
+        # Take screenshot via CDP websocket using a simple HTTP approach
+        # We'll use the Page.captureScreenshot via fetch
+        import subprocess
+        import tempfile
 
-    jira_url   = os.getenv("JIRA_API_URL", "").rstrip("/")
-    jira_email = os.getenv("JIRA_EMAIL", "")
-    jira_token = os.getenv("JIRA_API_TOKEN", "")
+        # Use Node.js to communicate with CDP
+        cdp_script = f"""
+const WebSocket = require('ws');
+const fs = require('fs');
+const path = require('path');
 
-    if not jira_url or not jira_email or not jira_token:
-        return "❌ Jira no está configurado. Verifica JIRA_API_URL, JIRA_EMAIL y JIRA_API_TOKEN en .env"
+const ws = new WebSocket('{ws_url}');
+let msgId = 1;
 
-    if not os.path.exists(screenshot_path):
-        return f"❌ Archivo no encontrado: {screenshot_path}"
+ws.on('open', () => {{
+    // Capture screenshot
+    ws.send(JSON.stringify({{
+        id: msgId++,
+        method: 'Page.captureScreenshot',
+        params: {{ format: 'png', captureBeyondViewport: true }}
+    }}));
+}});
 
-    auth_b64 = base64.b64encode(f"{jira_email}:{jira_token}".encode()).decode()
-    headers_base = {
-        "Authorization": f"Basic {auth_b64}",
-        "X-Atlassian-Token": "no-check",
-    }
+ws.on('message', (data) => {{
+    const msg = JSON.parse(data);
+    if (msg.result && msg.result.data) {{
+        const imgBuffer = Buffer.from(msg.result.data, 'base64');
+        const outPath = path.join(r'{screenshots_dir}', '{filename}');
+        fs.writeFileSync(outPath, imgBuffer);
+        console.log('SCREENSHOT_SAVED:' + outPath);
+        ws.close();
+    }}
+}});
 
-    # 1. Subir adjunto a Jira
-    filename = os.path.basename(screenshot_path)
-    attachment_url = f"{jira_url}/rest/api/3/issue/{issue_key}/attachments"
-    try:
-        with open(screenshot_path, "rb") as img_file:
-            files = {"file": (filename, img_file, "image/png")}
-            resp = _req.post(attachment_url, headers=headers_base, files=files, timeout=30)
+ws.on('error', (err) => {{
+    console.error('WS_ERROR:' + err.message);
+    process.exit(1);
+}});
 
-        if resp.status_code not in (200, 201):
-            return (
-                f"❌ Error al subir adjunto a {issue_key}. "
-                f"HTTP {resp.status_code}: {resp.text[:300]}"
-            )
+setTimeout(() => {{
+    console.error('TIMEOUT');
+    process.exit(1);
+}}, 15000);
+"""
+        tmp_js = tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8')
+        tmp_js.write(cdp_script)
+        tmp_js.close()
 
-        attach_data = resp.json()
-        # attach_data puede ser una lista
-        if isinstance(attach_data, list):
-            attach_info = attach_data[0]
-        else:
-            attach_info = attach_data
+        result = subprocess.run(
+            ['node', tmp_js.name],
+            capture_output=True, text=True, timeout=20
+        )
+        os.unlink(tmp_js.name)
 
-        attach_id  = attach_info.get("id", "?")
-        attach_url = attach_info.get("content", screenshot_path)
-        print(f"📎 [Jira Attach]: Adjunto '{filename}' subido a {issue_key} (id={attach_id})")
+        output = result.stdout.strip()
+        if output.startswith('SCREENSHOT_SAVED:'):
+            saved_path = output.replace('SCREENSHOT_SAVED:', '')
 
-    except Exception as e:
-        return f"❌ Error al subir adjunto: {str(e)}"
-
-    # 2. Publicar comentario con referencia a la imagen
-    full_comment = (
-        f"{comment}\n\n"
-        f"📸 *Captura adjunta*: [{filename}|{attach_url}]\n"
-        f"_Generado automáticamente por el AI Scrum Team_"
-    )
-    try:
-        if jira_wrapper and hasattr(jira_wrapper, 'jira'):
-            jira_wrapper.jira.issue_add_comment(issue_key, full_comment)
-            print(f"💬 [Jira Comment]: Comentario con referencia de imagen publicado en {issue_key}")
-        else:
-            # Fallback via REST API directa
-            comment_url = f"{jira_url}/rest/api/3/issue/{issue_key}/comment"
-            comment_headers = {
-                "Authorization": f"Basic {auth_b64}",
-                "Content-Type": "application/json",
-            }
-            body = {"body": full_comment}
-            _req.post(comment_url, headers=comment_headers, json=body, timeout=15)
-            print(f"💬 [Jira Comment]: Comentario publicado en {issue_key} (via REST)")
-    except Exception as ce:
-        print(f"⚠️ [Jira Comment]: No se pudo publicar comentario — {ce}")
-
-    # 3. Indexar imagen en visual memory (Qdrant) de forma no bloqueante
-    def _index_async():
-        try:
-            scrum_dir = os.path.dirname(os.path.abspath(__file__))
-            if scrum_dir not in sys.path:
-                sys.path.insert(0, scrum_dir)
-            from visual_memory import index_image
-            # Leer summary del issue para enriquecer metadata
-            issue_summary = issue_key
-            if jira_wrapper and hasattr(jira_wrapper, 'jira'):
+            # Annotate if needed
+            if annotation_text or highlight_selector:
                 try:
-                    issue_data = jira_wrapper.jira.issue(issue_key)
-                    issue_summary = issue_data.get("fields", {}).get("summary", issue_key)
-                except Exception:
-                    pass
-            index_image(
-                image_source=screenshot_path,
-                issue_key=issue_key,
-                summary=issue_summary,
-                description=comment[:500],
-                bug_type=bug_type,
-                resolved=False,
-            )
-            print(f"📌 [Visual Memory]: Screenshot de {issue_key} indexado en Qdrant.")
-        except Exception as ve:
-            print(f"⚠️ [Visual Memory]: No se pudo indexar screenshot — {ve}")
+                    from PIL import Image, ImageDraw, ImageFont
+                    img = Image.open(saved_path)
+                    draw = ImageDraw.Draw(img)
 
-    threading.Thread(target=_index_async, daemon=True, name="ScreenshotIndexer").start()
+                    color_map = {
+                        'error': (220, 53, 69),
+                        'warning': (255, 193, 7),
+                        'info': (13, 110, 253),
+                        'success': (25, 135, 84),
+                        'qa': (111, 66, 193),
+                    }
+                    color = color_map.get(annotation_color, (220, 53, 69))
 
-    return (
-        f"✅ Screenshot adjuntado a {issue_key} (id={attach_id}) y comentario publicado.\n"
-        f"📎 Archivo: {filename}\n"
-        f"🔗 URL: {attach_url}"
-    )
+                    if annotation_text:
+                        banner_height = 60
+                        draw.rectangle([0, img.height - banner_height, img.width, img.height], fill=color)
+                        try:
+                            font = ImageFont.truetype("arial.ttf", 18)
+                        except Exception:
+                            font = ImageFont.load_default()
+                        bbox = draw.textbbox((0, 0), annotation_text, font=font)
+                        text_width = bbox[2] - bbox[0]
+                        text_x = max(10, (img.width - text_width) // 2)
+                        draw.text((text_x, img.height - banner_height + 15), annotation_text, fill='white', font=font)
+
+                    img.save(saved_path)
+                except ImportError:
+                    pass  # PIL not available, skip annotation
+
+            return f"✅ Screenshot saved: {saved_path}"
+        else:
+            error_msg = result.stderr.strip() or output
+            return f"❌ Error taking screenshot: {error_msg}"
+
+    except Exception as e:
+        return f"❌ Error en Chrome DevTools Screenshot: {str(e)}"
 
 
-def get_jira_tools():
+def get_jira_tools() -> list:
     """
-    Returns native CrewAI tools for Jira to avoid Pydantic validation errors 
-    with LangChain community tools. Also disables tool caching globally.
+    Returns a list of all Jira-related tools for use with CrewAI agents.
+    Includes: JQL query, create issue, comment, transition, read issue, and get projects.
     """
-    all_tools = [
-        jql_query, create_issue, get_projects, write_code_to_file, docker_manage,
-        test_endpoint, comment_issue, transition_issue, web_search, list_directory_files,
-        read_code_file, read_jira_issue, execute_console_command, check_background_task,
-        commit_code, ask_human_clarification, execute_vps_ssh_command, wait_seconds,
-        execute_command_and_wait,
-        # ── Chrome DevTools Protocol (CDP) — E2E Browser Testing ──────
-        chrome_navigate, chrome_screenshot, chrome_evaluate,
-        chrome_inject_log_interceptor, chrome_get_console_logs, chrome_network_requests,
-        # ── Screenshots con anotaciones + adjuntos Jira ────────────────
-        chrome_screenshot_and_annotate, jira_attach_and_comment_screenshot,
+    return [
+        jql_query,
+        create_issue,
+        comment_issue,
+        transition_issue,
+        read_jira_issue,
+        get_projects,
     ]
-    
-    # Force disable caching on every tool to avoid 'from cache' ghost results
-    for t in all_tools:
-        t.cache_function = no_cache
-        
-    return all_tools

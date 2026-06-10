@@ -1,6 +1,19 @@
 from crewai import Task
 from agents import product_owner, software_developer, system_architect, qa_engineer, devops_engineer, technical_writer, frontend_developer, marketing_specialist
 
+# ── Deduplication instructions shared across all tasks ──────────────────
+_DEDUP_COMMENT_INSTRUCTIONS = """
+    🔒 ANTES DE COMENTAR EN JIRA: Lee los comentarios existentes del issue usando 'Read Jira Issue'.
+    Si ya existe un comentario tuyo (con tu prefijo de agente) con el mismo contenido o contenido muy similar,
+    NO vuelvas a comentar. Solo comenta si tienes información nueva que agregar.
+"""
+
+_DEDUP_CREATE_INSTRUCTIONS = """
+    🔒 ANTES DE CREAR UN ISSUE EN JIRA: Usa 'JQL Query Tool' para buscar issues existentes con summary similar.
+    Si ya existe un issue con el mismo summary o muy similar en el proyecto CLOUD, NO lo creas de nuevo.
+    En su lugar, trabaja sobre el issue existente.
+"""
+
 # We define the core Scrum tasks dynamically.
 
 sprint_planning = Task(
@@ -30,6 +43,8 @@ sprint_planning = Task(
     5. In BOTH cases, record and output the list of ALL Jira Issue Keys (e.g., CLOUD-123, CLOUD-124) that must be processed in this sprint.
     6. ESTIMATION & SPRINT INITIATION: After creating/identifying all sprint tasks and before any development starts, you MUST collaboratively estimate the time required for each task. Consult with the other agents (Software Developer, System Architect, Frontend Developer, DevOps) and leverage historical data from past_stories_db.json and lessons_learned.md to propose realistic time estimates based on technical complexity and role expertise. Add the final time estimates clearly in the description or comments of each Jira issue, then create a new Sprint in Jira (or simulate/manage it), place all the sprint tasks into it, and mark the Sprint as started (iniciada).
     
+    ''' + _DEDUP_CREATE_INSTRUCTIONS + '''
+    
     CRITICAL: If you are confused about the feature or lack details, you MUST use the 'Ask Human Clarification' tool to ask Edwin.
     
     CRITICAL FOR SPEC-DRIVEN DEVELOPMENT: If the codebase context includes a specification document (like spec.md, openapi.yaml, etc.) or the user requests strict adherence to a spec, you MUST enforce that the generated Jira tasks strictly follow the specification exactly, without inventing extra features.
@@ -51,7 +66,7 @@ research_task = Task(
     3. Write a clear Architecture and Implementation Plan for the Developers.
     CRITICAL: You MUST use the 'Comment on Jira Issue' tool to post a summary of your research findings to the relevant Jira Issue Keys. 
     CRITICAL 2: You MUST start your comment with "🤖 **System Architect**: " to identify yourself.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='A technical architecture and implementation blueprint starting with docker-compose-local.yml analysis. A Jira comment must be added.',
     agent=system_architect
 )
@@ -78,7 +93,7 @@ development_task = Task(
     CRITICAL 7: Omit any action on the VPS at this stage. Keep all development local.
     CRITICAL 8: If the sprint goal contains a LATEST COMMENT from the user, your Jira comment MUST explicitly address the user's feedback and explain how you fixed their specific concern.
     CRITICAL 9: If you are stuck or need a password/key, use the 'Ask Human Clarification' tool.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='All source code and configuration files written to disk. A Jira comment must be added.',
     agent=software_developer
 )
@@ -101,7 +116,7 @@ deployment_prep = Task(
     CRITICAL 5b: If 'Execute Console Command' returns an error you don't understand, use the 'Web Search' tool to search for the error and find a fix. Then apply the fix and retry.
     CRITICAL 6: After verifying the local services/containers are running, you MUST use the 'Transition Jira Issue' tool to change the status of the Jira Issue Keys to 'pruebas'.
     CRITICAL 7: If the sprint goal contains a LATEST COMMENT from the user, your Jira comment MUST acknowledge their feedback.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='Local services running (frontend_new via npm run dev locally, others via local Docker). A Jira comment must be added.',
     agent=devops_engineer
 )
@@ -137,7 +152,7 @@ quality_assurance = Task(
          e. Use 'Chrome DevTools: Screenshot' to capture a visual proof of the UI state. Save with descriptive names like 'login_success.png', 'dashboard_after_create.png'.
          f. Use 'Chrome DevTools: Get Console Logs' to detect any JS errors or warnings.
          g. Use 'Chrome DevTools: Network Requests' again to verify all API calls returned 2xx status codes.
-        - CRITICAL - PASO OBLIGATORIO ANTES DE CUALQUIER CDP: SIEMPRE lanza Chrome con debugging ANTES de usar cualquier herramienta CDP. Ejecuta este comando con 'Execute Console Command' PRIMERO: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\tmp\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`. Si el CDP devuelve error de conexión (puerto 9222 rechazado), es porque Chrome no está corriendo con debugging — ejecuta el mismo comando y espera 3 segundos antes de reintentar.
+        - CRITICAL - PASO OBLIGATORIO ANTES DE CUALQUIER CDP: SIEMPRE lanza Chrome con debugging ANTES de usar cualquier herramienta CDP. Ejecuta este comando con 'Execute Console Command' PRIMERO: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\\tmp\\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`. Si el CDP devuelve error de conexión (puerto 9222 rechazado), es porque Chrome no está corriendo con debugging — ejecuta el mismo comando y espera 3 segundos antes de reintentar.
        - Write a Python test script (e.g. test_frontend_cdp.py) that documents the test steps and assertions, save it using 'Write Code To File' to the path 'tests/AGENTE_DEV_<feature_name>_cdp.py'. This script should use the websocket-client library to connect to CDP directly and run the same assertions you performed manually.
 
     2b. EVIDENCIA VISUAL OBLIGATORIA — CAPTURAS ANOTADAS EN JIRA:
@@ -179,7 +194,7 @@ quality_assurance = Task(
     CRITICAL: If the sprint goal contains a LATEST COMMENT from the user reporting a bug, your Jira comment MUST explicitly confirm to the user whether their specific bug was successfully fixed or if it still fails.
     
     CRITICAL FOR SPEC-DRIVEN DEVELOPMENT: If a specification file is present in the codebase context (such as spec.md), you MUST validate the endpoints and configurations strictly against that specification. Any deviation from the spec MUST be reported as a BUG.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='QA E2E sign-off report covering the entire project. Jira issues transitioned to Done and deployed to VPS (except frontend_new). Git push executed on final sprint completion. Or failure details comment.',
     agent=qa_engineer
 )
@@ -197,7 +212,7 @@ documentation_task = Task(
     5. CRITICAL: You must use the 'Write Code To File' tool to save all your generated documentation to disk. Everything MUST be delivered strictly in Markdown (.md) format. Any visual diagrams (Mermaid.js flowcharts, sequence diagrams, or ERDs) MUST be embedded directly inside these Markdown files as fenced code blocks (using ```mermaid) rather than as standalone files.
     6. CRITICAL 2: All newly created documentation files MUST be saved in the directory "C:\\apps\\cloudfly\\docs" and their filenames MUST end in ".md" and start with the prefix "AGENTE_DEV_" (e.g. "C:\\apps\\cloudfly\\docs\\AGENTE_DEV_technical_architecture.md") to clearly distinguish them as being generated by the AI Scrum Team agent.
     7. Always start your comments with "🤖 **Technical Writer**: " to identify yourself.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='Comprehensive technical documentation and Mermaid.js diagrams saved strictly as .md files to the docs folder with the AGENTE_DEV_ prefix, and a detailed summary commented on Jira.',
     agent=technical_writer
 )
@@ -219,14 +234,14 @@ frontend_development_task = Task(
     4. You MUST use the 'Write Code To File' tool to save all your frontend files strictly inside the "C:\\apps\\cloudfly\\frontend_new" directory structure.
     5. CRITICAL: When exploring the frontend_new directory, you MUST exclude the "node_modules" folder from all reviews and file listings. Never read, list, or modify files inside node_modules. Use 'List Directory Files' with directory="frontend_new" and ignore any node_modules entries.
     6. QUICK VISUAL VERIFICATION: After writing the components, use the Chrome DevTools tools to do a quick smoke test:
-       PASO 0 OBLIGATORIO: Antes de cualquier herramienta CDP, lanza Chrome con debugging: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\tmp\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`
+       PASO 0 OBLIGATORIO: Antes de cualquier herramienta CDP, lanza Chrome con debugging: `Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=C:\\tmp\\chrome-debug http://localhost:3000"; Start-Sleep -Seconds 3`
        a. 'Chrome DevTools: Navigate' to the relevant page (e.g. 'http://localhost:3000').
        b. 'Chrome DevTools: Screenshot' to capture the current render as 'frontend_dev_<feature>.png'.
        c. 'Chrome DevTools: Evaluate JS' to verify key elements exist (e.g. "document.querySelector('.my-component') !== null").
        Si el CDP devuelve error de conexion en puerto 9222, repite el comando del PASO 0 y espera 3 segundos.
     7. Post a summary of your frontend changes in a Jira comment on the relevant Jira Issue Keys, starting with "🤖 **Frontend Developer**: " to identify yourself. Include screenshot filename if captured.
     8. Before passing to DevOps/QA, do NOT deploy or push yet. The global push will be done by QA at the end of the sprint.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='All React/Next.js files and UI components written to frontend_new. Optional CDP smoke test screenshot captured. A Jira comment must be added.',
     agent=frontend_developer
 )
@@ -253,7 +268,7 @@ marketing_task = Task(
     6. Use the 'Write Code To File' tool to save all marketing content and assets to disk.
     7. Post a summary of your marketing strategy and assets in a detailed Jira comment on the relevant Jira Issue Keys.
     8. Always start your comments with "🤖 **Marketing Specialist**: " to identify yourself.
-    ''',
+    ''' + _DEDUP_COMMENT_INSTRUCTIONS,
     expected_output='Marketing strategy document, content assets, and optionally frontend marketing components saved to disk. A Jira comment with the marketing summary.',
     agent=marketing_specialist
 )
