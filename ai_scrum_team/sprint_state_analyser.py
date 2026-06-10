@@ -44,6 +44,19 @@ def _has_subtasks(issue_key: str) -> bool:
         print(f"[SprintState] Error verificando subtareas de {issue_key}: {e}")
         return False
 
+def _get_blockers(issue_key: str) -> list:
+    """Retorna lista de issue keys que bloquean a este issue."""
+    issue = jira_wrapper.jira.issue(issue_key, fields="issuelinks")
+    links = issue.get("fields", {}).get("issuelinks", [])
+    blockers = []
+    for link in links:
+        if link.get("type", {}).get("inward") == "is blocked by":
+            blocker_key = link.get("inwardIssue", {}).get("key")
+            blocker_status = link.get("inwardIssue", {}).get("fields", {}).get("status", {}).get("name", "")
+            if blocker_status.lower() not in CLOSED_STATUSES:
+                blockers.append(blocker_key)
+    return blockers
+
 
 def _get_issue_list(jql: str) -> list:
     """Execute a JQL query using jira_wrapper.run() and return the list of issues."""

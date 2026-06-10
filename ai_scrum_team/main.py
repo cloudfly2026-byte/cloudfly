@@ -603,6 +603,19 @@ def compact_sprint_context(sprint_state: dict, sprint_goal: str, jira_backlog_co
     
     return result
 
+def _unblock_dependents(completed_task_id: str):
+    """Cuando una tarea termina, verifica si desbloquea otras."""
+    for k in connector.redis_client.scan_iter("scrum:blocked:*"):
+        task_id = k.split(":")[-1]
+        blockers = json.loads(connector.redis_client.get(k) or "[]")
+        if completed_task_id in blockers:
+            blockers.remove(completed_task_id)
+            if not blockers:
+                # Ya no tiene blockers — encolar ahora
+                connector.redis_client.delete(k)
+                connector.send_task(_pick_least_busy_worker(), task_id)
+            else:
+                connector.redis_client.set(k, json.dumps(blockers), ex=86400)
 
 def run_sprint():
     import threading
