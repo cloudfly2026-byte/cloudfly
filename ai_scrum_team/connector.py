@@ -152,6 +152,9 @@ class ScrumConnector:
     # ── Task Queueing ───────────────────────────────────────────────────────
 
     def send_task(self, worker_id, task_id, blockers: list = None):
+        """
+        Coloca una tarea en la cola privada de un Worker específico.
+        """
         if blockers:
             # Guardar en Redis para retry posterior
             self.redis_client.set(f"scrum:blocked:{task_id}", 
@@ -159,9 +162,6 @@ class ScrumConnector:
             print(f"⏸️ Tarea {task_id} bloqueada por {blockers}. No se encola.")
             return False
 
-     """
-        Coloca una tarea en la cola privada de un Worker específico.
-        """
         try:    
             # Poner el lock de la tarea en Redis mapeándolo al worker
             self.redis_client.set(f"scrum:task:{task_id}", worker_id, ex=43200) # Lock por 12 horas
@@ -426,4 +426,3 @@ class ScrumConnector:
         except Exception as e:
             print(f"[!] Error al obtener clave saludable: {e}")
             return keys[0]
-

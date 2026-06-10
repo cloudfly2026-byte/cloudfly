@@ -1544,6 +1544,8 @@ def run_sprint():
                     try:
                         connector.redis_client.delete(f"scrum:task:{key}")
                         connector.redis_client.delete(f"scrum:status:{key}")
+                        connector._unblock_dependents(f"{key}")    
+                        
                     except Exception:
                         pass
                 continue
@@ -1989,7 +1991,7 @@ Historial de Comentarios:
                 initial_feature_set = True
                 current_sprint_goal = user_feature
             else:
-                current_sprint_goal = "Crear un PBX FreeSWITCH en docker con 2 extensiones"
+                current_sprint_goal = ""
         else:
             print(f"\n✅ [🤖 Scrum Master]: ¡No hay bugs ni tareas pendientes! Todo ha quedado en estado 'Done'.")
             print("==================================================")
