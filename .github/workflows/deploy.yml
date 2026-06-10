@@ -173,9 +173,8 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: '109.205.182.94'
-          username: 'root'
+          username: ${{ secrets.VPS_SSH_USER || 'deploy' }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          password: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
             if [ ! -d "/apps/cloudfly/.git" ]; then
@@ -193,3 +192,4 @@ jobs:
             docker compose -f docker-compose-full-vps.yml pull
             docker compose -f docker-compose-full-vps.yml up -d
             docker image prune -f
+

@@ -1,0 +1,46 @@
+name: Security Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  static-security-checks:
+    name: Static Security Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Block known hardcoded production secrets in executable config
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            docker-compose-full-vps.yml
+            .github/workflows/deploy.yml
+            backend_new/src/main/resources/application.yml
+            backend_new/src/main/java/com/app/AppConfig.java
+            backend_new/src/main/java/com/app/config/JwtAuthenticationFilter.java
+          )
+          if grep -InE 'widowmaker|Elian2020|chatbot_pass|cloudfly-prod-secret-change-later|cloudfly_ai_secret_2026|CAMBIA_ESTA_LLAVE_LARGA_Y_UNICA|cambia_esta_llave_para_n8n' "${files[@]}"; then
+            echo "Hardcoded secret-like value found in executable config. Move it to environment variables or GitHub Secrets."
+            exit 1
+          fi
+
+      - name: Block unsafe auth bypass patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            backend_new/src/main/java/com/app/AppConfig.java
+            backend_new/src/main/java/com/app/config/JwtAuthenticationFilter.java
+          )
+          if grep -InE 'ai_secret|headers\(\)\.values\(\).*contains|new SimpleGrantedAuthority\("ROLE_ADMIN"\)' "${files[@]}"; then
+            echo "Unsafe auth bypass pattern found in security configuration."
+            exit 1
+          fi

@@ -145,7 +145,7 @@ quality_assurance = Task(
     2. FRONTEND E2E TESTING WITH CHROME DEVTOOLS (CDP):
        - If the sprint feature involves frontend changes in the active Next.js/React workspace (frontend_new), you MUST perform browser-based E2E tests using the Chrome DevTools Protocol (CDP) tools.
        - WORKFLOW for each frontend test scenario:
-         a. Use 'Chrome DevTools: Navigate' to open the target page (e.g. 'http://localhost:3000/dashboard').
+         a. Use 'Chrome DevTools: Navigate' to open the target page (e.g. 'http://localhost:3000/'). if need login use: manager / Password123!
          b. Use 'Chrome DevTools: Inject Log Interceptor' to start capturing console output.
          c. Use 'Chrome DevTools: Network Requests' to inject the network interceptor before interacting.
          d. Use 'Chrome DevTools: Evaluate JS' to interact with the UI: fill forms, click buttons, verify DOM elements, check localStorage values (e.g. 'activeTenantId', 'activeCompanyId').

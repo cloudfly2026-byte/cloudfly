@@ -1216,10 +1216,14 @@ setTimeout(() => {{
         return f"❌ Error en Chrome DevTools Screenshot: {str(e)}"
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Tool Group Factories
+# ══════════════════════════════════════════════════════════════════════════════
+
 def get_jira_tools() -> list:
     """
-    Returns a list of all Jira-related tools for use with CrewAI agents.
-    Includes: JQL query, create issue, comment, transition, read issue, and get projects.
+    Returns only Jira tools. Use for agents that ONLY need Jira access
+    (Product Owner, Scrum Master, etc).
     """
     return [
         jql_query,
@@ -1228,4 +1232,56 @@ def get_jira_tools() -> list:
         transition_issue,
         read_jira_issue,
         get_projects,
+    ]
+
+
+def get_dev_tools() -> list:
+    """
+    Returns the full developer toolkit: Jira + filesystem + terminal + Docker + web search.
+    Use for Software Developer, Frontend Developer, DevOps, System Architect, and QA.
+    """
+    return [
+        # ── Jira ──────────────────────────────────────────────────────────
+        jql_query,
+        create_issue,
+        comment_issue,
+        transition_issue,
+        read_jira_issue,
+        get_projects,
+        # ── Filesystem ────────────────────────────────────────────────────
+        write_code_to_file,
+        read_code_file,
+        list_directory_files,
+        # ── Terminal / execution ──────────────────────────────────────────
+        execute_console_command,
+        execute_command_and_wait,
+        check_background_task,
+        wait_seconds,
+        # ── Docker ────────────────────────────────────────────────────────
+        docker_manage,
+        # ── Network & endpoints ───────────────────────────────────────────
+        test_endpoint,
+        # ── VPS / SSH ─────────────────────────────────────────────────────
+        execute_vps_ssh_command,
+        # ── Git ───────────────────────────────────────────────────────────
+        commit_code,
+        # ── Web search ────────────────────────────────────────────────────
+        web_search,
+        # ── Human escalation ──────────────────────────────────────────────
+        ask_human_clarification,
+    ]
+
+
+def get_qa_tools() -> list:
+    """
+    Returns the QA toolkit: full dev tools + Chrome DevTools for E2E browser testing.
+    """
+    return get_dev_tools() + [
+        chrome_navigate,
+        chrome_screenshot,
+        chrome_evaluate,
+        chrome_get_console_logs,
+        chrome_inject_log_interceptor,
+        chrome_network_requests,
+        chrome_screenshot_and_annotate,
     ]

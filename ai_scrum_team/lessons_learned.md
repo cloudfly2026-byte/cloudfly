@@ -585,3 +585,28 @@ Este archivo registra errores históricos y lecciones aprendidas para que el equ
 ## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-09 19:19:20) - Área: Resume-CLOUD-321
 *   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
 *   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 13:37:20) - Área: Resume-CLOUD-321
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 14:39:32) - Área: CrewExecution
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 15:37:25) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 15:45:10) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 16:37:15) - Área: Resume-CLOUD-339
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.

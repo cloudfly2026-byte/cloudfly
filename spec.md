@@ -1,322 +1,196 @@
-# CloudFly AI - Especificación Técnica
+# CloudFly AI - Especificacion Tecnica
 
-## Visión General
-CloudFly AI es una plataforma SaaS de automatización empresarial todo-en-uno diseñada para empoderar a las empresas con IA-driven automation. Centraliza multi-canal communication, sales pipelines, intelligent customer engagement, y back-office operations en un ecosistema digital unificado.
+## Vision General
+CloudFly AI es una plataforma SaaS multi-tenant de automatizacion empresarial. Centraliza CRM, ventas, marketing, mensajeria, agenda, IA conversacional y operaciones administrativas en un ecosistema modular orientado a empresas.
 
 ### Capacidades Principales
-- **CRM & Ventas**: Pipelines visuales Kanban, gestión de órdenes, presupuestos, facturación
-- **Marketing Automatizado**: Campañas multi-canal (WhatsApp, Facebook Messenger), segmentación inteligente de audiencias, analítica en tiempo real
-- **Motor de IA Conversacional**: Chatbots personalizables, agentes de IA autónomos para calificación de leads, cierre de ventas y soporte al cliente
-- **Agenda & Calendario**: Reserva de citas en tiempo real y sincronización de calendario
-- **SaaS Multi-tenant**: Modelo de aislamiento jerárquico de datos tenant/company
-- **POS (Point of Sale)**: Aplicación de escritorio basada en Java
-- **Integración DIAN**: Facturación electrónica para la autoridad tributaria colombiana
-- **Nómina & Contabilidad**: Nómina electrónica colombiana completa, libro mayor, balance general
+- CRM y ventas: pipelines Kanban, contactos, categorias, productos, cotizaciones, ordenes e invoices.
+- Marketing automatizado: campanas multicanal, listas de envio, segmentacion y metricas.
+- Motor de IA conversacional: agentes de ventas/soporte, memoria semantica y automatizacion de respuestas.
+- Agenda y calendario: reserva de citas y sincronizacion de eventos.
+- SaaS multi-tenant: aislamiento jerarquico por tenant/customer y company.
+- POS: aplicacion de escritorio Java y alternativa Python.
+- Integracion DIAN: facturacion electronica colombiana.
+- Nomina y contabilidad: modulos para operaciones financieras colombianas.
+
+## Estado del Repositorio
+La rama local revisada esta en `main...origin/main`. El arbol esta casi limpio, con `webTemplates.zip` sin versionar. Git requiere usar `safe.directory` para operar desde el usuario sandbox.
+
+### Archivos compose reales en la raiz
+- `docker-compose-full-vps.yml`: stack principal para VPS/produccion.
+- `docker-compose-local.yml`: stack de desarrollo local disponible actualmente.
+
+No existen actualmente en la raiz:
+- `docker-compose.yml`
+- `docker-compose-full.yml`
+- `docker-compose-full-local.yml`
+- `docker-compose-monitoring.yml`
 
 ## Arquitectura del Sistema
 
-### Stack Tecnológico
-
-#### Backend Principal (API)
-| Tecnología | Detalles |
+### Backend Principal
+| Area | Detalle |
 |---|---|
-| **Lenguaje** | Java 17 |
-| **Framework** | Spring Boot 3.4.0 con **WebFlux** (reactive/no-blocking) |
-| **Acceso a BD** | Spring Data R2DBC (reactive) para MySQL |
-| **Herramienta de Build** | Maven (pom.xml) |
-| **Autenticación** | JWT (custom `JwtProvider`, `JwtAuthenticationFilter`) |
-| **Validación** | Spring Boot Starter Validation |
-| **Lombok** | Sí (reducción de boilerplate) |
+| Lenguaje | Java 17 |
+| Framework | Spring Boot 3.4 con WebFlux |
+| Persistencia | Spring Data R2DBC para MySQL |
+| Build | Maven |
+| Seguridad | JWT custom (`JwtProvider`, `JwtAuthenticationFilter`) y Spring Security WebFlux |
+| Mensajeria | Kafka |
 
-#### Frontend (Dashboard)
-| Tecnología | Detalles |
+El backend actual de referencia es `backend_new/`. El directorio `backend/` conserva backend original y componentes historicos/DIAN.
+
+### Frontend Dashboard
+| Area | Detalle |
 |---|---|
-| **Framework** | Next.js 14.2.5 (App Router) |
-| **Lenguaje** | TypeScript 5.5.4 |
-| **Librería UI** | MUI (Material UI) v6, Emotion styled components |
-| **Gestión de Estado** | Redux Toolkit + Redux |
-| **Estilos** | TailwindCSS 3.4.6, PostCSS |
-| **Gráficos** | ApexCharts, Recharts |
-| **Formularios** | React Hook Form, Formik, Yup/Valibot validation |
-| **Tablas** | TanStack React Table |
-| **Auth** | NextAuth.js 4.24.7 |
-| **Tiempo Real** | Socket.IO client |
-| **Editor Enriquecido** | Tiptap editor |
-| **Calendario** | FullCalendar |
-| **Mapas** | Mapbox GL |
-| **Drag & Drop** | FormKit drag-and-drop, React DnD |
-| **PDF** | jsPDF, html2pdf, react-pdf-tailwind |
-| **Gestor de Paquetes** | npm (con pnpm-lock para algunos sub-proyectos) |
+| Framework | Next.js 14.2.5 App Router |
+| Lenguaje | TypeScript |
+| UI | MUI v6, Emotion, TailwindCSS |
+| Estado | Redux Toolkit |
+| Auth | NextAuth.js 4.24.7 |
+| Tiempo real | Socket.IO client |
 
-#### Mobile App
-| Tecnología | Detalles |
-|---|---|
-| **Framework** | React Native con **Expo** (v54) |
-| **Navegación** | Expo Router, React Navigation (tabs, drawer) |
-| **Estilos** | NativeWind (Tailwind para React Native) |
-| **UI** | React Native Paper (Material Design) |
-| **Estado** | Redux Toolkit |
-| **Tiempo Real** | Socket.IO client |
-| **HTTP** | Axios |
+El frontend actual de referencia para despliegue es `frontend_new/`.
 
-#### IA / Machine Learning
-| Componente | Tecnología |
-|---|---|
-| **Agente de IA** | Python, OpenAI API (`gpt-4o-mini`), Groq, OpenRouter (pool multi-LLM) |
-| **Base de Datos Vectorial** | Qdrant + PostgreSQL con pgvector |
-| **Memoria Semántica** | Cliente Qdrant, Chroma/HuggingFace |
-| **Cola de Mensajes** | Apache Kafka (event bus para comunicación de IA) |
-| **Tipos de Agentes IA** | Agente de ventas, agente de soporte, trabajador vectorial |
-| **Marketing IA** | Equipo de marketing basado en Python con agentes estilo CrewAI |
+### Mobile
+- React Native con Expo.
+- Expo Router y React Navigation.
+- Redux Toolkit, Axios y Socket.IO client.
 
-#### Comunicación en Tiempo Real
-| Componente | Tecnología |
-|---|---|
-| **Servicio de Socket Chat** | Node.js, Socket.IO, Express, Redis, KafkaJS, MySQL |
-| **WhatsApp** | Evolution API (integración empresarial WhatsApp, Node.js/TypeScript) |
-| **Chatwoot** | Plataforma completa de engagement al cliente Ruby on Rails (incluido como submódulo) |
+### IA y Automatizacion
+- `ai-agent/`: servicio Python para agentes conversacionales, OpenAI, Qdrant, Redis, MySQL y Kafka.
+- `marketing_agent/` y `marketing_team_ai/`: agentes de marketing automatizado.
+- `lead-generator/` y `lead-scrapper-google/`: extraccion automatizada de leads.
+- Qdrant y PostgreSQL/pgvector para memoria semantica.
 
-#### Infraestructura y DevOps
-| Tecnología | Detalles |
-|---|---|
-| **Containerización** | Docker, Docker Compose (múltiples archivos compose) |
-| **Proxy Inverso** | Traefik v3.6.7 (con SSL automático vía Let's Encrypt) |
-| **Orquestación** | Docker Compose |
-| **Monitoreo** | Prometheus + Grafana (en monitoring/) |
-| **Secretos** | Archivos `.env` para configuración |
+### Comunicacion
+- `chat-socket-service/`: Node.js, Socket.IO, Express, Redis, KafkaJS y MySQL.
+- `evolution-api/`: integracion WhatsApp.
+- `chatwoot/`: plataforma de engagement al cliente incluida en el repositorio.
 
-#### Bases de Datos
-| Base de Datos | Propósito |
-|---|---|
-| **MySQL 8.0** | Base de datos maestra multi-tenant principal (`cloud_master`) |
-| **PostgreSQL 15** | Datos de chatbot/vector (con extensión pgvector) |
-| **Redis** | Caché, gestión de sesiones, pub/sub en tiempo real |
-| **Qdrant** | Base de datos vectorial para memoria semántica de IA |
+### Infraestructura
+- Docker y Docker Compose.
+- Traefik como proxy inverso con TLS.
+- MySQL 8.0 como base principal multi-tenant.
+- Redis para cache/sesiones/pub-sub.
+- PostgreSQL 15/pgvector y Qdrant para IA.
+- Kafka/Zookeeper como bus de eventos.
 
-#### Bus de Eventos
-- **Apache Kafka** (Confluent CP 7.4.0) -- espina dorsal de comunicación asíncrona entre microservicios
+## Estructura Principal
 
-#### Microservicios Adicionales
-| Servicio | Lenguaje/Framework | Propósito |
-|---|---|---|
-| **Servicio de Facturación** | Go 1.21 (Fiber, Kafka-go) | Procesamiento de pagos con integración Wompi |
-| **Servicio de Scheduler** | Java 17 / Spring WebFlux | Calendario & programación de citas |
-| **Servicio de Notificaciones** | Java 17 / Spring Boot | Notificaciones por email & push |
-| **Marketing Worker** | Java 17 / Spring Boot | Ejecución de campañas de marketing |
-| **Servicio de Backup** | PHP (Cliente API de Google) | Operaciones de backup |
-| **Servicio DIAN** | Java (Maven multi-módulo) | Facturación electrónica colombiana |
-| **Agente de Marketing** | Python | Marketing autónomo de Facebook/Ads |
-| **Generador de Leads** | Python | Rasgado automatizado de leads (Apify) |
-| **Rasgador de Leads** | Python | Rasgado de leads de Google/negocios locales |
-| **Agentes Conversacionales** | Python | Bots de Facebook Messenger |
-
-## Estructura del Proyecto
-
-```
+```text
 C:\apps\cloudfly\
-├── .env                          # Configuración global de entorno
-├── .env.local, .env.production, .env.vps  # Sobrescrituras de entorno
-├── README.md                     # Documentación principal del proyecto
-├── CLOUD_SAAS_ARCHITECTURE.md    # Arquitectura de datos multi-tenant
-├── package.json                  # Paquete raíz (utilidades Node.js)
-├── docker-compose.yml            # Compose mínimo (scraper)
-├── docker-compose-full.yml       # Compose completo de producción
-├── docker-compose-full-vps.yml   # Compose completo para VPS (informativo)
-├── docker-compose-local.yml      # Compose para desarrollo local
-├── docker-compose-monitoring.yml # Compose para stack de monitoreo
-├── Dockerfile                    # Dockerfile raíz
-├── traefik/                      # Configuración del proxy inverso Traefik
-│   ├── traefik.yml               # Configuración estática (SSL, entrypoints)
-│   └── dynamic_conf.yml
-│
-├── backend/                      # BACKEND ORIGINAL (Spring Boot 3.4, JPA, servlet)
-│   ├── pom.xml                   # Maven con Spring Boot 3.4.0
-│   ├── src/main/java/com/app/starter1/
-│   └── src/main/java/co/cloudfly/erp/dian/  # DIAN electronic invoicing
-│
-├── backend_new/                  # BACKEND NUEVO/ACTUAL (Spring Boot 3.4, WebFlux, R2DBC)
-│   ├── pom.xml                   # Stack reactivo
-│   └── src/main/java/com/app/
-│       ├── controllers/          # Controladores REST
-│       ├── services/             # Lógica de negocio
-│       ├── persistence/services/ # Capa de persistencia de datos
-│       ├── config/               # Config Web, R2DBC, Kafka, JWT, CORS
-│       ├── events/               # Productores de eventos Kafka
-│       ├── util/                 # JWT, etc.
-│       └── dto/                  # Objetos de transferencia de datos
-│
-├── frontend/                     # FRONTEND ORIGINAL (Next.js 14)
-│   ├── package.json
-│   ├── src/
-│   │   ├── app/                  # Páginas del App Router de Next.js
-│   │   ├── views/                # Vistas de rutas (apps, dashboards, pages, settings)
-│   │   ├── components/           # Componentes reutilizables
-│   │   ├── @core/                # Marco de UI central
-│   │   ├── @layouts/             # Componentes de layout
-│   │   ├── @menu/                # Componentes de menú
-│   │   ├── redux-store/          # Gestión de estado Redux
-│   │   ├── services/             # Capa de servicio API
-│   │   ├── hooks/                # Hooks personalizados
-│   │   ├── utils/                # Funciones de utilidad
-│   │   ├── configs/              # Configuración de la aplicación
-│   │   └── types/                # Tipos de TypeScript
-│   └── public/                   # Assets estáticos
-│
-├── frontend_new/                 # FRONTEND NUEVO/ACTUAL (Next.js 14) - Ruta al frontend de la aplicación basado en docker-compose-full-vps.yml (solo informativo)
-│   ├── package.json
-│   └── src/
-│       ├── views/                # Organizado por módulo:
-│       │   ├── dashboard/        #   Vistas de dashboard
-│       │   ├── apps/             #   Módulos de aplicaciones
-│       │   ├── ventas/           #   Módulo de ventas
-│       │   ├── marketing/        #   Módulo de marketing
-│       │   ├── administracion/   #   Módulo de administración
-│       │   ├── automation/       #   Módulo de automatización
-│       │   └── pages/            #   Páginas estáticas
-│       ├── redux/                # Gestión de estado Redux
-│       ├── services/             # Capa de servicio API
-│       └── ... (similar layout to frontend/)
-│
-├── mobile/                       # App móvil React Native / Expo
-│   ├── app/                      # Páginas de Expo Router
-│   └── src/                      # Componentes, hooks, etc.
-│
-├── ai-agent/                     # Servicio de Agente de IA Python
-│   ├── agents/
-│   │   ├── sales_agent.py        # IA de ventas y calificación de leads
-│   │   └── support_agent.py      # IA de soporte al cliente
-│   ├── domain/                   # Modelos de dominio
-│   ├── infrastructure/           # Adaptadores de DB, Redis, Kafka
-│   ├── application/              # Lógica de aplicación
-│   ├── app.py                    # Aplicación principal del agente
-│   ├── vector_worker.py          # Trabajador de embeddings vectoriales
-│   ├── kafka_consumer.py         # Consumidor de eventos Kafka
-│   ├── kafka_producer.py         # Productor de eventos Kafka
-│   ├── redis_client.py           # Cliente Redis para caché
-│   └── requirements.txt          # Dependencias de Python (OpenAI, Qdrant, Kafka, etc.)
-│
-├── chat-socket-service/          # Servicio de chat en tiempo real Node.js
-│   ├── src/
-│   └── package.json              # Socket.IO, Express, KafkaJS, Redis
-│
-├── billing-service/              # Microservicio de facturación Go
-│   ├── cmd/                      # Punto de entrada principal
-│   ├── internal/                 # Lógica de negocio
-│   ├── pkg/                      # Paquetes compartidos
-│   ├── go.mod                    # Go 1.21, Fiber, Kafka, Resty
-│   └── Dockerfile
-│
-├── scheduler_service/            # Servicio Java Spring Boot scheduler
-│   ├── pom.xml                   # WebFlux + R2DBC
-│   └── src/main/resources/application.yml
-│
-├── notifications/                # Servicio Java Spring Boot de notificaciones
-│   ├── pom.xml                   # Spring Mail, Kafka
-│   └── src/
-│
-├── marketing-worker/             # Servicio Java Spring Boot de marketing worker
-│   ├── pom.xml
-│   └── src/
-│
-├── marketing_agent/              # Agente de marketing autónomo Python
-│   ├── main.py
-│   ├── facebook_client.py        # Integración API de Facebook Ads
-│   ├── ai_ad_service.py          # Gestión de anuncios impulsada por IA
-│   └── models/
-│
-├── marketing_team_ai/            # Equipo de marketing multi-agente Python (estilo CrewAI)
-│   ├── agents/                   # Agentes de marketing individuales
-│   ├── crews/                    # Equipos de agentes
-│   ├── flows/                    # Flujos de trabajo
-│   ├── kafka/                    # Integración Kafka
-│   └── services/                 # Servicios compartidos
-│
-├── lead-generator/               # Servicio de generación de leads Python
-│   ├── app/
-│   └── requirements.txt
-│
-├── lead-scrapper-google/         # Rasgador de leads de Google Python
-│   ├── Dockerfile
-│   └── ...
-│
-├── evolution-api/                # WhatsApp Evolution API (Node.js/TypeScript)
-│   ├── src/
-│   ├── prisma/                   # ORM Prisma (PostgreSQL/MySQL)
-│   └── package.json
-│
-├── chatwoot/                     # Plataforma completa Chatwoot engagement al cliente (Ruby on Rails)
-│   ├── app/                      # App de Rails
-│   ├── Gemfile                   # Dependencias de Ruby
-│   └── ...
-│
-├── cloudfly-dian-service/        # Servicio DIAN de facturación electrónica colombiana (Java multi-módulo)
-│   ├── dian-common/              # Biblioteca DIAN compartida
-│   ├── dian-core/                # Servicio DIAN principal
-│   └── pom.xml
-│
-├── cloudfly-landing-repo/        # Página de aterrizaje (Vite + TypeScript)
-│   ├── src/
-│   ├── vite.config.ts
-│   └── wrangler.jsonc            # Configuración de Cloudflare Workers
-│
-├── POS/                          # Aplicación de escritorio Java POS
-│   ├── pom.xml                   # JavaFX
-│   └── src/main/resources/fxml/  # Layouts FXML (pantallas de POS)
-│
-├── pos-python/                   # Alternativa de POS Python
-│
-├── backup-service/               # Servicio de backup PHP (API de Google)
-│   ├── public/
-│   └── composer.json             # Dependencias PHP (Cliente API de Google, Guzzle)
-│
-├── n8n/                          # Configuración de automatización de workflows n8n
-├── terraform/                    # Infraestructura como Código
-├── monitoring/                   # Stack de monitoreo Prometheus + Grafana
-├── scripts/                      # Scripts de utilidad
-├── tests/                        # Archivos de prueba
-├── docs/                         # Documentación
-├── certs/                        # Certificados SSL
-└── developmentAI/                # Configuraciones de desarrollo VoIP/IA FreeSWITCH
-
-## Entrega y Despliegue
-La entrega del proyecto y su despliegue se gestiona de manera automática al realizar un push a la rama `main` del repositorio.
+|-- backend_new/              # Backend actual Spring WebFlux/R2DBC
+|-- backend/                  # Backend original y componentes historicos
+|-- frontend_new/             # Dashboard actual Next.js
+|-- frontend/                 # Frontend original
+|-- mobile/                   # App movil React Native/Expo
+|-- ai-agent/                 # Agente conversacional Python
+|-- chat-socket-service/      # Servicio realtime Node.js
+|-- billing-service/          # Servicio de facturacion Go
+|-- scheduler_service/        # Servicio scheduler Java
+|-- notifications/            # Servicio notificaciones Java
+|-- marketing-worker/         # Worker marketing Java
+|-- marketing_agent/          # Agente marketing Python
+|-- marketing_team_ai/        # Equipo multi-agente marketing
+|-- lead-generator/           # Generador de leads Python
+|-- lead-scrapper-google/     # Extraccion leads Google
+|-- evolution-api/            # WhatsApp Evolution API
+|-- chatwoot/                 # Plataforma engagement Rails
+|-- cloudfly-dian-service/    # Servicio DIAN Java multi-modulo
+|-- cloudfly-storefront/      # Storefront Go
+|-- cloudfly-landing-repo/    # Landing Vite/TypeScript
+|-- POS/                      # POS Java
+|-- pos-python/               # POS Python
+|-- backup-service/           # Servicio backup PHP
+|-- n8n/                      # Automatizacion workflows
+|-- terraform/                # Infraestructura como codigo
+|-- monitoring/               # Monitoreo
+|-- scripts/                  # Utilidades
+|-- tests/                    # Pruebas
+|-- docs/                     # Documentacion
+|-- traefik/                  # Config proxy inverso
+|-- docker-compose-full-vps.yml
+|-- docker-compose-local.yml
+|-- package.json
+|-- README.md
+|-- spec.md
+```
 
 ## Desarrollo Local
 
-Para el desarrollo local se utiliza una arquitectura híbrida donde el frontend se ejecuta de manera nativa y los servicios backend corren sobre Docker:
-
-1. **Frontend**: Se corre localmente desde la carpeta `frontend_new` con:
-   ```bash
-   npm run dev
-   ```
-   Este servidor de desarrollo local se conecta a `localhost:8080` (el servicio de API backend ejecutándose en Docker).
-
-2. **Backend y Servicios**: Se ejecutan en Docker local usando un archivo `docker-compose-full-local.yml` con las siguientes adaptaciones:
-   - **Sin Traefik**: Se expone cada puerto directamente (ej. `backend-api` en `8080:8080`, `evolution-api` en `8081:8080`, `mysql` en `3306:3306`, `kafka` en `9092:9092`).
-   - **Perfil de Desarrollo**: Variable `SPRING_PROFILES_ACTIVE=development`.
+### Frontend
+Ejecutar desde `frontend_new/`:
 
 ```bash
-# Levantar servicios Docker (excepto frontend)
-docker-compose -f docker-compose-full-local.yml up -d
+npm install
+npm run dev
 ```
 
-## Pruebas de Desarrollo E2E
+El frontend debe apuntar al backend local definido en variables `NEXT_PUBLIC_*`.
 
-### Herramientas de Pruebas en Navegador
-El equipo **`ai_scrum_team`** cuenta con herramientas de automatización de navegador integradas:
-- **Playwright / MCP / `chrome-devtools-mcp`**: Permiten interactuar y realizar pruebas dinámicas directamente sobre la interfaz de usuario en el navegador web local.
+### Backend y servicios
+El archivo compose local disponible actualmente es:
 
-### Credenciales de Prueba
-Para pruebas automáticas o manuales:
-- **Usuario:** `manager`
-- **Contraseña:** `Password123!`
+```bash
+docker compose -f docker-compose-local.yml up -d
+```
 
-### Inspección de Logs
-- **Ver logs del backend API en tiempo real:**
-  ```bash
-  docker-compose -f docker-compose-full-local.yml logs -f backend-api
-  ```
+Antes de documentar otro flujo, crear o restaurar el compose correspondiente y mantener esta spec sincronizada.
 
+## Entrega y Despliegue
+El despliegue actual se ejecuta por GitHub Actions al hacer push a `main`, usando `.github/workflows/deploy.yml`. El workflow construye imagenes, publica en GHCR y despliega en el VPS mediante SSH.
 
+## Politica de Secretos
+Los secretos no deben estar hardcodeados en archivos versionados. Deben vivir en uno de estos lugares:
+- GitHub Actions Secrets para CI/CD.
+- Variables de entorno del VPS.
+- Archivos `.env` no versionados con permisos restringidos.
+- Un gestor de secretos cuando se adopte formalmente.
 
+Archivos versionados como `docker-compose-full-vps.yml`, `application.yml`, workflows y documentacion solo deben contener nombres de variables o placeholders no sensibles.
 
+## Tareas de Seguridad Pendientes
+
+### P0 - Bloqueantes antes de produccion
+1. Eliminar el bypass global por secreto fijo en `backend_new/src/main/java/com/app/AppConfig.java` y `backend_new/src/main/java/com/app/config/JwtAuthenticationFilter.java`.
+2. Remover autenticacion por query string (`ai_secret`) y cualquier busqueda del secreto en todos los headers.
+3. Sustituir el secreto interno hardcodeado `cloudfly_ai_secret_2026` por una variable de entorno fuerte, rotada y comparada solo desde un header dedicado.
+4. Restringir el acceso interno de IA a rutas especificas y con permisos minimos; no debe otorgar `ROLE_ADMIN` global.
+5. Rotar credenciales expuestas o hardcodeadas en compose/documentos: MySQL, Redis, Postgres, NextAuth, N8N, Evolution API y cualquier secreto similar.
+6. Mover secretos de `docker-compose-full-vps.yml` a variables obligatorias sin defaults sensibles.
+7. Desactivar `/actuator/**` publico en produccion o limitarlo por red/autenticacion.
+8. Cambiar `management.endpoint.health.show-details` para que no exponga detalles publicos en produccion.
+9. Dejar logs productivos sin `TRACE/DEBUG` para `org.springframework.*`, seguridad, web y HTTP.
+10. Detener logging de headers completos en `JwtAuthenticationFilter`; nunca loguear `Authorization`, cookies ni tokens.
+
+### P1 - Alto impacto
+1. Revisar rutas `permitAll()` en `AppConfig.java`, especialmente `/internal/**`, `/api/billing/**`, `/public/invoices/**` y webhooks.
+2. Validar que cada endpoint multi-tenant derive `tenant/company` del JWT y no de parametros manipulables.
+3. Corregir controladores que usan fallback a `tenantId=1` o `ROLE_ADMIN` cuando falta contexto autenticado.
+4. Reforzar CORS para produccion y separar origenes locales mediante perfil `development`.
+5. Revisar exposicion de puertos del compose VPS; publicar solo lo que deba salir por Traefik o administracion protegida.
+6. Endurecer Kafka si se expone externamente: evitar PLAINTEXT publico y usar autenticacion/TLS si cruza redes.
+7. Cambiar deploy SSH para usar usuario dedicado, sin password, con permisos minimos y sin login root directo.
+8. Eliminar `password: ${{ secrets.VPS_SSH_KEY }}` del workflow de deploy.
+9. Reemplazar el bloque `rm -rf /apps/cloudfly` por un flujo idempotente y acotado.
+10. Revisar documentacion interna que contenga secretos historicos y limpiar/rotar lo que aplique.
+
+### P2 - Higiene y mantenibilidad
+1. Crear una suite minima de pruebas de seguridad para autenticacion, roles y aislamiento tenant/company.
+2. Agregar checks CI para secret scanning y dependency audit.
+3. Corregir `package.json` raiz: reemplazar el script `test` placeholder por pruebas reales o mover utilidades a paquetes especificos.
+4. Revisar dependencia raiz `lodash` `^4.18.1`; usar una version valida y confiable o eliminarla si no se usa.
+5. Mantener esta spec como documento operativo: rutas reales, comandos reales y sin credenciales reutilizables.
+6. Normalizar terminos: usar "extraccion de leads" o "scraper" en lugar de "rasgado/rasgador".
+7. Documentar perfiles `development`, `staging` y `production` con diferencias de seguridad.
+
+## Pruebas Recomendadas
+- Tests unitarios del filtro JWT y configuracion Spring Security.
+- Tests de integracion para rutas protegidas y `permitAll`.
+- Tests multi-tenant para confirmar que un usuario no lee/modifica datos de otro tenant/company.
+- Smoke test de compose local.
+- Secret scan en CI y local antes de merge.
+
+## Credenciales de Prueba
+No publicar credenciales reutilizables en esta spec. Si se requieren usuarios de prueba, deben generarse por seed local y documentarse en `.env.example` o en guias internas no productivas, dejando claro que no aplican a staging ni produccion.

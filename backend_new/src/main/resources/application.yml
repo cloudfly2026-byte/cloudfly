@@ -23,7 +23,7 @@ management:
         include: health, prometheus, metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when_authorized
     prometheus:
       enabled: true
   metrics:
@@ -34,16 +34,20 @@ management:
 logging:
   level:
     root: INFO
-    com.app: DEBUG
-    org.springframework.data.r2dbc: DEBUG
-    io.asyncer.r2dbc.mysql: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: TRACE
-    org.springframework.http: TRACE
+    com.app: INFO
+    org.springframework.data.r2dbc: WARN
+    io.asyncer.r2dbc.mysql: WARN
+    org.springframework.security: WARN
+    org.springframework.web: INFO
+    org.springframework.http: INFO
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 86400000 # 1 día en ms
+  expiration: 86400000 # 1 dia en ms
+
+internal:
+  ai:
+    secret: ${AI_INTERNAL_SECRET:}
 
 evolution:
   api:
@@ -69,7 +73,6 @@ facebook:
       id: ${FACEBOOK_LOGIN_APP_ID:}
       secret: ${FACEBOOK_LOGIN_APP_SECRET:}
 
-# CLOUD-279/CLOUD-280: OAuth Configuration
 google:
   client:
     id: ${GOOGLE_CLIENT_ID:}

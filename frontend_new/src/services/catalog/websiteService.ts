@@ -1,100 +1,77 @@
-/**
- * Website Service - API client for the Online Catalog Module
- * Base URL: /api/v1/website
- */
+// CLOUD-340 - Servicio HTTP para el módulo de Catálogo en Línea
+// Consume los endpoints del WebsiteController (Backend API, puerto 8080)
 
-import axiosInstance from '@/utils/axiosInstance';
+import axios from 'axios';
+import type {
+  WebsiteStatusResponse,
+  WebsiteMetrics,
+  SubdomainValidation,
+  WebsiteCreateRequest,
+  WebsiteCreateResponse,
+} from '@/types/catalog';
 
-export interface WebsiteResponse {
-  id: number | null;
-  siteName: string;
-  description: string;
-  status: string;
-  domain: string;
-  template: string;
-  theme: number;
-  domainId: number;
-  tenantId: number;
-  companyId: number;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export interface WebsiteCreateRequest {
-  subdomain: string;
-  siteName: string;
-  description?: string;
-  tenantId?: number;
-  companyId?: number;
-}
+const apiClient = axios.create({
+  baseURL: `${API_BASE}/api/v1/website`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export interface WebsiteMetricsDTO {
-  yearlyVisits: { month: string; visits: number }[];
-  origins: { source: string; percentage: number }[];
-  topPages: { path: string; views: number }[];
-  bounceRate: number;
-}
+// Interceptor para agregar token de autenticación Bearer
+apiClient.interceptors.request.use((config) => {
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-const API_BASE = '/api/v1/website';
-
-export const websiteService = {
-  /**
-   * Check if a website exists for the current user's company.
-   */
-  getWebsiteStatus: async (): Promise<WebsiteResponse | null> => {
-    try {
-      const response = await axiosInstance.get<WebsiteResponse>(`${API_BASE}/status`);
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return null;
+// Interceptor para manejo de errores de autenticación
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
       }
-      throw error;
     }
-  },
+    return Promise.reject(error);
+  }
+);
 
-  /**
-   * Create a new website catalog.
-   */
-  createWebsite: async (data: WebsiteCreateRequest): Promise<WebsiteResponse> => {
-    const response = await axiosInstance.post<WebsiteResponse>(`${API_BASE}/create`, data);
+export default {
+  async getStatus(): Promise<WebsiteStatusResponse> {
+    const response = await apiClient.get('/status');
     return response.data;
   },
 
-  /**
-   * Toggle website status (ENABLED / DISABLED).
-   */
-  toggleStatus: async (websiteId: number, status: string): Promise<WebsiteResponse> => {
-    const response = await axiosInstance.put<WebsiteResponse>(
-      `${API_BASE}/toggle?websiteId=${websiteId}&status=${status}`
+  async validateSubdomain(subdomain: string): Promise<SubdomainValidation> {
+    const response = await apiClient.get(
+      `/validate-subdomain?subdomain=${encodeURIComponent(subdomain)}`
     );
     return response.data;
   },
 
-  /**
-   * Delete a website.
-   */
-  deleteWebsite: async (websiteId: number): Promise<void> => {
-    await axiosInstance.delete(`${API_BASE}/delete?websiteId=${websiteId}`);
-  },
-
-  /**
-   * Get demo metrics for the website dashboard.
-   */
-  getMetrics: async (websiteId: number): Promise<WebsiteMetricsDTO> => {
-    const response = await axiosInstance.get<WebsiteMetricsDTO>(
-      `${API_BASE}/metrics?websiteId=${websiteId}`
-    );
+  async createWebsite(
+    data: WebsiteCreateRequest
+  ): Promise<WebsiteCreateResponse> {
+    const response = await apiClient.post('/create', data);
     return response.data;
   },
 
-  /**
-   * Validate subdomain availability.
-   */
-  validateSubdomain: async (subdomain: string): Promise<boolean> => {
-    const response = await axiosInstance.get<{ available: boolean }>(
-      `${API_BASE}/domain/validate?subdomain=${encodeURIComponent(subdomain)}`
-    );
-    return response.data.available;
+  async toggleStatus(enable: boolean): Promise<void> {
+    await apiClient.put('/toggle-status', { enable });
+  },
+
+  async deleteWebsite(): Promise<void> {
+    await apiClient.delete('/delete');
+  },
+
+  async getMetrics(): Promise<WebsiteMetrics> {
+    const response = await apiClient.get('/metrics');
+    return response.data;
   },
 };
-
-export default websiteService;
