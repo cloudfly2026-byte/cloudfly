@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Paper, LinearProgress, Stepper, Step, StepLabel, StepContent } from '@mui/material';
+import { Box, Typography, Paper, LinearProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import ConstructionIcon from '@mui/icons-material/Construction';
 
 const steps = [
   { label: 'Configurando subdominio', description: 'Preparando tu dominio personalizado...' },
-  { label: 'Generando estructura', description: 'Creando las páginas de tu tienda...' },
+  { label: 'Generando estructura', description: 'Creando las paginas de tu tienda...' },
   { label: 'Optimizando rendimiento', description: 'Ajustando velocidad y SEO...' },
-  { label: 'Publicando tienda', description: 'Tu tienda estará lista pronto...' },
+  { label: 'Publicando tienda', description: 'Tu tienda estara lista pronto...' },
 ];
 
 export default function ConstructionView() {
@@ -28,10 +28,10 @@ export default function ConstructionView() {
         </motion.div>
 
         <Typography variant="h4" fontWeight="bold" mb={1}>
-          ¡Tu tienda está en construcción!
+          Tu tienda esta en construccion!
         </Typography>
         <Typography variant="body1" color="text.secondary" mb={4}>
-          Nuestro agente constructor está trabajando en tu tienda. Te notificaremos cuando esté lista.
+          Nuestro agente constructor esta trabajando en tu tienda. Te notificaremos cuando este lista.
         </Typography>
 
         <Box sx={{ maxWidth: 500, mx: 'auto', mb: 4 }}>
@@ -41,26 +41,47 @@ export default function ConstructionView() {
           />
         </Box>
 
-        <Stepper orientation="vertical" activeStep={-1}>
+        <Box component="ol" sx={{ listStyle: 'none', p: 0, m: 0, maxWidth: 500, mx: 'auto', textAlign: 'left' }}>
           {steps.map((step, index) => (
-            <Step key={index} active={false}>
-              <StepLabel
-                StepIconProps={{
-                  sx: { color: 'primary.light' },
+            <Box
+              key={index}
+              component="li"
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 2,
+                mb: 3,
+                pl: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  mt: 0.5,
                 }}
               >
+                <Typography variant="caption" color="primary.contrastText" fontWeight="bold">
+                  {index + 1}
+                </Typography>
+              </Box>
+              <Box>
                 <Typography variant="subtitle1" fontWeight="medium">
                   {step.label}
                 </Typography>
-              </StepLabel>
-              <StepContent>
                 <Typography variant="body2" color="text.secondary">
                   {step.description}
                 </Typography>
-              </StepContent>
-            </Step>
+              </Box>
+            </Box>
           ))}
-        </Stepper>
+        </Box>
       </Paper>
     </motion.div>
   );

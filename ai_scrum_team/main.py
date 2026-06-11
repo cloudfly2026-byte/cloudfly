@@ -97,15 +97,42 @@ load_dotenv()
 import threading
 import time
 
+# ── RPM limits por proveedor ────────────────────────────────────────────
+# NVIDIA free tier: 40 RPM — usamos 30 para tener margen de seguridad.
+# OpenRouter / OpenAI: configurable via LLM_RPM_LIMIT (default 25).
+_PROVIDER_RPM_DEFAULTS = {
+    "nvidia": 30,
+    "openai": 60,
+    "groq": 30,
+    "openrouter": 25,
+}
+
 class LLMRateLimiter:
     def __init__(self, requests_per_minute=25):
+        self._default_rpm = requests_per_minute
         self.delay = 60.0 / requests_per_minute if requests_per_minute > 0 else 0.0
         self.last_call_time = 0.0
         self.lock = threading.Lock()
 
+    def set_rpm_for_provider(self, provider: str):
+        """Ajusta el RPM dinámicamente según el proveedor activo."""
+        rpm = _PROVIDER_RPM_DEFAULTS.get(provider.lower(), self._default_rpm)
+        # Respetar siempre el valor manual de .env si es más conservador
+        env_rpm = int(os.getenv("LLM_RPM_LIMIT", str(rpm)))
+        rpm = min(rpm, env_rpm)
+        new_delay = 60.0 / rpm if rpm > 0 else 0.0
+        if new_delay != self.delay:
+            print(f"⚙️  [Throttler]: RPM ajustado a {rpm} para proveedor '{provider}' (delay={new_delay:.2f}s/req)")
+            self.delay = new_delay
+
     def wait(self, model_name=""):
         if self.delay <= 0.0:
             return
+        # Auto-ajustar RPM si el model_name incluye proveedor (ej: nvidia/...)
+        if "/" in model_name:
+            prov = model_name.split("/", 1)[0].lower()
+            if prov in _PROVIDER_RPM_DEFAULTS:
+                self.set_rpm_for_provider(prov)
         with self.lock:
             now = time.time()
             elapsed = now - self.last_call_time
@@ -502,6 +529,9 @@ def compact_with_owl_alpha(raw_context: str, label: str = "contexto") -> str:
         f"Solo devuelve el resumen, sin introducciones.\n\n"
         f"CONTEXTO:\n{raw_context[:12000]}\n\nRESUMEN CONCISO:"
     )
+
+    # Respetar el rate limit global antes de llamar al API directamente
+    global_rate_limiter.wait(llm_model)
 
     t_start = time.time()
     try:

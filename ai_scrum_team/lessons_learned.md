@@ -760,3 +760,268 @@ Este archivo registra errores históricos y lecciones aprendidas para que el equ
 ## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 23:32:26) - Área: Resume-CLOUD-359
 *   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
 *   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-10 23:38:19) - Área: Resume-CLOUD-360
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:13:30) - Área: Resume-CLOUD-344
+*   **Fallo Detectado**: `litellm.BadGatewayError: BadGatewayError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:26:34) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:29:55) - Área: CompleteTasks-CLOUD-329
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:33:12) - Área: CompleteTasks-CLOUD-345
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:36:32) - Área: CompleteTasks-CLOUD-346
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:39:50) - Área: CompleteTasks-CLOUD-352
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:43:07) - Área: CompleteTasks-CLOUD-353
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:46:24) - Área: CompleteTasks-CLOUD-354
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:49:41) - Área: CompleteTasks-CLOUD-355
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:52:59) - Área: CompleteTasks-CLOUD-357
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 00:56:40) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:00:02) - Área: Resume-CLOUD-344
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:03:22) - Área: Resume-CLOUD-338
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:07:34) - Área: Resume-CLOUD-359
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:12:17) - Área: Resume-CLOUD-358
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:16:55) - Área: Resume-CLOUD-342
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:30:50) - Área: CompleteTasks-CLOUD-329
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:35:18) - Área: CompleteTasks-CLOUD-345
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:39:29) - Área: CompleteTasks-CLOUD-346
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:44:03) - Área: CompleteTasks-CLOUD-352
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:48:13) - Área: CompleteTasks-CLOUD-353
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:52:49) - Área: CompleteTasks-CLOUD-354
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 01:57:19) - Área: CompleteTasks-CLOUD-355
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:01:52) - Área: CompleteTasks-CLOUD-357
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:08:17) - Área: Resume-CLOUD-329
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:12:59) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:17:31) - Área: Resume-CLOUD-344
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:33:51) - Área: Resume-CLOUD-338
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:38:55) - Área: Resume-CLOUD-359
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:43:35) - Área: Resume-CLOUD-358
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:48:08) - Área: Resume-CLOUD-342
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:53:00) - Área: CompleteTasks-CLOUD-345
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 02:57:33) - Área: CompleteTasks-CLOUD-346
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:09:05) - Área: Resume-CLOUD-344
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:12:23) - Área: Resume-CLOUD-338
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:15:41) - Área: Resume-CLOUD-329
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:19:01) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:22:19) - Área: Resume-CLOUD-359
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:25:38) - Área: Resume-CLOUD-358
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:28:55) - Área: Resume-CLOUD-342
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Rate limit exceeded: free-models-per-day-stealth. `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:32:16) - Área: CompleteTasks-CLOUD-345
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:36:27) - Área: Resume-CLOUD-344
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:39:12) - Área: Resume-CLOUD-338
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 08:56:30) - Área: Resume-CLOUD-329
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:05:14) - Área: Resume-CLOUD-332
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:06:26) - Área: Resume-CLOUD-359
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:09:45) - Área: Resume-CLOUD-358
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:11:03) - Área: Resume-CLOUD-342
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:13:35) - Área: CompleteTasks-CLOUD-345
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:16:37) - Área: CompleteTasks-CLOUD-346
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:26:29) - Área: CompleteTasks-CLOUD-352
+*   **Fallo Detectado**: `litellm.BadRequestError: OpenAIException - `
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:29:46) - Área: CompleteTasks-CLOUD-353
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
