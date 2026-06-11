@@ -275,15 +275,18 @@ func Home(c *fiber.Ctx) error {
 		}
 
 		// Load actual categories from `categorias` table
-		rows, err := database.DB.Query("SELECT name FROM categorias WHERE company_id = ? AND status = 1", companyID)
+		rows, err := database.DB.Query("SELECT name, COALESCE(slug,'') FROM categorias WHERE company_id = ? AND status = 1", companyID)
 		if err == nil {
 			var dbCats []Category
 			for rows.Next() {
-				var catName string
-				if err := rows.Scan(&catName); err == nil {
+				var catName, catSlugDB string
+				if err := rows.Scan(&catName, &catSlugDB); err == nil {
+					if catSlugDB == "" {
+						catSlugDB = slugify(catName)
+					}
 					dbCats = append(dbCats, Category{
 						Name: catName,
-						Slug: slugify(catName),
+						Slug: catSlugDB,
 						Icon: getCategoryIcon(catName),
 					})
 				}
@@ -295,19 +298,23 @@ func Home(c *fiber.Ctx) error {
 		}
 
 		// Load actual products from `productos` table
-		pRows, err := database.DB.Query("SELECT id, product_name, description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
+		pRows, err := database.DB.Query("SELECT id, product_name, COALESCE(slug,''), description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
 		if err == nil {
 			var dbProds []Product
 			for pRows.Next() {
 				var prodID int64
 				var pName string
+				var pSlugDB string
 				var pDesc sql.NullString
 				var pPrice float64
 				var pBrand sql.NullString
 				var pSku sql.NullString
 				var pInvStatus sql.NullString
 
-				if err := pRows.Scan(&prodID, &pName, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err == nil {
+				if err := pRows.Scan(&prodID, &pName, &pSlugDB, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err == nil {
+					if pSlugDB == "" {
+						pSlugDB = slugify(pName)
+					}
 					var brandStr = "Generico"
 					if pBrand.Valid {
 						brandStr = pBrand.String
@@ -330,10 +337,17 @@ func Home(c *fiber.Ctx) error {
 
 					// Query actual category name from database
 					var catName = "general"
+					var catSlugForProd = "general"
 					var cName sql.NullString
-					err := database.DB.QueryRow("SELECT c.name FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1", prodID).Scan(&cName)
+					var cSlug sql.NullString
+					err := database.DB.QueryRow("SELECT c.name, COALESCE(c.slug,'') FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1", prodID).Scan(&cName, &cSlug)
 					if err == nil && cName.Valid {
 						catName = cName.String
+						if cSlug.Valid && cSlug.String != "" {
+							catSlugForProd = cSlug.String
+						} else {
+							catSlugForProd = slugify(catName)
+						}
 					}
 
 					// Query media image URL — normalize to absolute URL so the browser
@@ -349,11 +363,11 @@ func Home(c *fiber.Ctx) error {
 					dbProds = append(dbProds, Product{
 						ID:           prodID,
 						Name:         pName,
-						Slug:         slugify(pName),
+						Slug:         pSlugDB,
 						Description:  descStr,
 						Price:        pPrice,
 						Category:     catName,
-						CategorySlug: slugify(catName),
+						CategorySlug: catSlugForProd,
 						Brand:        brandStr,
 						SKU:          skuStr,
 						Image:        imgURL,

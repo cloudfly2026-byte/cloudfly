@@ -592,6 +592,23 @@ def show_story_progress(issue_key: str) -> str:
     except Exception as e:
         return f"Error fetching story {issue_key}: {str(e)}"
 
+
+@tool("Print Story Remaining")
+def print_story_remaining(issue_key: str) -> str:
+    """
+    Convenience wrapper: prints the remaining estimated time for the given Jira issue's subtasks.
+    Use this when you only want a console printout (developer convenience).
+    """
+    try:
+        res = show_story_progress(issue_key)
+        # Also print to stdout for immediate visibility
+        print(f"[StoryRemaining] {res}")
+        return res
+    except Exception as e:
+        msg = f"Error printing story remaining for {issue_key}: {e}"
+        print(msg)
+        return msg
+
 @tool("Execute Console Command")
 def execute_console_command(command: str, background: bool = False, timeout_seconds: int = 120) -> str:
     """

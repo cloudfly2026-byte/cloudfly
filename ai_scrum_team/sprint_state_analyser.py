@@ -28,6 +28,12 @@ TODO_KEYWORDS = [
     "todo - in progress", "por hacer - en curso",
 ]
 
+# Status keywords that indicate a story is closed/done
+CLOSED_STATUSES = {
+    "done", "finalizada", "finalizado", "completada", "completado",
+    "terminada", "terminado", "closed", "cerrada", "cerrado",
+}
+
 
 def _has_subtasks(issue_key: str) -> bool:
     """
@@ -44,18 +50,42 @@ def _has_subtasks(issue_key: str) -> bool:
         print(f"[SprintState] Error verificando subtareas de {issue_key}: {e}")
         return False
 
-def _get_blockers(issue_key: str) -> list:
-    """Retorna lista de issue keys que bloquean a este issue."""
-    issue = jira_wrapper.jira.issue(issue_key, fields="issuelinks")
-    links = issue.get("fields", {}).get("issuelinks", [])
-    blockers = []
-    for link in links:
-        if link.get("type", {}).get("inward") == "is blocked by":
-            blocker_key = link.get("inwardIssue", {}).get("key")
-            blocker_status = link.get("inwardIssue", {}).get("fields", {}).get("status", {}).get("name", "")
-            if blocker_status.lower() not in CLOSED_STATUSES:
-                blockers.append(blocker_key)
-    return blockers
+
+def get_blockers(issue_key: str) -> list:
+    """
+    Returns a list of issue keys that are blocking this issue and are NOT yet closed.
+
+    Jira link direction:
+      inwardIssue  + type.inward == "is blocked by"  →  blocker
+      outwardIssue + type.outward == "blocks"         →  this issue blocks another (ignored here)
+
+    :param issue_key: e.g. "CLOUD-322"
+    :return: list of blocking issue keys still open, e.g. ["CLOUD-321"]
+    """
+    if not jira_wrapper or not hasattr(jira_wrapper, 'jira'):
+        return []
+    try:
+        issue = jira_wrapper.jira.issue(issue_key, fields="issuelinks")
+        links = issue.get("fields", {}).get("issuelinks", [])
+        blockers = []
+        for link in links:
+            link_type = link.get("type", {})
+            # "is blocked by" → the inward issue is the blocker
+            if link_type.get("inward", "").lower() == "is blocked by" and "inwardIssue" in link:
+                blocker = link["inwardIssue"]
+                blocker_key = blocker.get("key", "")
+                blocker_status = (
+                    blocker.get("fields", {})
+                    .get("status", {})
+                    .get("name", "")
+                    .lower()
+                )
+                if blocker_key and blocker_status not in CLOSED_STATUSES:
+                    blockers.append(blocker_key)
+        return blockers
+    except Exception as e:
+        print(f"[SprintState] Error obteniendo blockers de {issue_key}: {e}")
+        return []
 
 
 def _get_issue_list(jql: str) -> list:
@@ -171,7 +201,7 @@ def analyse_sprint_state() -> dict:
     Main analysis function. Returns a dict with the sprint state:
     {
         "state": "in_progress" | "pending_with_tasks" | "clean",
-        "issues": [...],   # list of relevant Jira issues
+        "issues": [...],          # list of relevant Jira issues
         "resume_context": {...},  # detailed context for in-progress issues
         "in_progress": [...],
         "pending_with_tasks": [...],

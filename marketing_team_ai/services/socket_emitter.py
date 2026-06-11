@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import requests
+import re
 
 from config import Config
 
@@ -133,6 +134,11 @@ def emit_agent_status(
         "tenantId": tenant_id,
         "companyId": company_id,
     }
+    # Print to console for local visibility (developer convenience)
+    try:
+        print(f"[AgentStatus] {agent_name} ({agent_id}) -> {status}. Task: {current_task}")
+    except Exception:
+        pass
     _emit("marketing-agent-status-update", tenant_id, company_id, payload)
 
 
@@ -166,6 +172,30 @@ def emit_agent_task(
         "output": output,
         "timestamp": datetime.now().isoformat(),
     }
+    # Console output for quick developer feedback
+    try:
+        display = next((a for a in AGENT_DEFINITIONS if a["id"] == agent_id), None)
+        displayName = display["displayName"] if display else agent_id
+        print(f"[AgentTask] {displayName} ({agent_id}) - {status.upper()} - {task_name} - progress={progress}%")
+        if status.lower() == 'completed':
+            print(f"[AgentTask] {displayName} completed task: {task_name}")
+            # If task_name or output contains a Jira issue key like CLOUD-123, call print_story_remaining
+            try:
+                text_to_search = (task_name or "") + " " + (output or "")
+                m = re.search(r'([A-Z][A-Z0-9]+-\d+)', text_to_search)
+                if m:
+                    issue_key = m.group(1)
+                    try:
+                        # Import the tools module and call the convenience printer
+                        from ai_scrum_team import tools as _tools
+                        if hasattr(_tools, 'print_story_remaining'):
+                            _tools.print_story_remaining(issue_key)
+                    except Exception as exc:
+                        print(f"[AgentTask] Warning: failed to call print_story_remaining for {issue_key}: {exc}")
+            except Exception:
+                pass
+    except Exception:
+        pass
     _emit("marketing-agent-task-update", tenant_id, company_id, payload)
 
 

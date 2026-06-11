@@ -151,26 +151,115 @@ class ScrumConnector:
 
     # ── Task Queueing ───────────────────────────────────────────────────────
 
-    def send_task(self, worker_id, task_id, blockers: list = None):
+    def send_task(self, worker_id: str, task_id: str, blockers: list = None) -> bool:
         """
         Coloca una tarea en la cola privada de un Worker específico.
+
+        Si `blockers` es una lista no vacía de issue keys que aún no están
+        cerrados, la tarea se aparca en Redis (scrum:blocked:<task_id>) y NO
+        se encola. Cuando cada blocker termine, _unblock_dependents() la
+        re-evaluará y la encolará automáticamente.
+
+        :param worker_id: ID del worker destino.
+        :param task_id:   Issue key de Jira (ej. "CLOUD-322").
+        :param blockers:  Lista de issue keys que bloquean a task_id (opcional).
+        :return: True si la tarea fue encolada, False si fue bloqueada o hubo error.
         """
         if blockers:
-            # Guardar en Redis para retry posterior
-            self.redis_client.set(f"scrum:blocked:{task_id}", 
-                              json.dumps(blockers), ex=86400)
-            print(f"⏸️ Tarea {task_id} bloqueada por {blockers}. No se encola.")
+            self.redis_client.set(
+                f"scrum:blocked:{task_id}",
+                json.dumps(blockers),
+                ex=86400  # Expira en 24 h para no acumular basura
+            )
+            print(
+                f"⏸️  [Dependencias]: Tarea {task_id} BLOQUEADA por {blockers}. "
+                f"Se encolará automáticamente cuando sus bloqueadores terminen."
+            )
             return False
 
-        try:    
-            # Poner el lock de la tarea en Redis mapeándolo al worker
-            self.redis_client.set(f"scrum:task:{task_id}", worker_id, ex=43200) # Lock por 12 horas
+        try:
+            # Lock de tarea → worker (12 h)
+            self.redis_client.set(f"scrum:task:{task_id}", worker_id, ex=43200)
             self.redis_client.lpush(f"scrum:queue:{worker_id}", task_id)
             print(f"[👑 Master]: Tarea {task_id} asignada y encolada para {worker_id}.")
             return True
         except Exception as e:
             print(f"[!] Error al enviar tarea a {worker_id}: {e}")
             return False
+
+    def _unblock_dependents(self, completed_task_id: str):
+        """
+        Debe llamarse cada vez que una tarea se completa (Done).
+        Recorre todas las tareas actualmente bloqueadas y elimina
+        `completed_task_id` de su lista de blockers.
+
+        Cuando la lista de una tarea queda vacía significa que ya no tiene
+        impedimentos: se elige el worker menos cargado y se encola.
+
+        :param completed_task_id: Issue key que acaba de cerrarse (ej. "CLOUD-321").
+        """
+        if not self.redis_client:
+            return
+        try:
+            for redis_key in self.redis_client.scan_iter("scrum:blocked:*"):
+                task_id = redis_key.split(":")[-1]
+                raw = self.redis_client.get(redis_key)
+                if not raw:
+                    continue
+
+                blockers: list = json.loads(raw)
+                if completed_task_id not in blockers:
+                    continue
+
+                # Eliminar el blocker recién completado
+                blockers.remove(completed_task_id)
+
+                if not blockers:
+                    # ── Tarea completamente desbloqueada ─────────────────
+                    self.redis_client.delete(redis_key)
+                    target_worker = self._pick_least_busy_worker()
+                    if target_worker:
+                        self.send_task(target_worker, task_id)
+                        print(
+                            f"✅ [Dependencias]: Tarea {task_id} desbloqueada "
+                            f"→ encolada en worker {target_worker}."
+                        )
+                    else:
+                        # Sin workers disponibles: marcar como pendiente para el Master
+                        self.redis_client.set(
+                            f"scrum:unblocked_pending:{task_id}", "1", ex=86400
+                        )
+                        print(
+                            f"✅ [Dependencias]: Tarea {task_id} desbloqueada "
+                            f"pero no hay workers disponibles. Se procesará localmente."
+                        )
+                else:
+                    # Aún quedan otros blockers → actualizar la lista
+                    self.redis_client.set(redis_key, json.dumps(blockers), ex=86400)
+                    print(
+                        f"⏸️  [Dependencias]: Tarea {task_id} aún bloqueada por {blockers}."
+                    )
+        except Exception as e:
+            print(f"[!] Error en _unblock_dependents para '{completed_task_id}': {e}")
+
+    def _pick_least_busy_worker(self) -> str:
+        """
+        Devuelve el ID del worker activo con menos tareas en cola.
+        Retorna None si no hay workers activos.
+        """
+        if not self.redis_client:
+            return None
+        try:
+            workers = list(self.redis_client.smembers("scrum:workers"))
+            active = [w for w in workers if self.redis_client.get(f"scrum:heartbeat:{w}")]
+            if not active:
+                return None
+            return min(
+                active,
+                key=lambda w: self.redis_client.llen(f"scrum:queue:{w}")
+            )
+        except Exception:
+            return None
 
     def get_task(self):
         """
@@ -218,6 +307,17 @@ class ScrumConnector:
             })
             self.redis_client.expire(key, 86400) # Expira en 24 horas
             self.publish_event("task_progress", f"[{status}] {details}", task_id=task_id)
+
+            # ── Auto-desbloqueo de dependientes al completar ──────────
+            # Si la tarea pasó a Done/Finalizada, notificar a tareas dependientes
+            DONE_STATUSES = {
+                "done", "finalizada", "finalizado", "completada", "completado",
+                "terminada", "terminado", "closed", "cerrada", "cerrado",
+                "finalizada", "finalizado",
+            }
+            if status.lower() in DONE_STATUSES:
+                self._unblock_dependents(task_id)
+
         except Exception as e:
             print(f"[!] Error al actualizar estado de tarea {task_id}: {e}")
 
@@ -245,7 +345,6 @@ class ScrumConnector:
                     self.redis_client.srem("scrum:workers", w_id)
             
             # 2. Buscar TODOS los locks de tareas y verificar si su poseedor está vivo (tiene heartbeat)
-            # Esto corrige el bug donde tareas quedaban huérfanas si el worker no estaba en la lista pero tenía el lock.
             for k in self.redis_client.scan_iter("scrum:task:*"):
                 assigned_worker = self.redis_client.get(k)
                 if assigned_worker:
@@ -255,6 +354,16 @@ class ScrumConnector:
                         print(f"🚨 [👑 Master]: Tarea {task_id} estaba asignada al worker inactivo {assigned_worker}. Liberando lock y estado...")
                         self.redis_client.delete(k)
                         self.redis_client.delete(f"scrum:status:{task_id}")
+
+            # 3. Recuperar tareas desbloqueadas pendientes de encolar
+            for k in self.redis_client.scan_iter("scrum:unblocked_pending:*"):
+                task_id = k.split(":")[-1]
+                target_worker = self._pick_least_busy_worker()
+                if target_worker:
+                    self.redis_client.delete(k)
+                    self.send_task(target_worker, task_id)
+                    print(f"♻️  [Dependencias]: Tarea {task_id} (antes desbloqueada sin workers) encolada en {target_worker}.")
+
         except Exception as e:
             print(f"[!] Error en auto-curación de workers: {e}")
 
@@ -294,25 +403,19 @@ class ScrumConnector:
                 # Buscar si hay algún worker con 0 tareas
                 idle_worker = next((w for w, info in worker_tasks.items() if info["total_count"] == 0), None)
                 if not idle_worker:
-                    # Todos tienen al menos 1 tarea, balanceo perfecto
                     break
 
                 # Buscar al worker con más tareas asignadas
                 busy_worker = max(worker_tasks.keys(), key=lambda w: worker_tasks[w]["total_count"])
                 
-                # Si el worker con más tareas tiene menos de 2, no hay de dónde robar
-                # (1 tarea en progreso o cola no se puede robar sin dejar al otro ocioso)
                 if worker_tasks[busy_worker]["total_count"] < 2:
                     break
 
                 # Robar una tarea de la cola del busy_worker
                 stolen_task = self.redis_client.rpop(f"scrum:queue:{busy_worker}")
                 if stolen_task:
-                    # Encolar en el idle_worker
                     self.redis_client.lpush(f"scrum:queue:{idle_worker}", stolen_task)
-                    # Cambiar el lock/asignación
                     self.redis_client.set(f"scrum:task:{stolen_task}", idle_worker, ex=43200)
-                    # Actualizar estado y publicar evento
                     self.update_task_status(stolen_task, "Reasignada", f"Reasignada automáticamente de {busy_worker} a {idle_worker}")
                     self.publish_event(
                         "task_rebalanced", 
@@ -378,14 +481,12 @@ class ScrumConnector:
             now = time.time()
             for k in keys:
                 is_limited = False
-                # Check local in-memory rate limit
                 if k in self.local_rate_limits:
                     if now < self.local_rate_limits[k]:
                         is_limited = True
                     else:
-                        del self.local_rate_limits[k] # Expirado
+                        del self.local_rate_limits[k]
                 
-                # Check Redis rate limit
                 if not is_limited and self.redis_client:
                     try:
                         res = self.redis_client.get(f"scrum:rate_limit:{k}")
@@ -416,9 +517,7 @@ class ScrumConnector:
             except Exception:
                 index = 0
                 
-            # 4. Asignar clave saludable de forma balanceada o simplemente rotar secuencialmente si somos standalone
             if current_key in healthy_keys and len(healthy_keys) > 1:
-                # Si la clave actual sigue siendo "saludable" (ej. no fue la que disparó el error), mantenerla
                 return current_key
                 
             assigned_key = healthy_keys[index % len(healthy_keys)]

@@ -158,7 +158,7 @@ os.environ["EMBEDDINGS_OLLAMA_MODEL_NAME"] = "nvidia/llama-nemotron-embed-vl-1b-
 from agents import product_owner, system_architect, software_developer, qa_engineer, devops_engineer, technical_writer, frontend_developer, marketing_specialist
 from tasks import sprint_planning, research_task, development_task, quality_assurance, deployment_prep, documentation_task, frontend_development_task, marketing_task
 from connector import ScrumConnector
-from sprint_state_analyser import analyse_sprint_state, get_issue_resume_context
+from sprint_state_analyser import analyse_sprint_state, get_issue_resume_context, get_blockers
 from kafka_consumer import poll_kafka_queue, format_kafka_message_for_sprint, is_kafka_configured
 
 CLOSED_STATUSES = {"done", "finalizada", "finalizado", "completada", "completado", "terminada", "terminado", "closed", "cerrada", "cerrado"}
@@ -602,20 +602,6 @@ def compact_sprint_context(sprint_state: dict, sprint_goal: str, jira_backlog_co
     print(f"📦 [Sprint Context] Compactado en {elapsed}s")
     
     return result
-
-def _unblock_dependents(completed_task_id: str):
-    """Cuando una tarea termina, verifica si desbloquea otras."""
-    for k in connector.redis_client.scan_iter("scrum:blocked:*"):
-        task_id = k.split(":")[-1]
-        blockers = json.loads(connector.redis_client.get(k) or "[]")
-        if completed_task_id in blockers:
-            blockers.remove(completed_task_id)
-            if not blockers:
-                # Ya no tiene blockers — encolar ahora
-                connector.redis_client.delete(k)
-                connector.send_task(_pick_least_busy_worker(), task_id)
-            else:
-                connector.redis_client.set(k, json.dumps(blockers), ex=86400)
 
 def run_sprint():
     import threading
@@ -1481,6 +1467,15 @@ def run_sprint():
                 print(f"   ⏭️ [👑 Master]: Tarea {key} ya está asignada a un Worker. Saltando...")
                 continue
 
+            # ── Verificar dependencias (blockers) antes de encolar ────────
+            active_blockers = get_blockers(key)
+            if active_blockers:
+                print(f"   ⏸️  [👑 Master]: Tarea {key} bloqueada por {active_blockers}. Aparcando en Redis.")
+                target_worker = workers[worker_idx % len(workers)]
+                connector.send_task(target_worker, key, blockers=active_blockers)
+                worker_idx += 1
+                continue
+
             target_worker = workers[worker_idx % len(workers)]
             success = connector.send_task(target_worker, key)
             if success:
@@ -1827,6 +1822,8 @@ Historial de Comentarios:
                     res = execute_crew_locally(sprint_goal, codebase_context, jira_ctx, is_worker=True)
                     print(f"\n✅ [Worker {connector.instance_id}]: Tarea {task_id} completada con éxito.")
                     connector.update_task_status(task_id, "Finalizada", f"La tarea {task_id} fue resuelta y validada.")
+                    # ── Desbloquear tareas dependientes ──────────────────
+                    connector._unblock_dependents(task_id)
                 except Exception as e:
                     print(f"❌ [Worker {connector.instance_id}] ERROR en ejecución: {e}")
                     connector.update_task_status(task_id, "Fallida", f"Error: {e}")

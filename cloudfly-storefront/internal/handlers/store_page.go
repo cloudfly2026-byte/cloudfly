@@ -97,15 +97,18 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 		}
 
 		rows, err := database.DB.Query(
-			"SELECT name FROM categorias WHERE company_id = ? AND status = 1", companyID,
+			"SELECT name, COALESCE(slug,'') FROM categorias WHERE company_id = ? AND status = 1", companyID,
 		)
 		if err == nil {
 			for rows.Next() {
-				var catName string
-				if err := rows.Scan(&catName); err == nil {
+				var catName, catSlugDB string
+				if err := rows.Scan(&catName, &catSlugDB); err == nil {
+					if catSlugDB == "" {
+						catSlugDB = slugify(catName)
+					}
 					categories = append(categories, Category{
 						Name: catName,
-						Slug: slugify(catName),
+						Slug: catSlugDB,
 						Icon: getCategoryIcon(catName),
 					})
 				}
@@ -114,17 +117,20 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 		}
 
 		pRows, err := database.DB.Query(
-			"SELECT id, product_name, description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE','PUBLISHED')",
+			"SELECT id, product_name, COALESCE(slug,''), description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE','PUBLISHED')",
 			companyID,
 		)
 		if err == nil {
 			for pRows.Next() {
 				var prodID int64
-				var pName string
+				var pName, pSlugDB string
 				var pDesc, pBrand, pSku, pInvStatus sql.NullString
 				var pPrice float64
-				if err := pRows.Scan(&prodID, &pName, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err != nil {
+				if err := pRows.Scan(&prodID, &pName, &pSlugDB, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err != nil {
 					continue
+				}
+				if pSlugDB == "" {
+					pSlugDB = slugify(pName)
 				}
 				brandStr := "Generico"
 				if pBrand.Valid {
@@ -143,12 +149,18 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 					isAvailable = false
 				}
 				catName := "general"
-				var cName sql.NullString
+				catSlug := "general"
+				var cName, cSlug sql.NullString
 				if err := database.DB.QueryRow(
-					"SELECT c.name FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1",
+					"SELECT c.name, COALESCE(c.slug,'') FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1",
 					prodID,
-				).Scan(&cName); err == nil && cName.Valid {
+				).Scan(&cName, &cSlug); err == nil && cName.Valid {
 					catName = cName.String
+					if cSlug.Valid && cSlug.String != "" {
+						catSlug = cSlug.String
+					} else {
+						catSlug = slugify(catName)
+					}
 				}
 				imgURL := ""
 				var mediaURL sql.NullString
@@ -161,11 +173,11 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 				products = append(products, Product{
 					ID:           prodID,
 					Name:         pName,
-					Slug:         slugify(pName),
+					Slug:         pSlugDB,
 					Description:  descStr,
 					Price:        pPrice,
 					Category:     catName,
-					CategorySlug: slugify(catName),
+					CategorySlug: catSlug,
 					Brand:        brandStr,
 					SKU:          skuStr,
 					Image:        imgURL,
