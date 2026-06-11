@@ -537,6 +537,61 @@ def read_jira_issue(issue_key: str) -> str:
     except Exception as e:
         return f"Error reading issue {issue_key}: {str(e)}"
 
+
+@tool("Show Story Progress")
+def show_story_progress(issue_key: str) -> str:
+    """
+    Summarize sub-task counts and remaining time for a Jira story/issue.
+    - Counts subtasks in 'In Progress', 'To Do', and 'Done' buckets (multilingual heuristics).
+    - Sums `timeestimate` (remaining seconds) from each subtask to show remaining time in hours/minutes.
+    :param issue_key: Exact Jira issue key (e.g., 'CLOUD-351').
+    """
+    if not jira_wrapper or not hasattr(jira_wrapper, 'jira'):
+        return "Jira is not configured. Set JIRA_API_URL, JIRA_EMAIL and JIRA_API_TOKEN environment variables."
+    try:
+        issue = jira_wrapper.jira.issue(issue_key)
+        fields = issue.get('fields', {})
+        subtasks = fields.get('subtasks', []) or []
+
+        in_progress = []
+        todo = []
+        done = []
+        total_remaining_seconds = 0
+
+        for s in subtasks:
+            key = s.get('key')
+            try:
+                si = jira_wrapper.jira.issue(key)
+                sfields = si.get('fields', {})
+                status = (sfields.get('status') or {}).get('name', '').lower()
+                remaining = sfields.get('timeestimate') or 0
+                if isinstance(remaining, (int, float)):
+                    total_remaining_seconds += int(remaining)
+
+                # multilingual status heuristics
+                if any(w in status for w in ['in progress', 'en curso', 'curso', 'progress', 'doing']):
+                    in_progress.append(key)
+                elif any(w in status for w in ['to do', 'por hacer', 'open', 'todo', 'backlog']):
+                    todo.append(key)
+                elif any(w in status for w in ['done', 'listo', 'cerrada', 'closed', 'finalizada', 'resolved']):
+                    done.append(key)
+                else:
+                    # treat unknown as todo
+                    todo.append(key)
+            except Exception:
+                todo.append(f"{key} (meta fetch error)")
+
+        hrs = total_remaining_seconds // 3600
+        mins = (total_remaining_seconds % 3600) // 60
+
+        return (
+            f"Story {issue_key}: {len(subtasks)} subtasks — "
+            f"In progress: {len(in_progress)}, To do: {len(todo)}, Done: {len(done)}. "
+            f"Remaining time: {hrs}h {mins}m"
+        )
+    except Exception as e:
+        return f"Error fetching story {issue_key}: {str(e)}"
+
 @tool("Execute Console Command")
 def execute_console_command(command: str, background: bool = False, timeout_seconds: int = 120) -> str:
     """
@@ -1331,6 +1386,11 @@ def get_dev_tools() -> list:
         web_search,
         # ── Human escalation ──────────────────────────────────────────────
         ask_human_clarification,
+        # ── Story progress quick-check ───────────────────────────────────
+        # Shows counts of subtasks by status and remaining time estimates (seconds -> h/m)
+        # Usage: Show Story Progress (issue_key)
+        # Requires Jira configured via environment variables.
+        globals().get('show_story_progress',),
     ]
 
 
