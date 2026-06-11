@@ -39,6 +39,68 @@ if _jira_base_url and _jira_email and _jira_token:
 _bg_process_registry: Dict[int, dict] = {}
 _bg_registry_lock = threading.Lock()
 
+
+def _register_bg_process(pid: int, proc: subprocess.Popen | None, command: str):
+    """Register a background process in the shared registry."""
+    with _bg_registry_lock:
+        _bg_process_registry[pid] = {
+            "pid": pid,
+            "proc": proc,
+            "command": command,
+            "start_time": time.time(),
+            "output": [],
+            "done": False,
+            "exit_code": None,
+        }
+
+
+def _update_bg_output(pid: int, line: str):
+    """Append a line of output to the background task's output buffer."""
+    with _bg_registry_lock:
+        task = _bg_process_registry.get(pid)
+        if not task:
+            # fall back to a generic error entry
+            _bg_process_registry.setdefault(-1, {
+                "pid": -1,
+                "proc": None,
+                "command": "unknown",
+                "start_time": time.time(),
+                "output": [],
+                "done": False,
+                "exit_code": None,
+            })
+            task = _bg_process_registry[-1]
+        task["output"].append(line)
+
+
+def _mark_bg_done(pid: int, exit_code: int | None):
+    """Mark a background task as finished and record its exit code and end time."""
+    with _bg_registry_lock:
+        task = _bg_process_registry.get(pid)
+        if task:
+            task["done"] = True
+            task["exit_code"] = exit_code
+            task["end_time"] = time.time()
+
+
+def _get_all_bg_pids() -> List[int]:
+    """Return a list of all registered background PIDs (sorted)."""
+    with _bg_registry_lock:
+        return sorted(list(_bg_process_registry.keys()))
+
+
+def _get_bg_task(pid: int) -> Dict[str, Any] | None:
+    """Return the registry entry for a given PID, or None if missing."""
+    with _bg_registry_lock:
+        return _bg_process_registry.get(pid)
+
+
+def _remove_bg_task(pid: int):
+    """Remove a background task from the registry (cleanup after retrieval)."""
+    with _bg_registry_lock:
+        if pid in _bg_process_registry:
+            del _bg_process_registry[pid]
+
 # ── Deduplication Registry ─────────────────────────────────────────────
 # Tracks comments and issues created during the current sprint to prevent duplicates.
 # Persisted to disk so retries and parallel agents share the same state.
