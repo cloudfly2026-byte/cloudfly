@@ -1,55 +1,91 @@
-// CLOUD-336 - Componente de bienvenida para el módulo de Catálogo en Línea
-// Muestra un banner con gradiente purple y el formulario de creación de tienda
+'use client';
 
-'use client'
+import React from 'react';
+import { Box, Typography, Button, Paper } from '@mui/material';
+import { motion } from 'framer-motion';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 
-import React from 'react'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import SubdomainForm from './SubdomainForm'
-
-const WelcomeCard = () => {
-  return (
-    <Card
-      className='relative overflow-hidden'
-      style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '16px'
-      }}
-    >
-      <CardContent className='p-8'>
-        <Box className='relative z-10'>
-          <Typography variant='h3' className='text-white font-bold mb-2'>
-            🛍️ Catálogo en Línea
-          </Typography>
-          <Typography variant='h6' className='text-white/90 mb-1'>
-            Crea tu tienda online en minutos
-          </Typography>
-          <Typography variant='body1' className='text-white/70 mb-6 max-w-lg'>
-            Configura tu catálogo en línea para que tus clientes puedan explorar tus productos
-            y realizar pedidos desde cualquier dispositivo.
-          </Typography>
-        </Box>
-
-        {/* Decorative elements */}
-        <div
-          className='absolute top-0 right-0 w-64 h-64 rounded-full opacity-10'
-          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
-        />
-        <div
-          className='absolute bottom-0 right-20 w-32 h-32 rounded-full opacity-10'
-          style={{ background: 'radial-gradient(circle, white 0%, transparent 70%)' }}
-        />
-      </CardContent>
-
-      {/* Subdomain creation form */}
-      <Box className='px-8 pb-8'>
-        <SubdomainForm />
-      </Box>
-    </Card>
-  )
+interface WelcomeCardProps {
+  onActivate: () => void;
 }
 
-export default WelcomeCard
+export default function WelcomeCard({ onActivate }: WelcomeCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Paper
+        elevation={0}
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: 3,
+          p: { xs: 3, sm: 4, md: 5 },
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -30,
+            left: -30,
+            width: 150,
+            height: 150,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+          }}
+        />
+
+        <Box position="relative" zIndex={1}>
+          <StorefrontIcon sx={{ fontSize: { xs: 48, sm: 56 }, mb: 2, opacity: 0.9 }} />
+          
+          <Typography variant="h4" fontWeight="bold" mb={1}>
+            ¡Bienvenido a tu Tienda en Línea!
+          </Typography>
+          
+          <Typography variant="body1" mb={3} sx={{ opacity: 0.9, maxWidth: 500 }}>
+            Tu catálogo en línea no está activado aún. Crea tu tienda virtual y empieza a vender en internet con tu propio subdominio.
+          </Typography>
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onActivate}
+              sx={{
+                bgcolor: 'white',
+                color: 'primary.main',
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.9)',
+                },
+              }}
+            >
+              Crear Catálogo en Línea
+            </Button>
+          </motion.div>
+        </Box>
+      </Paper>
+    </motion.div>
+  );
+}

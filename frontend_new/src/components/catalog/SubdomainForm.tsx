@@ -39,7 +39,7 @@ export default function SubdomainForm({ onCreated }: SubdomainFormProps) {
         description: description.trim(),
         subdomain: subdomain.trim(),
       };
-      await websiteService.createWebsite(data.siteName, data.description, data.subdomain);
+      await websiteService.createWebsite(data);
       onCreated();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al crear la tienda');

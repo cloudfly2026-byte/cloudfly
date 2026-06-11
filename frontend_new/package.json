@@ -137,7 +137,7 @@
     "tailwindcss-logical": "3.0.1",
     "ts-jest": "^29.4.11",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.9.3"
   },
   "resolutions": {
     "rimraf": "^5.0.7",

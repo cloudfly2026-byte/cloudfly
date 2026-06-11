@@ -1,46 +1,67 @@
-// CLOUD-336 - Vista de "En Construcción" para el módulo de Catálogo en Línea
-// Muestra un mensaje de que la tienda está siendo configurada
+'use client';
 
-'use client'
+import React from 'react';
+import { Box, Typography, Paper, LinearProgress, Stepper, Step, StepLabel, StepContent } from '@mui/material';
+import { motion } from 'framer-motion';
+import ConstructionIcon from '@mui/icons-material/Construction';
 
-import React from 'react'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+const steps = [
+  { label: 'Configurando subdominio', description: 'Preparando tu dominio personalizado...' },
+  { label: 'Generando estructura', description: 'Creando las páginas de tu tienda...' },
+  { label: 'Optimizando rendimiento', description: 'Ajustando velocidad y SEO...' },
+  { label: 'Publicando tienda', description: 'Tu tienda estará lista pronto...' },
+];
 
-interface ConstructionViewProps {
-  onRefresh?: () => void
-}
-
-const ConstructionView = ({ onRefresh }: ConstructionViewProps) => {
+export default function ConstructionView() {
   return (
-    <Card className='max-w-2xl mx-auto'>
-      <CardContent className='flex flex-col items-center text-center gap-4 p-8'>
-        <div className='text-6xl mb-2'>🚧</div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Paper elevation={0} sx={{ borderRadius: 3, p: { xs: 3, sm: 4, md: 5 }, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}>
+        <motion.div
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <ConstructionIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+        </motion.div>
 
-        <Typography variant='h4' className='font-bold'>
-          Tienda en Construcción
+        <Typography variant="h4" fontWeight="bold" mb={1}>
+          ¡Tu tienda está en construcción!
+        </Typography>
+        <Typography variant="body1" color="text.secondary" mb={4}>
+          Nuestro agente constructor está trabajando en tu tienda. Te notificaremos cuando esté lista.
         </Typography>
 
-        <Typography variant='body1' className='text-gray-500 max-w-md'>
-          Tu tienda online está siendo configurada. Este proceso puede tomar algunos minutos.
-          Te notificaremos cuando esté lista.
-        </Typography>
-
-        <Box className='flex gap-3 mt-4'>
-          <Button
-            variant='outlined'
-            onClick={onRefresh}
-            startIcon={<i className='tabler-refresh' />}
-          >
-            Verificar estado
-          </Button>
+        <Box sx={{ maxWidth: 500, mx: 'auto', mb: 4 }}>
+          <LinearProgress
+            variant="indeterminate"
+            sx={{ height: 8, borderRadius: 4, mb: 3 }}
+          />
         </Box>
-      </CardContent>
-    </Card>
-  )
-}
 
-export default ConstructionView
+        <Stepper orientation="vertical" activeStep={-1}>
+          {steps.map((step, index) => (
+            <Step key={index} active={false}>
+              <StepLabel
+                StepIconProps={{
+                  sx: { color: 'primary.light' },
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight="medium">
+                  {step.label}
+                </Typography>
+              </StepLabel>
+              <StepContent>
+                <Typography variant="body2" color="text.secondary">
+                  {step.description}
+                </Typography>
+              </StepContent>
+            </Step>
+          ))}
+        </Stepper>
+      </Paper>
+    </motion.div>
+  );
+}
