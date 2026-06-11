@@ -1,22 +1,19 @@
-// CLOUD-335 - Layout para el módulo de Tienda/Catálogo en Línea
-// Extiende el dashboard layout con configuración específica para el módulo de catálogo
+import React from 'react';
+import type { Metadata } from 'next';
 
-// Type Imports
-import type { ChildrenType } from '@core/types'
+export const metadata: Metadata = {
+  title: 'Tienda en Línea | CloudFly Dashboard',
+  description: 'Módulo de catálogo en línea de CloudFly',
+};
 
-// Component Imports
-import { PermissionGate } from '@/components/rbac/PermissionGate'
-
-interface TiendaLayoutProps extends ChildrenType {}
-
-const TiendaLayout = ({ children }: TiendaLayoutProps) => {
+export default function TiendaLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <PermissionGate permission='catalog.view'>
-      <div className='flex flex-col gap-6 p-6'>
-        {children}
-      </div>
-    </PermissionGate>
-  )
+    <main style={{ minHeight: 'calc(100vh - 64px)' }}>
+      {children}
+    </main>
+  );
 }
-
-export default TiendaLayout
