@@ -25,10 +25,15 @@ class StorefrontPublisher:
 
             # 4. Invalidate cache in Redis directly (redis_tool is a crewai Tool object, use redis_client directly)
             if redis_client:
-                redis_client.delete(f"storefront:html:{company_id}:home")
                 redis_client.delete(f"website:{website_id}")
                 redis_client.delete(f"theme:{theme_id}")
                 redis_client.delete(f"layout:{company_id}")
+                
+                # Scan and delete all storefront html cache keys for this company (home, categories, etc.)
+                pattern = f"storefront:html:{company_id}:*"
+                keys_to_delete = redis_client.keys(pattern)
+                if keys_to_delete:
+                    redis_client.delete(*keys_to_delete)
 
             # 5. Update build log to completed
             self.repo.update_build_log(
