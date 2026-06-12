@@ -10,6 +10,7 @@ FROM alpine:latest
 
 WORKDIR /app
 COPY --from=builder /app/storefront .
+COPY templates ./templates
 # Create the uploads directory for shared media files
 RUN mkdir -p /uploads
 
