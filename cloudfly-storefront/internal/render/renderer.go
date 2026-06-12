@@ -7,6 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"strconv"
+	"strings"
+
 	"cloudfly-storefront/internal/layout"
 	"github.com/gofiber/fiber/v2"
 )
@@ -40,13 +43,23 @@ func (r *Renderer) Load() error {
 	}
 
 	tmpl := template.New("storefront").Funcs(template.FuncMap{
-		"themeConfigVal": func(themeVal *theme.Theme, key string, fallback string) string {
-			if themeVal == nil || themeVal.Config == nil {
+		"themeConfigVal": func(themeVal any, key string, fallback string) string {
+			if themeVal == nil {
 				return fallback
 			}
-			if val, ok := themeVal.Config[key]; ok {
-				if strVal, ok := val.(string); ok && strVal != "" {
-					return strVal
+			// Use reflection or interface assertion if needed, but since we just pass a struct
+			// that has a Config field, let's use a type assertion or helper structure.
+			// Actually we can define an interface with a GetConfig() method or just assert to a struct
+			// with Config map[string]any. Let's do type assertion.
+			type configGetter interface {
+				GetConfig() map[string]any
+			}
+			if cg, ok := themeVal.(configGetter); ok {
+				cfg := cg.GetConfig()
+				if val, ok := cfg[key]; ok {
+					if strVal, ok := val.(string); ok && strVal != "" {
+						return strVal
+					}
 				}
 			}
 			return fallback

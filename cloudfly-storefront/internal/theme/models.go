@@ -13,3 +13,8 @@ type Theme struct {
 	LogoURL        string         `json:"logo_url"`
 	Config         map[string]any `json:"config"`
 }
+
+func (t *Theme) GetConfig() map[string]any {
+	return t.Config
+}
+
