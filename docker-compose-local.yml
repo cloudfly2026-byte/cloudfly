@@ -355,8 +355,8 @@ services:
 
   marketing-agent:
     build:
-      context: .
-      dockerfile: marketing_team_ai/Dockerfile
+      context: ./marketing_team_ai
+      dockerfile: Dockerfile
     container_name: marketing-agent
     restart: always
     env_file:

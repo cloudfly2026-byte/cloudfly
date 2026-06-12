@@ -11,6 +11,7 @@ from src.crews.theme_crew import run_theme_builder
 from src.crews.layout_crew import run_layout_builder
 from src.crews.content_crew import run_content_generator
 from src.crews.publisher_crew import StorefrontPublisher
+from sqlalchemy import text
 
 logger = structlog.get_logger()
 
@@ -116,12 +117,25 @@ class KafkaHandler:
             # Update website status to CONSTRUCTION (representing pause waiting for logo)
             repo.update_website_status(website_id, "CONSTRUCTION")
             
+            # Retrieve admin/manager user associated with the company to notify
+            user_row = db.execute(
+                text(
+                    "SELECT u.id FROM users u "
+                    "JOIN user_roles ur ON u.id = ur.user_id "
+                    "JOIN roles r ON ur.role_id = r.id "
+                    "WHERE u.company_id = :company_id AND r.role_name IN ('ADMIN', 'SUPERADMIN', 'MANAGER') "
+                    "LIMIT 1"
+                ),
+                {"company_id": company_id}
+            ).fetchone()
+            admin_user_id = user_row[0] if user_row else None
+
             # Web Notification + socket.io broadcast
             Notifier.notify_web(
                 db_session=db,
                 tenant_id=tenant_id,
                 company_id=company_id,
-                user_id=None,
+                user_id=admin_user_id,
                 title="Logo Requerido",
                 description="Tu catálogo está listo para construirse, pero necesitamos que subas un logo en /tienda/principal para continuar."
             )
@@ -232,12 +246,25 @@ class KafkaHandler:
             )
 
             if success:
+                # Retrieve admin/manager user associated with the company to notify
+                user_row = db.execute(
+                    text(
+                        "SELECT u.id FROM users u "
+                        "JOIN user_roles ur ON u.id = ur.user_id "
+                        "JOIN roles r ON ur.role_id = r.id "
+                        "WHERE u.company_id = :company_id AND r.role_name IN ('ADMIN', 'SUPERADMIN', 'MANAGER') "
+                        "LIMIT 1"
+                    ),
+                    {"company_id": company_id}
+                ).fetchone()
+                admin_user_id = user_row[0] if user_row else None
+
                 # Web Notification + Socket broadcast
                 Notifier.notify_web(
                     db_session=db,
                     tenant_id=tenant_id,
                     company_id=company_id,
-                    user_id=None,
+                    user_id=admin_user_id,
                     title="Catálogo Publicado",
                     description="¡Felicidades! Tu catálogo en línea ha sido generado y publicado con éxito."
                 )
