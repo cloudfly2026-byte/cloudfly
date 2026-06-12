@@ -24,9 +24,17 @@ def run_theme_builder(brand_profile: dict, logo_url: str) -> dict:
         verbose=True
     )
 
+    ux_ui_expert_agent = Agent(
+        role="Experto en Accesibilidad y Estética UX/UI",
+        goal="Diseñar una paleta de colores premium y combinaciones de tipografías legibles y de alto impacto emocional para {brand_profile}",
+        backstory="Un diseñador de interfaces galardonado, especializado en accesibilidad WCAG y paletas cromáticas armónicas que elevan la percepción de marca.",
+        llm=llm,
+        verbose=True
+    )
+
     theme_builder_agent = Agent(
         role="Diseñador Frontend Senior",
-        goal="Construir la especificación completa del tema basándose en la recomendación y en la identidad visual de la marca.",
+        goal="Construir la especificación completa del tema basándose en la recomendación de diseño UX/UI y en la identidad visual de la marca.",
         backstory="Ingeniero frontend de UI obsesionado con el pixel-perfect, que organiza colores, tipografías e imágenes en configuraciones limpias.",
         llm=llm,
         verbose=True
@@ -42,21 +50,32 @@ def run_theme_builder(brand_profile: dict, logo_url: str) -> dict:
         agent=theme_recommendation_agent
     )
 
+    task_design_ux_ui = Task(
+        description=(
+            "A partir de la plantilla recomendada y el perfil de marca {brand_profile}, diseña la paleta cromática completa.\n"
+            "Define valores premium para: primary_color, secondary_color, accent_color, background_color (fondo base), surface_color (fondo de tarjetas/menús), surface_hover_color, y text_color.\n"
+            "Asegúrate de que haya excelente contraste entre el texto y el fondo para cumplir con los estándares WCAG."
+        ),
+        expected_output="Un reporte detallado con las especificaciones de colores hex y tipografías recomendadas.",
+        agent=ux_ui_expert_agent
+    )
+
     task_build_theme = Task(
         description=(
-            "Usa la plantilla seleccionada y el perfil de marca {brand_profile} para generar la especificación visual final.\n"
-            "Asegúrate de incluir todos los campos del tema de forma estructurada.\n"
+            "Usa la plantilla seleccionada, el diseño del experto de UX/UI y el perfil de marca {brand_profile} para generar la especificación visual final.\n"
+            "Asegúrate de incluir todos los campos del tema de forma estructurada, incluyendo colores avanzados para el fondo de la página, tarjetas y textos.\n"
             "El logo de la compañía es: '{logo_url}'."
         ),
         expected_output=(
-            "JSON válido con los campos: template_name, primary_color, secondary_color, accent_color, heading_font, body_font, logo_url"
+            "JSON válido con los campos: template_name, primary_color, secondary_color, accent_color, heading_font, body_font, logo_url, "
+            "background_color, surface_color, surface_hover_color, text_color"
         ),
         agent=theme_builder_agent
     )
 
     crew = Crew(
-        agents=[theme_recommendation_agent, theme_builder_agent],
-        tasks=[task_recommend_theme, task_build_theme],
+        agents=[theme_recommendation_agent, ux_ui_expert_agent, theme_builder_agent],
+        tasks=[task_recommend_theme, task_design_ux_ui, task_build_theme],
         process=Process.sequential,
         verbose=True
     )
@@ -89,5 +108,9 @@ def run_theme_builder(brand_profile: dict, logo_url: str) -> dict:
             "accent_color": brand_profile.get("accent_color", "#D2A26B"),
             "heading_font": brand_profile.get("heading_font", "Inter"),
             "body_font": brand_profile.get("body_font", "Inter"),
-            "logo_url": logo_url or ""
+            "logo_url": logo_url or "",
+            "background_color": "#0b0f19",
+            "surface_color": "#131c2e",
+            "surface_hover_color": "#1b263f",
+            "text_color": "#f3f4f6"
         }
