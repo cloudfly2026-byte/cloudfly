@@ -53,6 +53,10 @@
 
             --heading-font: {{if .Theme.HeadingFont}}'{{.Theme.HeadingFont}}'{{else}}'Outfit'{{end}}, sans-serif;
             --body-font: {{if .Theme.BodyFont}}'{{.Theme.BodyFont}}'{{else}}'Plus Jakarta Sans'{{end}}, sans-serif;
+            
+            --logo-height: {{themeConfigVal .Theme "logo_height" "40px"}};
+            --logo-width: {{themeConfigVal .Theme "logo_width" "auto"}};
+            --logo-fit: {{themeConfigVal .Theme "logo_fit" "contain"}};
         }
 
         * {
@@ -114,10 +118,11 @@
         }
 
         .logo-img {
-            height: 38px;
-            width: 38px;
-            border-radius: var(--radius-sm);
-            object-fit: cover;
+            height: var(--logo-height);
+            width: var(--logo-width);
+            max-width: 180px;
+            max-height: 48px;
+            object-fit: var(--logo-fit);
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
@@ -801,8 +806,8 @@
                 <div class="logo-placeholder">
                     <i class="fa-solid fa-store"></i>
                 </div>
-                {{end}}
                 <span class="company-name">{{if .Company.Name}}{{.Company.Name}}{{else}}Tienda Online{{end}}</span>
+                {{end}}
             </a>
 
             <!-- Main Navigation Desktop -->
