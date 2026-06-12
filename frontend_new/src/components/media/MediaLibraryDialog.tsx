@@ -52,20 +52,25 @@ const MediaLibraryDialog = ({
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
+  // Reset selection when dialog opens
   useEffect(() => {
     if (open) {
       if (multiple) {
-        if (initialSelectedIds.length > 0 && mediaList.length > 0) {
-          const preselected = mediaList.filter(m => initialSelectedIds.includes(m.id))
-          setSelectedMediaList(preselected)
-        } else {
-          setSelectedMediaList([])
-        }
+        setSelectedMediaList([])
       } else {
         setSelectedMedia(null)
       }
     }
-  }, [open, mediaList, initialSelectedIds, multiple])
+  }, [open, multiple])
+
+  // Populate initial selection once media list is loaded
+  const serializedInitialIds = JSON.stringify(initialSelectedIds)
+  useEffect(() => {
+    if (open && multiple && initialSelectedIds && initialSelectedIds.length > 0 && mediaList.length > 0) {
+      const preselected = mediaList.filter(m => initialSelectedIds.includes(m.id))
+      setSelectedMediaList(preselected)
+    }
+  }, [open, mediaList, multiple, serializedInitialIds])
 
   useEffect(() => {
     if (open && tab === 0) {

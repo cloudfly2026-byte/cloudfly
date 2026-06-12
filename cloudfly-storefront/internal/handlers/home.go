@@ -1,19 +1,27 @@
 package handlers
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"html/template"
 	"log"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"cloudfly-storefront/internal/database"
+	"cloudfly-storefront/internal/domainresolver"
+	"cloudfly-storefront/internal/layout"
+	"cloudfly-storefront/internal/render"
+	"cloudfly-storefront/internal/theme"
+
 	"github.com/gofiber/fiber/v2"
+)
+
+// Global services instantiated at startup
+var (
+	ThemeService  *theme.Service
+	LayoutService *layout.Service
+	Renderer      *render.Renderer
 )
 
 type Company struct {
@@ -73,7 +81,7 @@ type Page struct {
 
 type StorefrontData struct {
 	Company       Company
-	Theme         Theme
+	Theme         *theme.Theme
 	Categories    []Category
 	Products      []Product
 	Pages         []Page
@@ -81,6 +89,7 @@ type StorefrontData struct {
 	ActiveCat     string    // active category slug
 	ActiveProduct *Product  // set when viewing a single product
 	ActivePage    *Page     // set when viewing a single page or post
+	Blocks        []layout.Block
 }
 
 // stripMarkdown removes common markdown syntax for plain-text rendering
@@ -172,86 +181,49 @@ func normalizeImageURL(raw string) string {
 }
 
 func Home(c *fiber.Ctx) error {
-	host := c.Hostname()
+	// 1. Obtener WebsiteContext inyectado por el middleware WebsiteResolver
+	websiteVal := c.Locals("website")
+	if websiteVal == nil {
+		return c.Status(500).SendString("Website context not resolved")
+	}
+	website := websiteVal.(*domainresolver.WebsiteContext)
 
-	// Handle local development hostname fallback
-	isLocal := host == "localhost" || host == "127.0.0.1" || strings.HasPrefix(host, "192.168.") || strings.HasPrefix(host, "10.")
-	domainName := host
-	if isLocal {
-		domainName = "cloudflyshop.cloudfly.com.co" // Fallback seed domain for local testing
+	companyID := website.CompanyID
+
+	// 2. Obtener Tema y Layout usando los servicios multi-tenant
+	themeData, err := ThemeService.GetTheme(website.ThemeID)
+	if err != nil {
+		log.Printf("⚠️  [Home Handler Theme Warning]: %v", err)
 	}
 
-	// 1. Resolve host in company_domains table
-	var tenantID int64
-	var companyID int64
-	var estado string
-	var fechaCaduca sql.NullTime
+	layoutData, err := LayoutService.GetLayout(companyID, "home")
+	if err != nil {
+		log.Printf("⚠️  [Home Handler Layout Warning]: %v", err)
+	}
 
-	var resolved = false
-	if database.DB != nil {
-		err := database.DB.QueryRow("SELECT tenant_id, company_id, estado, fecha_caduca FROM company_domains WHERE domain_name = ? LIMIT 1", domainName).Scan(&tenantID, &companyID, &estado, &fechaCaduca)
-		if err == nil {
-			resolved = true
-		} else if err != sql.ErrNoRows {
-			log.Printf("⚠️  [MySQL Query Error]: %v", err)
+	// 3. Caching Redis usando claves únicas por tenant/company
+	var cacheKey string
+	if database.RedisClient != nil {
+		cacheKey = "storefront:html:" + strconv.FormatInt(companyID, 10) + ":home"
+		cachedHTML, err := database.RedisClient.Get(database.Ctx, cacheKey).Result()
+		if err == nil && cachedHTML != "" {
+			c.Set("Content-Type", "text/html")
+			c.Set("X-Cache", "HIT")
+			return c.SendString(cachedHTML)
 		}
 	}
 
-	log.Printf("ℹ️  [Domain Resolved]: host=%s resolved=%v tenantID=%d companyID=%d", domainName, resolved, tenantID, companyID)
-
-	// If the domain is not registered, redirect to CloudFly landing page
-	if !resolved && !isLocal {
-		return c.Redirect("https://www.cloudfly.com.co", 302)
-	}
-
-	// If resolved, verify subscription is active
-	if resolved {
-		isActive := strings.ToLower(estado) == "activo"
-		if fechaCaduca.Valid && fechaCaduca.Time.Before(time.Now()) {
-			isActive = false
-		}
-		if !isActive {
-			return c.Status(403).SendString("<h1>403 Acceso Denegado</h1><p>La suscripción de este comercio no se encuentra activa o ha caducado. Por favor contacte al administrador de CloudFly.</p>")
-		}
-
-		// 1.5 Verify active subscription in subscriptions table (customer_id = tenantID)
-		if database.DB != nil {
-			var subStatus string
-			var subEndDate time.Time
-			err := database.DB.QueryRow("SELECT status, end_date FROM subscriptions WHERE customer_id = ? AND status = 'ACTIVE' AND end_date > ? LIMIT 1", tenantID, time.Now()).Scan(&subStatus, &subEndDate)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					return c.Status(403).SendString("<h1>403 Acceso Denegado</h1><p>El comercio no tiene una suscripción de plan activa o vigente. Por favor contacte al administrador de CloudFly.</p>")
-				}
-				log.Printf("⚠️  [Subscription Check Error]: %v", err)
-			}
-		}
-	}
-
-	// Default/Mock metadata fallbacks
+	// Estructurar el ViewModel base
 	company := Company{
-		ID:          companyID,
-		Name:        "",
-		Logo:        "",
-		Description: "",
-		Phone:       "",
-		Email:       "",
-		Address:     "",
-	}
-	theme := Theme{
-		PrimaryColor:   "#6366f1",
-		SecondaryColor: "#10b981",
+		ID: companyID,
+		Name: website.CompanyName,
 	}
 	var categories []Category
 	var products []Product
 
-	// 2. Fetch Company metadata from companies table if available
-	if resolved && database.DB != nil {
-		var logoURL sql.NullString
-		var compDesc sql.NullString
-		var compPhone sql.NullString
-		var compEmail sql.NullString
-		var compAddress sql.NullString
+	if database.DB != nil {
+		// Cargar metadatos detallados de la compañía
+		var logoURL, compDesc, compPhone, compEmail, compAddress sql.NullString
 		err := database.DB.QueryRow("SELECT name, logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
 			&company.Name, &logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
 		if err == nil {
@@ -270,21 +242,18 @@ func Home(c *fiber.Ctx) error {
 			if compAddress.Valid {
 				company.Address = compAddress.String
 			}
-		} else {
-			log.Printf("ℹ️  [Database Notice]: companies query failed: %v.", err)
 		}
 
-		// Load actual categories from `categorias` table
+		// Cargar categorías
 		rows, err := database.DB.Query("SELECT name, COALESCE(slug,'') FROM categorias WHERE company_id = ? AND status = 1", companyID)
 		if err == nil {
-			var dbCats []Category
 			for rows.Next() {
 				var catName, catSlugDB string
 				if err := rows.Scan(&catName, &catSlugDB); err == nil {
 					if catSlugDB == "" {
 						catSlugDB = slugify(catName)
 					}
-					dbCats = append(dbCats, Category{
+					categories = append(categories, Category{
 						Name: catName,
 						Slug: catSlugDB,
 						Icon: getCategoryIcon(catName),
@@ -292,54 +261,41 @@ func Home(c *fiber.Ctx) error {
 				}
 			}
 			rows.Close()
-			if len(dbCats) > 0 {
-				categories = dbCats
-			}
 		}
 
-		// Load actual products from `productos` table
+		// Cargar productos
 		pRows, err := database.DB.Query("SELECT id, product_name, COALESCE(slug,''), description, price, brand, sku, inventory_status FROM productos WHERE company_id = ? AND status IN ('ACTIVE', 'PUBLISHED')", companyID)
 		if err == nil {
-			var dbProds []Product
 			for pRows.Next() {
 				var prodID int64
-				var pName string
-				var pSlugDB string
-				var pDesc sql.NullString
+				var pName, pSlugDB string
+				var pDesc, pBrand, pSku, pInvStatus sql.NullString
 				var pPrice float64
-				var pBrand sql.NullString
-				var pSku sql.NullString
-				var pInvStatus sql.NullString
 
 				if err := pRows.Scan(&prodID, &pName, &pSlugDB, &pDesc, &pPrice, &pBrand, &pSku, &pInvStatus); err == nil {
 					if pSlugDB == "" {
 						pSlugDB = slugify(pName)
 					}
-					var brandStr = "Generico"
+					brandStr := "Generico"
 					if pBrand.Valid {
 						brandStr = pBrand.String
 					}
-
-					var descStr = ""
+					descStr := ""
 					if pDesc.Valid {
 						descStr = pDesc.String
 					}
-
-					var skuStr = ""
+					skuStr := ""
 					if pSku.Valid {
 						skuStr = pSku.String
 					}
-
-					var isAvailable = true
+					isAvailable := true
 					if pInvStatus.Valid && pInvStatus.String != "" && strings.ToUpper(pInvStatus.String) != "IN_STOCK" {
 						isAvailable = false
 					}
 
-					// Query actual category name from database
 					var catName = "general"
 					var catSlugForProd = "general"
-					var cName sql.NullString
-					var cSlug sql.NullString
+					var cName, cSlug sql.NullString
 					err := database.DB.QueryRow("SELECT c.name, COALESCE(c.slug,'') FROM product_categories pc JOIN categorias c ON pc.category_id = c.id WHERE pc.product_id = ? LIMIT 1", prodID).Scan(&cName, &cSlug)
 					if err == nil && cName.Valid {
 						catName = cName.String
@@ -350,9 +306,6 @@ func Home(c *fiber.Ctx) error {
 						}
 					}
 
-					// Query media image URL — normalize to absolute URL so the browser
-					// can load it regardless of which domain the storefront is served from.
-					// An empty string signals the JS template to show the placeholder image.
 					var imgURL = ""
 					var mediaURL sql.NullString
 					err = database.DB.QueryRow("SELECT m.url FROM product_images pi JOIN media m ON pi.media_id = m.id WHERE pi.product_id = ? LIMIT 1", prodID).Scan(&mediaURL)
@@ -360,7 +313,7 @@ func Home(c *fiber.Ctx) error {
 						imgURL = normalizeImageURL(mediaURL.String)
 					}
 
-					dbProds = append(dbProds, Product{
+					products = append(products, Product{
 						ID:           prodID,
 						Name:         pName,
 						Slug:         pSlugDB,
@@ -377,69 +330,30 @@ func Home(c *fiber.Ctx) error {
 				}
 			}
 			pRows.Close()
-			if len(dbProds) > 0 {
-				products = dbProds
-			}
 		}
 	}
 
-	// 3. Redis Caching: Index by Tenant and Company ID
-	var cacheKey string
-	if resolved && database.RedisClient != nil {
-		cacheKey = "storefront:html:" + strconv.FormatInt(tenantID, 10) + ":" + strconv.FormatInt(companyID, 10) + ":home"
-		cachedHTML, err := database.RedisClient.Get(database.Ctx, cacheKey).Result()
-		if err == nil && cachedHTML != "" {
-			c.Set("Content-Type", "text/html")
-			c.Set("X-Cache", "HIT")
-			return c.SendString(cachedHTML)
-		}
-	}
-
-	renderedHTML, err := renderStorefront(StorefrontData{
+	// 4. Renderizar usando Render Engine (Fase 4/5)
+	viewData := StorefrontData{
 		Company:     company,
-		Theme:       theme,
+		Theme:       themeData,
 		Categories:  categories,
 		Products:    products,
 		CurrentPath: "/",
-	})
+		Blocks:      layoutData.Blocks,
+	}
+
+	renderedHTML, err := Renderer.RenderToString("home", viewData)
 	if err != nil {
-		return c.Status(500).SendString(err.Error())
+		return c.Status(500).SendString(fmt.Sprintf("Error de renderizado: %v", err))
 	}
 
 	if cacheKey != "" && database.RedisClient != nil {
 		_ = database.RedisClient.Set(database.Ctx, cacheKey, renderedHTML, 10*time.Minute).Err()
 	}
+
 	c.Set("Content-Type", "text/html")
 	c.Set("X-Cache", "MISS")
 	return c.SendString(renderedHTML)
 }
 
-// renderStorefront parses and executes the index.html template with the given data.
-func renderStorefront(data StorefrontData) (string, error) {
-	tmplPaths := []string{
-		filepath.Join("/webTemplates", "default", "index.html"),
-		filepath.Join("webTemplates", "default", "index.html"),
-		filepath.Join("../webTemplates", "default", "index.html"),
-		filepath.Join("../../webTemplates", "default", "index.html"),
-		filepath.Join("..", "..", "webTemplates", "default", "index.html"),
-	}
-	var indexTemplatePath string
-	for _, p := range tmplPaths {
-		if _, err := os.Stat(p); err == nil {
-			indexTemplatePath = p
-			break
-		}
-	}
-	if indexTemplatePath == "" {
-		return "", fmt.Errorf("storefront template not found")
-	}
-	tmpl, err := template.ParseFiles(indexTemplatePath)
-	if err != nil {
-		return "", fmt.Errorf("error parsing template: %w", err)
-	}
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("error rendering template: %w", err)
-	}
-	return buf.String(), nil
-}

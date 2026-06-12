@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web-team:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: web-team
+    restart: always
+    ports:
+      - "9000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    networks:
+      - app-net
+      - kafka-net
+
+networks:
+  app-net:
+    external: true
+    name: developmentai_app-net
+  kafka-net:
+    external: true
+    name: developmentai_kafka-net

@@ -1025,3 +1025,17 @@ Este archivo registra errores históricos y lecciones aprendidas para que el equ
 ## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 09:29:46) - Área: CompleteTasks-CLOUD-353
 *   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
 *   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 🔄 Autocorrección y Aprendizaje Continuo (2026-06-11 10:08:43) - Área: CompleteTasks-CLOUD-357
+*   **Fallo Detectado**: `litellm.RateLimitError: RateLimitError: OpenAIException - Provider returned error`
+*   **Lección y Acción Correctiva**: Cuando ocurra este error, el equipo debe re-evaluar la sintaxis o variables en juego, limpiar el búfer de rate limits, rotar las claves del pool de OpenRouter de inmediato y simplificar el volumen de datos consultado para reducir la carga de tokens.
+
+
+## 👁️ Análisis Visual (2026-06-11 10:35:25) - image-20260610-201246.png [CLOUD-329]
+*   **Clasificación**: Captura de Pantalla / Informativa
+*   **Fuente**: moondream2 local (GTX 1650 CUDA)
+*   **Ubicación del Archivo**: Temporal (Eliminado)
+*   **Reporte**:
+
+Error modelo local: No module named 'local_vision_model'

@@ -1,0 +1,26 @@
+{{if .Products}}
+<div class="section-header">
+    <h3 class="section-title">Productos Destacados</h3>
+    <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="location.hash='#/catalogo'">Ver Todo</button>
+</div>
+<div class="products-grid">
+    {{range $idx, $prod := .Products}}
+    {{if lt $idx 4}}
+    <div class="product-card">
+        <div class="product-card-image-box" onclick="location.hash='#/producto/{{$idx}}'">
+            <img class="product-card-img" src="{{if $prod.Image}}{{$prod.Image}}{{else}}https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80{{end}}" alt="{{$prod.Name}}">
+            {{if not $prod.Available}}<span class="product-card-badge" style="background: var(--danger);">Agotado</span>{{end}}
+        </div>
+        <div class="product-card-content">
+            {{if $prod.Brand}}<span class="product-card-rating">{{$prod.Brand}}</span>{{end}}
+            <h4 class="product-card-title" onclick="location.hash='#/producto/{{$idx}}'">{{$prod.Name}}</h4>
+            <div class="product-card-price-row">
+                <span class="product-card-price">${{$prod.Price}}</span>
+                {{if $prod.Available}}<button class="btn-add-cart-quick" onclick="addToCart({{$idx}})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>{{end}}
+            </div>
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+</div>
+{{end}}

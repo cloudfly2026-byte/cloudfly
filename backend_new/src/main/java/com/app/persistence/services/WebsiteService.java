@@ -42,8 +42,7 @@ public class WebsiteService {
     public Mono<WebsiteResponse> checkWebsiteStatus(Long tenantId, Long companyId) {
         return websiteRepository.findByTenantIdAndCompanyId(tenantId, companyId)
                 .flatMap(website -> domainRepository.findById(website.getDomainId())
-                        .map(domain -> mapToResponse(website, domain.getDomainName())))
-                .defaultIfEmpty(null);
+                        .map(domain -> mapToResponse(website, domain.getDomainName())));
     }
 
     /**
@@ -114,7 +113,7 @@ public class WebsiteService {
                                 return websiteRepository.save(website)
                                         .flatMap(savedWebsite -> {
                                             // Step 3: Send Kafka event for site construction
-                                            websiteEventProducer.publishSiteConstruction(
+                                            Mono<Void> publishConstruction = websiteEventProducer.publishSiteConstruction(
                                                     savedWebsite.getId(), savedDomain.getId(),
                                                     cleanedSubdomain, request.getTenantId(), request.getCompanyId());
 
@@ -126,14 +125,16 @@ public class WebsiteService {
                                                     .newStatus("CONSTRUCTION")
                                                     .subdomain(cleanedSubdomain)
                                                     .eventType("WEBSITE_CREATED")
-                                                    .message("Tu tienda en l\u00ednea est\u00e1 siendo construida")
+                                                    .message("Tu tienda en línea está siendo construida")
                                                     .build();
-                                            websiteEventProducer.publishStatusChange(notification);
+                                            Mono<Void> publishStatus = websiteEventProducer.publishStatusChange(notification);
 
-                                            // Step 5: Create web notification
-                                            return createWebNotification(request.getTenantId(),
-                                                    "Tienda en l\u00ednea creada",
-                                                    "Tu tienda '" + request.getSiteName() + "' est\u00e1 siendo construida en " + fullDomain)
+                                            // Step 5: Create web notification and return response
+                                            return publishConstruction
+                                                    .then(publishStatus)
+                                                    .then(createWebNotification(request.getTenantId(),
+                                                            "Tienda en línea creada",
+                                                            "Tu tienda '" + request.getSiteName() + "' está siendo construida en " + fullDomain))
                                                     .then(Mono.just(mapToResponse(savedWebsite, fullDomain)));
                                         });
                             });
@@ -171,11 +172,11 @@ public class WebsiteService {
                                         .eventType("ENABLED".equals(newStatus) ? "WEBSITE_ENABLED" : "WEBSITE_DISABLED")
                                         .message("ENABLED".equals(newStatus) ? "Tu tienda en l\u00ednea est\u00e1 activa" : "Tu tienda en l\u00ednea ha sido desactivada")
                                         .build();
-                                websiteEventProducer.publishStatusChange(notification);
-
-                                return createWebNotification(tenantId,
-                                        "Estado de tienda actualizado",
-                                        "Tu tienda '" + saved.getSiteName() + "' ahora est\u00e1 " + newStatus)
+                                
+                                return websiteEventProducer.publishStatusChange(notification)
+                                        .then(createWebNotification(tenantId,
+                                                "Estado de tienda actualizado",
+                                                "Tu tienda '" + saved.getSiteName() + "' ahora est\u00e1 " + newStatus))
                                         .then(domainRepository.findById(saved.getDomainId())
                                                 .map(domain -> mapToResponse(saved, domain.getDomainName())));
                             });
@@ -203,9 +204,10 @@ public class WebsiteService {
                             .build();
                     websiteEventProducer.publishStatusChange(notification);
 
-                    return createWebNotification(tenantId,
-                            "Tienda eliminada",
-                            "Tu tienda '" + website.getSiteName() + "' ha sido eliminada.")
+                    return websiteEventProducer.publishStatusChange(notification)
+                            .then(createWebNotification(tenantId,
+                                    "Tienda eliminada",
+                                    "Tu tienda '" + website.getSiteName() + "' ha sido eliminada."))
                             .then(websiteRepository.deleteById(websiteId));
                 })
                 .then();
@@ -279,6 +281,26 @@ public class WebsiteService {
                     log.warn("Could not create web notification for tenant {}: {}", tenantId, e.getMessage());
                     return Mono.empty();
                 });
+    }
+
+    /**
+     * Trigger site construction again by publishing Kafka event.
+     */
+    public Mono<Void> triggerRebuild(Long websiteId, Long tenantId, Long companyId) {
+        return websiteRepository.findById(websiteId)
+                .flatMap(website -> {
+                    if (!website.getTenantId().equals(tenantId) || !website.getCompanyId().equals(companyId)) {
+                        return Mono.error(new IllegalArgumentException("Unauthorized website rebuild"));
+                    }
+                    return domainRepository.findById(website.getDomainId())
+                            .flatMap(domain -> {
+                                String cleanedSubdomain = domain.getDomainName().replace("." + BASE_DOMAIN, "");
+                                return websiteEventProducer.publishSiteConstruction(
+                                        website.getId(), domain.getId(),
+                                        cleanedSubdomain, tenantId, companyId);
+                            });
+                })
+                .then();
     }
 
     private WebsiteResponse mapToResponse(CompanyWebsiteEntity website, String domain) {

@@ -6,6 +6,7 @@ import type { ChildrenType } from '@core/types'
 
 // Style Imports
 import '@/app/globals.css'
+import Providers from './Providers'
 
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
@@ -27,7 +28,9 @@ const RootLayout = ({ children }: ChildrenType) => {
         <script src="https://accounts.google.com/gsi/client" async defer></script>
         {/* CLOUD-282: Facebook SDK will be initialized in a client component */}
       </head>
-      <body className='flex is-full min-bs-full flex-auto flex-col'>{children}</body>
+      <body className='flex is-full min-bs-full flex-auto flex-col'>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }

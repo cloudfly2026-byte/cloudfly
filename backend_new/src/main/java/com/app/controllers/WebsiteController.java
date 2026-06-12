@@ -135,4 +135,14 @@ public class WebsiteController {
         return websiteService.validateSubdomain(subdomain)
                 .map(available -> Map.of("available", available));
     }
+
+    /**
+     * POST /api/v1/website/rebuild
+     * Re-trigger the storefront build process.
+     */
+    @PostMapping("/rebuild")
+    public Mono<Void> rebuildWebsite(@RequestParam Long websiteId, @RequestHeader Map<String, String> headers) {
+        return getCurrentUserContext(headers)
+                .flatMap(ctx -> websiteService.triggerRebuild(websiteId, ctx.tenantId(), ctx.companyId()));
+    }
 }

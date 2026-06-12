@@ -53,6 +53,25 @@ export const AuthSync = () => {
                     localStorage.setItem('userData', newUserData)
                     window.dispatchEvent(new Event('storage'))
                 }
+
+                // 🔥 Sync activeTenantId and activeCompanyId so Axios interceptors
+                // always have X-Tenant-Id and X-Company-Id headers available.
+                const tenantId = mergedUser.customerId
+                    ?? mergedUser.customer?.id
+                    ?? mergedUser.tenantId
+                    ?? null
+
+                const companyId = mergedUser.activeCompanyId
+                    ?? mergedUser.companyId
+                    ?? mergedUser.company?.id
+                    ?? null
+
+                if (tenantId && !localStorage.getItem('activeTenantId')) {
+                    localStorage.setItem('activeTenantId', String(tenantId))
+                }
+                if (companyId && !localStorage.getItem('activeCompanyId')) {
+                    localStorage.setItem('activeCompanyId', String(companyId))
+                }
             }
         } else if (status === 'unauthenticated') {
             // Only clear if we actually have a token but no session

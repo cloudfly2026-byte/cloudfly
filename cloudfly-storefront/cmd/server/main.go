@@ -4,7 +4,12 @@ import (
 	"log"
 
 	"cloudfly-storefront/internal/database"
+	"cloudfly-storefront/internal/domainresolver"
 	"cloudfly-storefront/internal/handlers"
+	"cloudfly-storefront/internal/layout"
+	"cloudfly-storefront/internal/render"
+	"cloudfly-storefront/internal/theme"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -14,9 +19,27 @@ func main() {
 	// Initialize MySQL Connection
 	database.InitMySQL()
 
+	// Initialize Multi-Tenant Services & Repositories
+	themeRepo := theme.NewRepository(database.DB)
+	handlers.ThemeService = theme.NewService(themeRepo)
+
+	layoutRepo := layout.NewRepository(database.DB)
+	handlers.LayoutService = layout.NewService(layoutRepo)
+
+	templatesDir := render.FindTemplatesDir()
+	var err error
+	handlers.Renderer, err = render.NewRenderer(templatesDir)
+	if err != nil {
+		log.Fatalf("❌ [Renderer Load Error]: %v", err)
+	}
+
 	app := fiber.New()
 
 	app.Get("/health", handlers.Health)
+
+	// Register multi-tenant domain resolver middleware
+	app.Use(domainresolver.WebsiteResolver())
+
 	// Serve uploaded media files
 	app.Static("/media", "/uploads", fiber.Static{
 		Compress:  true,
@@ -36,3 +59,4 @@ func main() {
 	log.Println("CloudFly StoreFront listening on :8080")
 	log.Fatal(app.Listen(":8080"))
 }
+

@@ -553,6 +553,28 @@ services:
       - ${TRAEFIK_CERTS_DIR:-/apps/cloudfly/certs}:/letsencrypt
     networks:
       - app-net
+  
+  web-team:
+    build:
+      context: ./web-team
+      dockerfile: Dockerfile
+    container_name: web-team
+    restart: always
+    ports:
+      - "9000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./web-team:/app
+    networks:
+      - app-net
+      - kafka-net
+    depends_on:
+      - kafka
+      - db
+
 
 volumes:
   persistent_master:

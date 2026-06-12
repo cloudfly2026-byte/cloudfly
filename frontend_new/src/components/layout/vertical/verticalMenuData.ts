@@ -91,6 +91,12 @@ export const verticalMenuData = [
         ]
     },
     {
+        label: 'Métricas',
+        icon: 'chart-bar',
+        route: '/metrics',
+        roles: ['MANAGER', 'ADMIN', 'USER']
+    },
+    {
         label: 'Usuarios y Roles',
         icon: 'users',
         roles: ['MANAGER', 'ADMIN'],

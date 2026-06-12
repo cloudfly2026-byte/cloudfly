@@ -1,0 +1,14 @@
+<section class="hero-section">
+    <div class="hero-text">
+        {{if .Company.Logo}}<img class="hero-company-logo" src="{{.Company.Logo}}" alt="Logo">{{end}}
+        <h1 class="hero-title">{{if .Company.Name}}{{.Company.Name}}{{else}}Bienvenido a Nuestra Tienda{{end}}</h1>
+        <p class="hero-subtitle">{{if .Company.Description}}{{.Company.Description}}{{else}}Descubre nuestra amplia variedad de productos con los mejores precios y envío a todo el país.{{end}}</p>
+        <div class="hero-ctas">
+            {{if .Products}}<button class="btn btn-primary" onclick="location.hash='#/catalogo'">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>{{end}}
+            {{if .Categories}}<button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>{{end}}
+        </div>
+    </div>
+    <div class="hero-image-wrapper">
+        <img class="hero-banner-img" src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80" alt="Tienda Banner">
+    </div>
+</section>

@@ -8,66 +8,29 @@ import (
 	"time"
 
 	"cloudfly-storefront/internal/database"
+	"cloudfly-storefront/internal/domainresolver"
+	"cloudfly-storefront/internal/theme"
 	"github.com/gofiber/fiber/v2"
 )
 
 // resolveTenant resolves tenant/company IDs from the request hostname.
 // Returns (tenantID, companyID, company, theme, categories, products, pages, ok).
 // If ok=false the caller should redirect or 403.
-func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Product, []Page, bool) {
-	host := c.Hostname()
-	isLocal := host == "localhost" || host == "127.0.0.1" ||
-		strings.HasPrefix(host, "192.168.") || strings.HasPrefix(host, "10.")
-	domainName := host
-	if isLocal {
-		domainName = "cloudflyshop.cloudfly.com.co"
+func resolveTenant(c *fiber.Ctx) (int64, int64, Company, *theme.Theme, []Category, []Product, []Page, bool) {
+	websiteVal := c.Locals("website")
+	if websiteVal == nil {
+		_ = c.Status(500).SendString("<h1>500 Error</h1><p>Website context not resolved</p>")
+		return 0, 0, Company{}, nil, nil, nil, nil, false
+	}
+	website := websiteVal.(*domainresolver.WebsiteContext)
+	companyID := website.CompanyID
+
+	themeData, err := ThemeService.GetTheme(website.ThemeID)
+	if err != nil {
+		log.Printf("⚠️  [StorePage Theme Warning]: %v", err)
 	}
 
-	var tenantID, companyID int64
-	var estado string
-	var fechaCaduca sql.NullTime
-	resolved := false
-
-	if database.DB != nil {
-		err := database.DB.QueryRow(
-			"SELECT tenant_id, company_id, estado, fecha_caduca FROM company_domains WHERE domain_name = ? LIMIT 1",
-			domainName,
-		).Scan(&tenantID, &companyID, &estado, &fechaCaduca)
-		if err == nil {
-			resolved = true
-		}
-	}
-
-	if !resolved && !isLocal {
-		_ = c.Redirect("https://www.cloudfly.com.co", 302)
-		return 0, 0, Company{}, Theme{}, nil, nil, nil, false
-	}
-
-	if resolved {
-		isActive := strings.ToLower(estado) == "activo"
-		if fechaCaduca.Valid && fechaCaduca.Time.Before(time.Now()) {
-			isActive = false
-		}
-		if !isActive {
-			_ = c.Status(403).SendString("<h1>403</h1><p>Suscripción inactiva.</p>")
-			return 0, 0, Company{}, Theme{}, nil, nil, nil, false
-		}
-		if database.DB != nil {
-			var subStatus string
-			var subEnd time.Time
-			err := database.DB.QueryRow(
-				"SELECT status, end_date FROM subscriptions WHERE customer_id = ? AND status = 'ACTIVE' AND end_date > ? LIMIT 1",
-				tenantID, time.Now(),
-			).Scan(&subStatus, &subEnd)
-			if err != nil {
-				_ = c.Status(403).SendString("<h1>403</h1><p>Sin suscripción activa.</p>")
-				return 0, 0, Company{}, Theme{}, nil, nil, nil, false
-			}
-		}
-	}
-
-	company := Company{ID: companyID}
-	theme := Theme{PrimaryColor: "#6366f1", SecondaryColor: "#10b981"}
+	company := Company{ID: companyID, Name: website.CompanyName}
 	var categories []Category
 	var products []Product
 	var pages []Page
@@ -214,17 +177,17 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, Theme, []Category, []Pr
 		}
 	}
 
-	log.Printf("ℹ️  [StorePage] host=%s tenantID=%d companyID=%d cats=%d prods=%d pages=%d",
-		domainName, tenantID, companyID, len(categories), len(products), len(pages))
+	log.Printf("ℹ️  [StorePage] Resolved via Context companyID=%d cats=%d prods=%d pages=%d",
+		companyID, len(categories), len(products), len(pages))
 
-	return tenantID, companyID, company, theme, categories, products, pages, true
+	return 1, companyID, company, themeData, categories, products, pages, true
 }
 
 // CategoryPage handles GET /:categorySlug
 // URL: /chatbots
 func CategoryPage(c *fiber.Ctx) error {
 	catSlug := c.Params("categorySlug")
-	tenantID, companyID, company, theme, categories, products, pages, ok := resolveTenant(c)
+	_, companyID, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -240,8 +203,7 @@ func CategoryPage(c *fiber.Ctx) error {
 	// Cache key per category
 	cacheKey := ""
 	if database.RedisClient != nil {
-		cacheKey = "storefront:html:" + strconv.FormatInt(tenantID, 10) + ":" +
-			strconv.FormatInt(companyID, 10) + ":cat:" + catSlug
+		cacheKey = "storefront:html:" + strconv.FormatInt(companyID, 10) + ":cat:" + catSlug
 		if html, err := database.RedisClient.Get(database.Ctx, cacheKey).Result(); err == nil && html != "" {
 			c.Set("Content-Type", "text/html")
 			c.Set("X-Cache", "HIT")
@@ -249,7 +211,7 @@ func CategoryPage(c *fiber.Ctx) error {
 		}
 	}
 
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("category", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -297,7 +259,7 @@ func ProductPage(c *fiber.Ctx) error {
 		}
 	}
 
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("product", StorefrontData{
 		Company:       company,
 		Theme:         theme,
 		Categories:    categories,
@@ -320,7 +282,7 @@ func CatalogoPage(c *fiber.Ctx) error {
 	if !ok {
 		return nil
 	}
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -341,7 +303,7 @@ func CarritoPage(c *fiber.Ctx) error {
 	if !ok {
 		return nil
 	}
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -361,7 +323,7 @@ func NosotrosPage(c *fiber.Ctx) error {
 	if !ok {
 		return nil
 	}
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -381,7 +343,7 @@ func ContactoPage(c *fiber.Ctx) error {
 	if !ok {
 		return nil
 	}
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -410,7 +372,7 @@ func BlogPage(c *fiber.Ctx) error {
 		}
 	}
 
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -446,7 +408,7 @@ func PageBySlug(c *fiber.Ctx) error {
 		return c.Status(404).SendString("<h1>404</h1><p>Página no encontrada.</p>")
 	}
 
-	html, err := renderStorefront(StorefrontData{
+	html, err := Renderer.RenderToString("home", StorefrontData{
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,

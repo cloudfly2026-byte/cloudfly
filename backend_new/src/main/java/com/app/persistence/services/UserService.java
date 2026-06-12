@@ -235,7 +235,7 @@ public class UserService {
                                                         .defaultIfEmpty(false);
                                         
                                         Mono<CompanyEntity> companyMono = companyRepository.findByTenantId(user.getCustomerId())
-                                                        .filter(CompanyEntity::getIsPrincipal)
+                                                        .filter(c -> Boolean.TRUE.equals(c.getIsPrincipal()))
                                                         .next()
                                                         .switchIfEmpty(companyRepository.findByTenantId(user.getCustomerId()).next())
                                                         .defaultIfEmpty(new CompanyEntity());
@@ -288,7 +288,7 @@ public class UserService {
                                         if (tenantId == null) return Mono.empty();
                                         
                                         return companyRepository.findByTenantId(tenantId)
-                                                        .filter(CompanyEntity::getIsPrincipal)
+                                                        .filter(c -> Boolean.TRUE.equals(c.getIsPrincipal()))
                                                         .next()
                                                         .switchIfEmpty(companyRepository.findByTenantId(tenantId).next())
                                                         .map(company -> java.util.Map.of("tenantId", tenantId, "companyId", company.getId()))

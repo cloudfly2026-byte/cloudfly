@@ -1,0 +1,13 @@
+{{if .Categories}}
+<div class="section-header">
+    <h3 class="section-title">Categorías Destacadas</h3>
+</div>
+<div class="category-grid">
+    {{range .Categories}}
+    <div class="category-card" onclick="location.hash='#/categoria/{{.Slug}}'">
+        <div class="category-icon-box"><i class="{{if .Icon}}{{.Icon}}{{else}}fa-solid fa-tag{{end}}"></i></div>
+        <span class="category-name">{{.Name}}</span>
+    </div>
+    {{end}}
+</div>
+{{end}}
