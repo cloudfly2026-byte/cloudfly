@@ -505,7 +505,6 @@ services:
       - db
 
   storefront:
-    image: ghcr.io/cloudfly2026-byte/cloudfly/storefront:latest
     container_name: storefront
     build:
       context: ./cloudfly-storefront
