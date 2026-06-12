@@ -66,6 +66,14 @@ def startup_event():
     except Exception as e:
         logger.error("Failed to start Model Health Checker", error=str(e))
 
+    # Run Recovery Worker to resume pending CONSTRUCTION websites
+    try:
+        from src.recovery_worker import run_recovery
+        logger.info("Starting Recovery Worker for pending CONSTRUCTION websites...")
+        run_recovery()
+    except Exception as e:
+        logger.error("Failed to run Recovery Worker", error=str(e))
+
 @app.on_event("shutdown")
 def shutdown_event():
     global kafka_handler

@@ -109,3 +109,11 @@ class StorefrontRepository:
             self.db.commit()
             return True
         return False
+
+    def get_websites_by_status(self, status: str) -> list[CompanyWebsite]:
+        """Retrieve all websites matching a given status."""
+        return self.db.query(CompanyWebsite).filter(CompanyWebsite.status == status).all()
+
+    def get_websites_construction(self) -> list[CompanyWebsite]:
+        """Shortcut to retrieve all websites currently in CONSTRUCTION status."""
+        return self.get_websites_by_status("CONSTRUCTION")
