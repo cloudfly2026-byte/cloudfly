@@ -8,4 +8,7 @@ type WebsiteContext struct {
 	DomainName  string `json:"domain_name"`
 	CompanyName string `json:"company_name"`
 	Template    string `json:"template"`
+	Description string `json:"description"`
+	Keywords    string `json:"keywords"`
+	FooterText  string `json:"footer_text"`
 }

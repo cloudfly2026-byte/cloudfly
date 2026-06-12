@@ -40,6 +40,28 @@ func (r *Renderer) Load() error {
 	}
 
 	tmpl := template.New("storefront").Funcs(template.FuncMap{
+		"themeConfigVal": func(themeVal *theme.Theme, key string, fallback string) string {
+			if themeVal == nil || themeVal.Config == nil {
+				return fallback
+			}
+			if val, ok := themeVal.Config[key]; ok {
+				if strVal, ok := val.(string); ok && strVal != "" {
+					return strVal
+				}
+			}
+			return fallback
+		},
+		"isLightColor": func(hexStr string) bool {
+			hexStr = strings.TrimPrefix(hexStr, "#")
+			if len(hexStr) != 6 {
+				return false
+			}
+			rVal, _ := strconv.ParseInt(hexStr[0:2], 16, 64)
+			gVal, _ := strconv.ParseInt(hexStr[2:4], 16, 64)
+			bVal, _ := strconv.ParseInt(hexStr[4:6], 16, 64)
+			y := 0.299*float64(rVal) + 0.587*float64(gVal) + 0.114*float64(bVal)
+			return y > 150
+		},
 		"renderBlock": func(b layout.Block, pageData any) template.HTML {
 			var buf bytes.Buffer
 			tmplName := b.Type + ".html"

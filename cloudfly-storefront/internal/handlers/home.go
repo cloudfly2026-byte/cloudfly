@@ -80,6 +80,7 @@ type Page struct {
 }
 
 type StorefrontData struct {
+	Website       *domainresolver.WebsiteContext
 	Company       Company
 	Theme         *theme.Theme
 	Categories    []Category
@@ -224,8 +225,8 @@ func Home(c *fiber.Ctx) error {
 	if database.DB != nil {
 		// Cargar metadatos detallados de la compañía
 		var logoURL, compDesc, compPhone, compEmail, compAddress sql.NullString
-		err := database.DB.QueryRow("SELECT name, logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
-			&company.Name, &logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
+		err := database.DB.QueryRow("SELECT logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1", companyID).Scan(
+			&logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
 		if err == nil {
 			if logoURL.Valid {
 				company.Logo = normalizeImageURL(logoURL.String)
@@ -335,6 +336,7 @@ func Home(c *fiber.Ctx) error {
 
 	// 4. Renderizar usando Render Engine (Fase 4/5)
 	viewData := StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       themeData,
 		Categories:  categories,

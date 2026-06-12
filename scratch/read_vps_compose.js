@@ -5,7 +5,7 @@ const conn = new Client();
 const config = { host: '109.205.182.94', port: 22, username: 'root', privateKey: fs.readFileSync('C:/Users/Edwin/.ssh/id_rsa_cloudfly'), readyTimeout: 60000 };
 
 conn.on('ready', () => {
-  const cmd = 'cat /apps/cloudfly/docker-compose.yml';
+  const cmd = 'cat /apps/cloudfly/docker-compose-full-vps.yml';
   conn.exec(cmd, (err, stream) => {
     if (err) throw err;
     stream.on('close', () => conn.end()).on('data', d => process.stdout.write(d)).stderr.on('data', d => process.stderr.write(d));

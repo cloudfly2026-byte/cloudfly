@@ -67,7 +67,8 @@ func WebsiteResolver() fiber.Handler {
 		}
 
 		// Validar si el dominio está activo y vigente
-		isActive := strings.ToLower(estado) == "activo"
+		estadoLower := strings.ToLower(estado)
+		isActive := estadoLower == "activo" || estadoLower == "enabled"
 		if fechaCaduca.Valid && fechaCaduca.Time.Before(time.Now()) {
 			isActive = false
 		}
@@ -93,10 +94,13 @@ func WebsiteResolver() fiber.Handler {
 		// 3. Consultar datos en company_website para armar el WebsiteContext
 		var websiteID, themeID int64
 		var siteName, templateStr string
+		var description, keywords, footerText sql.NullString
 		err = database.DB.QueryRow(
-			"SELECT id, theme, site_name, template FROM company_website WHERE company_id = ? LIMIT 1",
+			"SELECT id, theme, site_name, template, description, keywords, footer_text FROM company_website WHERE company_id = ? LIMIT 1",
 			companyID,
-		).Scan(&websiteID, &themeID, &siteName, &templateStr)
+		).Scan(&websiteID, &themeID, &siteName, &templateStr, &description, &keywords, &footerText)
+		
+		var descVal, keyVal, footVal string
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// Valores por defecto si la tienda no tiene registro en company_website
@@ -104,9 +108,22 @@ func WebsiteResolver() fiber.Handler {
 				themeID = 1
 				siteName = "Tienda CloudFly"
 				templateStr = "default"
+				descVal = "Tienda Oficial de CloudFly"
+				keyVal = "ecommerce, tienda"
+				footVal = "Todos los derechos reservados"
 			} else {
 				log.Printf("⚠️  [DomainResolver Website Error]: %v", err)
 				return c.Status(500).SendString("Error interno al recuperar datos de la tienda.")
+			}
+		} else {
+			if description.Valid {
+				descVal = description.String
+			}
+			if keywords.Valid {
+				keyVal = keywords.String
+			}
+			if footerText.Valid {
+				footVal = footerText.String
 			}
 		}
 
@@ -118,6 +135,9 @@ func WebsiteResolver() fiber.Handler {
 			DomainName:  domainName,
 			CompanyName: siteName,
 			Template:    templateStr,
+			Description: descVal,
+			Keywords:    keyVal,
+			FooterText:  footVal,
 		}
 		c.Locals("website", ctxVal)
 		return c.Next()

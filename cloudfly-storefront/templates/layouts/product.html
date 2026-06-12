@@ -28,16 +28,16 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             
-            --bg-base: #0b0f19;
-            --bg-surface: #131c2e;
-            --bg-surface-hover: #1b263f;
+            --bg-base: {{themeConfigVal .Theme "background_color" "#0b0f19"}};
+            --bg-surface: {{themeConfigVal .Theme "surface_color" "#131c2e"}};
+            --bg-surface-hover: {{themeConfigVal .Theme "surface_hover_color" "#1b263f"}};
             --border-color: rgba(255, 255, 255, 0.08);
-            --text-main: #f3f4f6;
+            --text-main: {{themeConfigVal .Theme "text_color" "#f3f4f6"}};
             --text-muted: #9ca3af;
-            --text-inverse: #0b0f19;
+            --text-inverse: {{if isLightColor (themeConfigVal .Theme "background_color" "#0b0f19")}}#0b0f19{{else}}#f3f4f6{{end}};
             --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            --glass-bg: rgba(19, 28, 46, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.06);
+            --glass-bg: {{if isLightColor (themeConfigVal .Theme "background_color" "#0b0f19")}}rgba(255, 255, 255, 0.7){{else}}rgba(19, 28, 46, 0.7){{end}};
+            --glass-border: {{if isLightColor (themeConfigVal .Theme "background_color" "#0b0f19")}}rgba(0, 0, 0, 0.06){{else}}rgba(255, 255, 255, 0.06){{end}};
             
             --radius-sm: 8px;
             --radius-md: 12px;
@@ -794,7 +794,7 @@
     <!-- Sticky Header -->
     <header class="sticky-header">
         <div class="header-container">
-            <a href="#/" class="logo-section">
+            <a href="/" class="logo-section">
                 {{if .Company.Logo}}
                 <img class="logo-img" src="{{.Company.Logo}}" alt="{{.Company.Name}}">
                 {{else}}
@@ -808,10 +808,10 @@
             <!-- Main Navigation Desktop -->
             <nav class="main-nav">
                 <ul class="nav-links-list">
-                    <li class="nav-link-item active" data-route=""><a href="#/">Inicio</a></li>
-                    <li class="nav-link-item" data-route="catalogo"><a href="#/catalogo">Catálogo</a></li>
-                    <li class="nav-link-item" data-route="nosotros"><a href="#/nosotros">Nosotros</a></li>
-                    <li class="nav-link-item" data-route="contacto"><a href="#/contacto">Contacto</a></li>
+                    <li class="nav-link-item active" data-route=""><a href="/">Inicio</a></li>
+                    <li class="nav-link-item" data-route="catalogo"><a href="/catalogo">Catálogo</a></li>
+                    <li class="nav-link-item" data-route="nosotros"><a href="/nosotros">Nosotros</a></li>
+                    <li class="nav-link-item" data-route="contacto"><a href="/contacto">Contacto</a></li>
                 </ul>
             </nav>
 
@@ -819,7 +819,7 @@
                 <button class="action-btn" onclick="toggleSearch(true)" aria-label="Buscar">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-                <button class="action-btn" onclick="location.hash='#/carrito'" aria-label="Bolsa de compras">
+                <button class="action-btn" onclick="window.history.pushState(null, '', '/carrito'); renderRoute();" aria-label="Bolsa de compras">
                     <i class="fa-solid fa-bag-shopping"></i>
                     <span class="cart-badge" id="cart-badge-count">0</span>
                 </button>
@@ -837,10 +837,10 @@
     <!-- Mobile Menu Panel -->
     <div class="mobile-nav-panel" id="mobile-nav-panel">
         <ul class="mobile-links-list">
-            <li class="mobile-link-item"><a href="#/" onclick="toggleMobileMenu()">Inicio</a></li>
-            <li class="mobile-link-item"><a href="#/catalogo" onclick="toggleMobileMenu()">Catálogo</a></li>
-            <li class="mobile-link-item"><a href="#/nosotros" onclick="toggleMobileMenu()">Nosotros</a></li>
-            <li class="mobile-link-item"><a href="#/contacto" onclick="toggleMobileMenu()">Contacto</a></li>
+            <li class="mobile-link-item"><a href="/" onclick="toggleMobileMenu()">Inicio</a></li>
+            <li class="mobile-link-item"><a href="/catalogo" onclick="toggleMobileMenu()">Catálogo</a></li>
+            <li class="mobile-link-item"><a href="/nosotros" onclick="toggleMobileMenu()">Nosotros</a></li>
+            <li class="mobile-link-item"><a href="/contacto" onclick="toggleMobileMenu()">Contacto</a></li>
         </ul>
         <a href="https://wa.me/{{if .Company.Phone}}{{.Company.Phone}}{{else}}573000000000{{end}}?text=Hola!" target="_blank" class="whatsapp-btn-header" style="justify-content: center; width: 100%; padding: 0.85rem;">
             <i class="fa-brands fa-whatsapp"></i>
@@ -886,8 +886,8 @@
             <div class="footer-column">
                 <h4 class="footer-title">Enlaces Rápidos</h4>
                 <ul class="footer-links">
-                    <li><a href="#/">Inicio</a></li>
-                    <li><a href="#/catalogo">Catálogo</a></li>
+                    <li><a href="/">Inicio</a></li>
+                    <li><a href="/catalogo">Catálogo</a></li>
                     {{if .Company.Phone}}
                     <li><a href="https://wa.me/{{.Company.Phone}}">WhatsApp</a></li>
                     {{end}}
@@ -897,8 +897,8 @@
             <div class="footer-column">
                 <h4 class="footer-title">Información</h4>
                 <ul class="footer-links">
-                    <li><a href="#/privacidad">Políticas de Privacidad</a></li>
-                    <li><a href="#/terminos">Términos y Condiciones</a></li>
+                    <li><a href="/privacidad">Políticas de Privacidad</a></li>
+                    <li><a href="/terminos">Términos y Condiciones</a></li>
                 </ul>
             </div>
 
@@ -919,7 +919,7 @@
         </div>
 
         <div class="footer-bottom">
-            <span>&copy; 2026 {{if .Company.Name}}{{.Company.Name}}{{else}}Tienda{{end}}. Impulsado por <a href="https://www.cloudfly.com.co" target="_blank" style="color: var(--primary);">CloudFly</a>.</span>
+            <span>{{if .Website.FooterText}}{{.Website.FooterText}}{{else}}&copy; 2026 {{.Company.Name}}. Todos los derechos reservados.{{end}} Impulsado por <a href="https://www.cloudfly.com.co" target="_blank" style="color: var(--primary);">CloudFly</a>.</span>
         </div>
     </footer>
 
@@ -1017,7 +1017,7 @@
                 const query = this.value.trim();
                 if (query) {
                     toggleSearch(false);
-                    location.hash = `#/catalogo?search=${encodeURIComponent(query)}`;
+                    window.history.pushState(null, '', '/catalogo?search=' + encodeURIComponent(query)); renderRoute();;
                 }
             }
         });
@@ -1068,8 +1068,8 @@
                             <h1 class="hero-title">${companyName ? companyName : 'Bienvenido a Nuestra Tienda'}</h1>
                             <p class="hero-subtitle">{{if .Company.Description}}{{.Company.Description}}{{else}}Descubre nuestra amplia variedad de productos con los mejores precios and envío a todo el país.{{end}}</p>
                             <div class="hero-ctas">
-                                ${dynamicProducts.length > 0 ? `<button class="btn btn-primary" onclick="location.hash='#/catalogo'">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>` : ''}
-                                ${dynamicCategories.length > 0 ? `<button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>` : ''}
+                                ${dynamicProducts.length > 0 ? `<button class="btn btn-primary" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();">Comprar Ahora <i class="fa-solid fa-arrow-right"></i></button>` : ''}
+                                ${dynamicCategories.length > 0 ? `<button class="btn btn-secondary" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();">Ver Catálogo</button>` : ''}
                             </div>
                         </div>
                         <div class="hero-image-wrapper">
@@ -1082,7 +1082,7 @@
                     let catsHtml = `<div class="section-header"><h3 class="section-title">Categorías Destacadas</h3></div><div class="category-grid">`;
                     dynamicCategories.forEach(cat => {
                         catsHtml += `
-                            <div class="category-card" onclick="location.hash='#/categoria/${cat.slug}'">
+                            <div class="category-card" onclick="window.history.pushState(null, '', '/categoria/' + cat.slug); renderRoute();">
                                 <div class="category-icon-box"><i class="${cat.icon}"></i></div>
                                 <span class="category-name">${cat.name}</span>
                             </div>
@@ -1093,18 +1093,18 @@
                 },
                 'featured_products': () => {
                     if (dynamicProducts.length === 0) return '';
-                    let prodsHtml = `<div class="section-header"><h3 class="section-title">Productos Destacados</h3><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="location.hash='#/catalogo'">Ver Todo</button></div><div class="products-grid">`;
+                    let prodsHtml = `<div class="section-header"><h3 class="section-title">Productos Destacados</h3><button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();">Ver Todo</button></div><div class="products-grid">`;
                     dynamicProducts.slice(0, 4).forEach(prod => {
                         const imgSrc = prod.image || productPlaceholder;
                         prodsHtml += `
                             <div class="product-card">
-                                <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                                <div class="product-card-image-box" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">
                                     <img class="product-card-img" src="${imgSrc}" alt="${prod.name}">
                                     ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                                 </div>
                                 <div class="product-card-content">
                                     ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
-                                    <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                                    <h4 class="product-card-title" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">${prod.name}</h4>
                                     <div class="product-card-price-row">
                                         <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
                                         ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
@@ -1235,13 +1235,13 @@
                     const imgSrc = prod.image || productPlaceholder;
                     cardsHtml += `
                         <div class="product-card">
-                            <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                            <div class="product-card-image-box" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">
                                 <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
                                 ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                             </div>
                             <div class="product-card-content">
                                 ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
-                                <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                                <h4 class="product-card-title" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">${prod.name}</h4>
                                 <div class="product-card-price-row">
                                     <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
                                     ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
@@ -1369,13 +1369,13 @@
                             const imgSrc = prod.image || productPlaceholder;
                             return `
                                 <div class="product-card">
-                                    <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                                    <div class="product-card-image-box" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">
                                         <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
                                         ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                                     </div>
                                     <div class="product-card-content">
                                         ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
-                                        <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                                        <h4 class="product-card-title" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">${prod.name}</h4>
                                         <div class="product-card-price-row">
                                             <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
                                             ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
@@ -1446,13 +1446,13 @@
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <div class="product-card-image-box" onclick="location.hash='#/producto/${prod.id}'">
+                    <div class="product-card-image-box" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">
                         <img class="product-card-img" src="${imgSrc}" alt="${prod.name}" loading="lazy">
                         ${prod.available ? '' : '<span class="product-card-badge" style="background: var(--danger);">Agotado</span>'}
                     </div>
                     <div class="product-card-content">
                         ${prod.brand ? `<span class="product-card-rating">${prod.brand}</span>` : ''}
-                        <h4 class="product-card-title" onclick="location.hash='#/producto/${prod.id}'">${prod.name}</h4>
+                        <h4 class="product-card-title" onclick="window.history.pushState(null, '', '/producto/' + prod.id); renderRoute();">${prod.name}</h4>
                         <div class="product-card-price-row">
                             <span class="product-card-price">$${prod.price.toLocaleString('es-CO')}</span>
                             ${prod.available ? `<button class="btn-add-cart-quick" onclick="addToCart(${prod.id})" aria-label="Agregar al carrito"><i class="fa-solid fa-plus"></i></button>` : ''}
@@ -1495,7 +1495,7 @@
                         <i class="fa-solid fa-cart-shopping" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
                         <h2 style="font-family:'Outfit',sans-serif; margin-bottom: 0.5rem;">Tu carrito está vacío</h2>
                         <p style="color: var(--text-muted); margin-bottom: 2rem;">Agrega productos para continuar con tu compra.</p>
-                        <button class="btn btn-primary" onclick="location.hash='#/catalogo'">Ver Catálogo</button>
+                        <button class="btn btn-primary" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();">Ver Catálogo</button>
                     </section>`;
                 return;
             }
@@ -1533,7 +1533,7 @@
                             <hr style="border-color:var(--border-color);">
                             <div style="display:flex;justify-content:space-between;font-size:1.1rem;"><span style="font-weight:700;">Total</span><span style="font-weight:800;color:var(--success);">${total.toLocaleString('es-CO')}</span></div>
                             ${phone ? `<a href="https://wa.me/${phone.replace(/\D/g,'')}?text=${waMsg}" target="_blank" class="btn btn-primary" style="text-align:center;margin-top:0.5rem;"><i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp</a>` : ''}
-                            <button class="btn btn-secondary" onclick="location.hash='#/catalogo'">Seguir Comprando</button>
+                            <button class="btn btn-secondary" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();">Seguir Comprando</button>
                         </div>
                     </div>
                 </section>`;
@@ -1542,7 +1542,7 @@
         function renderProduct(container, productId) {
             const prod = dynamicProducts.find(p => p.id == productId);
             if (!prod) {
-                container.innerHTML = `<section style="padding:4rem 0;text-align:center;"><h2>Producto no encontrado</h2><button class="btn btn-secondary" onclick="location.hash='#/catalogo'" style="margin-top:1rem;">Volver al Catálogo</button></section>`;
+                container.innerHTML = `<section style="padding:4rem 0;text-align:center;"><h2>Producto no encontrado</h2><button class="btn btn-secondary" onclick="window.history.pushState(null, '', '/catalogo'); renderRoute();" style="margin-top:1rem;">Volver al Catálogo</button></section>`;
                 return;
             }
             container.innerHTML = `
@@ -1558,7 +1558,7 @@
                             <p style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;color:var(--success);">${prod.price.toLocaleString('es-CO')}</p>
                             ${prod.description ? `<p style="color:var(--text-muted);line-height:1.7;">${prod.description}</p>` : ''}
                             <div style="display:flex;gap:1rem;margin-top:0.5rem;">
-                                ${prod.available ? `<button class="btn btn-primary" onclick="addToCart(${prod.id});location.hash='#/carrito'"><i class="fa-solid fa-cart-shopping"></i> Agregar al Carrito</button>` : `<span style="color:var(--danger);font-weight:600;">Agotado</span>`}
+                                ${prod.available ? `<button class="btn btn-primary" onclick="addToCart(${prod.id});window.history.pushState(null, '', '/carrito'); renderRoute();"><i class="fa-solid fa-cart-shopping"></i> Agregar al Carrito</button>` : `<span style="color:var(--danger);font-weight:600;">Agotado</span>`}
                             </div>
                             <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1.25rem;margin-top:0.5rem;">
                                 <p style="font-weight:600;margin-bottom:0.75rem;">Especificaciones</p>
@@ -1569,45 +1569,49 @@
                 </section>`;
         }
 
-        let isInitialLoad = true;
+                let isInitialLoad = true;
 
         function renderRoute() {
             const container = document.getElementById('main-content');
             if (!container) return;
 
-            const hash = location.hash || '#/';
+            const path = window.location.pathname || '/';
             document.querySelectorAll('.nav-link-item, .mobile-link-item').forEach(li => {
+                const route = li.getAttribute('data-route');
                 li.classList.toggle('active',
-                    (hash.startsWith('#/catalogo') && li.dataset.route === 'catalogo') ||
-                    (hash === '#/' && li.dataset.route === 'inicio') ||
-                    (hash === '' && li.dataset.route === 'inicio')
+                    (path.startsWith('/catalogo') && route === 'catalogo') ||
+                    (path === '/' && route === 'inicio') ||
+                    (path === '/nosotros' && route === 'nosotros') ||
+                    (path === '/contacto' && route === 'contacto')
                 );
             });
             updateCartBadge();
 
-            if (isInitialLoad) {
+            // En la carga inicial de la página Home, respetamos el HTML server-side renderizado (SSR)
+            if (path === '/' && isInitialLoad) {
                 isInitialLoad = false;
                 return;
             }
+            isInitialLoad = false;
 
-            if (hash === '#/' || hash === '') {
+            if (path === '/') {
                 renderHome(container);
-            } else if (hash.startsWith('#/catalogo')) {
-                const search = hash.includes('?') ? new URLSearchParams(hash.split('?')[1]) : null;
+            } else if (path.startsWith('/catalogo')) {
+                const search = window.location.search ? new URLSearchParams(window.location.search) : null;
                 renderCatalog(container, search);
-            } else if (hash.startsWith('#/categoria/')) {
-                const slug = hash.replace('#/categoria/', '');
+            } else if (path.startsWith('/categoria/')) {
+                const slug = path.replace('/categoria/', '');
                 const cat = dynamicCategories.find(c => c.slug === slug);
                 const search = cat ? new URLSearchParams(`cat=${encodeURIComponent(cat.name)}`) : null;
                 renderCatalog(container, search);
-            } else if (hash.startsWith('#/producto/')) {
-                const id = hash.replace('#/producto/', '').split('?')[0];
+            } else if (path.startsWith('/producto/')) {
+                const id = path.replace('/producto/', '').split('?')[0];
                 renderProduct(container, id);
-            } else if (hash === '#/carrito') {
+            } else if (path === '/carrito') {
                 renderCart(container);
-            } else if (hash === '#/nosotros') {
-                container.innerHTML = `<section style="padding:var(--space-xl) 0;max-width:700px;"><h1 class="section-title">Nosotros</h1><p style="color:var(--text-muted);margin-top:1rem;line-height:1.8;">{{if .Company.Description}}{{.Company.Description}}{{else}}Somos una tienda comprometida con ofrecerte los mejores productos al mejor precio.{{end}}</p></section>`;
-            } else if (hash === '#/contacto') {
+            } else if (path === '/nosotros') {
+                container.innerHTML = `<section style="padding:var(--space-xl) 0;max-width:700px;"><h1 class="section-title">Nosotros</h1><p style="color:var(--text-muted);margin-top:1rem;line-height:1.8;">${companyName ? 'En ' + companyName : 'En nuestra tienda'} estamos comprometidos con ofrecerte los mejores productos al mejor precio.</p></section>`;
+            } else if (path === '/contacto') {
                 const phone = "{{.Company.Phone}}";
                 const email = "{{.Company.Email}}";
                 const address = "{{.Company.Address}}";
@@ -1617,7 +1621,7 @@
                         <div style="display:grid;gap:1.5rem;max-width:500px;">
                             ${email ? `<div style="display:flex;gap:1rem;align-items:center;"><i class="fa-solid fa-envelope" style="color:var(--primary);font-size:1.25rem;"></i><span>${email}</span></div>` : ''}
                             ${address ? `<div style="display:flex;gap:1rem;align-items:center;"><i class="fa-solid fa-location-dot" style="color:var(--primary);font-size:1.25rem;"></i><span>${address}</span></div>` : ''}
-                            ${phone ? `<a href="https://wa.me/${phone.replace(/\D/g,'')}" target="_blank" class="btn btn-primary" style="margin-top:0.5rem;"><i class="fa-brands fa-whatsapp"></i> Contáctanos por WhatsApp</a>` : ''}
+                            ${phone ? `<a href="https://wa.me/${phone.replace(/\\D/g,'')}" target="_blank" class="btn btn-primary" style="margin-top:0.5rem;"><i class="fa-brands fa-whatsapp"></i> Contáctanos por WhatsApp</a>` : ''}
                         </div>
                     </section>`;
             } else {
@@ -1625,7 +1629,21 @@
             }
         }
 
-        window.addEventListener('hashchange', renderRoute);
+        // Global click interceptor for friendly SPA navigation
+        window.addEventListener('click', e => {
+            const a = e.target.closest('a');
+            if (a && a.href && a.host === window.location.host) {
+                const path = a.pathname;
+                // Exclude external, whatsapp or mailto links
+                if (!a.target && !a.href.includes('wa.me') && !a.href.includes('mailto:') && !a.href.includes('tel:')) {
+                    e.preventDefault();
+                    window.history.pushState(null, '', a.href);
+                    renderRoute();
+                }
+            }
+        });
+
+        window.addEventListener('popstate', renderRoute);
         document.addEventListener('DOMContentLoaded', renderRoute);
     </script>
 </body>

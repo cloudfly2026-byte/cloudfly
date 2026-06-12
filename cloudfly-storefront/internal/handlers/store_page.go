@@ -16,11 +16,11 @@ import (
 // resolveTenant resolves tenant/company IDs from the request hostname.
 // Returns (tenantID, companyID, company, theme, categories, products, pages, ok).
 // If ok=false the caller should redirect or 403.
-func resolveTenant(c *fiber.Ctx) (int64, int64, Company, *theme.Theme, []Category, []Product, []Page, bool) {
+func resolveTenant(c *fiber.Ctx) (*domainresolver.WebsiteContext, int64, Company, *theme.Theme, []Category, []Product, []Page, bool) {
 	websiteVal := c.Locals("website")
 	if websiteVal == nil {
 		_ = c.Status(500).SendString("<h1>500 Error</h1><p>Website context not resolved</p>")
-		return 0, 0, Company{}, nil, nil, nil, nil, false
+		return nil, 0, Company{}, nil, nil, nil, nil, false
 	}
 	website := websiteVal.(*domainresolver.WebsiteContext)
 	companyID := website.CompanyID
@@ -38,7 +38,7 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, *theme.Theme, []Categor
 	if database.DB != nil {
 		var logoURL, compDesc, compPhone, compEmail, compAddress sql.NullString
 		err := database.DB.QueryRow(
-			"SELECT name, logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1",
+			"SELECT logo_url, company_description, phone, email, address FROM companies WHERE id = ? LIMIT 1",
 			companyID,
 		).Scan(&company.Name, &logoURL, &compDesc, &compPhone, &compEmail, &compAddress)
 		if err == nil {
@@ -180,14 +180,14 @@ func resolveTenant(c *fiber.Ctx) (int64, int64, Company, *theme.Theme, []Categor
 	log.Printf("ℹ️  [StorePage] Resolved via Context companyID=%d cats=%d prods=%d pages=%d",
 		companyID, len(categories), len(products), len(pages))
 
-	return 1, companyID, company, themeData, categories, products, pages, true
+	return website, companyID, company, themeData, categories, products, pages, true
 }
 
 // CategoryPage handles GET /:categorySlug
 // URL: /chatbots
 func CategoryPage(c *fiber.Ctx) error {
 	catSlug := c.Params("categorySlug")
-	_, companyID, company, theme, categories, products, pages, ok := resolveTenant(c)
+	website, companyID, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -212,6 +212,7 @@ func CategoryPage(c *fiber.Ctx) error {
 	}
 
 	html, err := Renderer.RenderToString("category", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -237,7 +238,7 @@ func ProductPage(c *fiber.Ctx) error {
 	catSlug := c.Params("categorySlug")
 	prodSlug := c.Params("productSlug")
 
-	_, _, company, theme, categories, products, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -260,6 +261,7 @@ func ProductPage(c *fiber.Ctx) error {
 	}
 
 	html, err := Renderer.RenderToString("product", StorefrontData{
+		Website:       website,
 		Company:       company,
 		Theme:         theme,
 		Categories:    categories,
@@ -278,11 +280,12 @@ func ProductPage(c *fiber.Ctx) error {
 
 // CatalogoPage handles GET /catalogo — full catalog (all products)
 func CatalogoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, products, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, products, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -299,11 +302,12 @@ func CatalogoPage(c *fiber.Ctx) error {
 
 // CarritoPage handles GET /carrito
 func CarritoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -319,11 +323,12 @@ func CarritoPage(c *fiber.Ctx) error {
 
 // NosotrosPage handles GET /nosotros
 func NosotrosPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -339,11 +344,12 @@ func NosotrosPage(c *fiber.Ctx) error {
 
 // ContactoPage handles GET /contacto
 func ContactoPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -359,7 +365,7 @@ func ContactoPage(c *fiber.Ctx) error {
 
 // BlogPage handles GET /blog — list all blog posts
 func BlogPage(c *fiber.Ctx) error {
-	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -373,6 +379,7 @@ func BlogPage(c *fiber.Ctx) error {
 	}
 
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
@@ -390,7 +397,7 @@ func BlogPage(c *fiber.Ctx) error {
 // This allows rendering any page or post created in the CMS
 func PageBySlug(c *fiber.Ctx) error {
 	slug := c.Params("slug")
-	_, _, company, theme, categories, _, pages, ok := resolveTenant(c)
+	website, _, company, theme, categories, _, pages, ok := resolveTenant(c)
 	if !ok {
 		return nil
 	}
@@ -409,6 +416,7 @@ func PageBySlug(c *fiber.Ctx) error {
 	}
 
 	html, err := Renderer.RenderToString("home", StorefrontData{
+		Website:     website,
 		Company:     company,
 		Theme:       theme,
 		Categories:  categories,
