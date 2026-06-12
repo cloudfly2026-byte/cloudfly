@@ -10,7 +10,7 @@ services:
       TZ: America/Bogota
       MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
     volumes:
       - persistent_master:/var/lib/mysql
     networks:
@@ -199,7 +199,7 @@ services:
     restart: always
     environment:
       - NEXTAUTH_URL=https://dashboard.cloudfly.com.co
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-CAMBIAR_ESTE_SECRET_EN_PRODUCCION_JWT_2025}
       - NEXT_PUBLIC_API_URL=https://api.cloudfly.com.co
       - NEXT_PUBLIC_BASE_URL=https://dashboard.cloudfly.com.co
       - NEXT_PUBLIC_FRONTEND_URL=https://dashboard.cloudfly.com.co
