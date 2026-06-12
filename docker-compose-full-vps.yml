@@ -70,14 +70,14 @@ services:
       - TZ=America/Bogota
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
       - SPRING_R2DBC_URL=r2dbc:mysql://mysql:3306/cloud_master?serverZoneId=America/Bogota
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - KAFKA_HOST=kafka
       - SPRING_PROFILES_ACTIVE=production
       - EVOLUTION_API_URL=http://evolution-api:8080
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:?EVOLUTION_API_KEY is required}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-cambia_esta_llave_para_n8n}
       - JWT_SECRET=${JWT_SECRET}
       - LEAD_GENERATOR_URL=http://lead-generator:8000
     networks:
@@ -139,10 +139,10 @@ services:
       - TZ=America/Bogota
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
       - SPRING_R2DBC_URL=r2dbc:mysql://mysql:3306/cloud_master?serverZoneId=America/Bogota
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - KAFKA_HOST=kafka
       - SPRING_PROFILES_ACTIVE=production
     networks:
@@ -173,13 +173,13 @@ services:
       - SPRING_PROFILES_ACTIVE=production
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - EVOLUTION_API_URL=http://evolution-api:8080
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-cambia_esta_llave_para_n8n}
       - SOCKET_SERVICE_URL=http://chat_socket:3001
-      - N8N_SECRET_KEY=${N8N_SECRET_KEY:?N8N_SECRET_KEY is required}
+      - N8N_SECRET_KEY=${N8N_SECRET_KEY:-cambia_este_secret_en_produccion_n8n_2025}
     networks:
       - kafka-net
       - app-net
@@ -248,7 +248,7 @@ services:
     environment:
       POSTGRES_DB: chatbotdb
       POSTGRES_USER: chatbot_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatbot_pass}
     
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -401,9 +401,9 @@ services:
       - PYTHONUNBUFFERED=1
       - KAFKA_HOST=kafka:9092
       - DB_HOST=mysql
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - LOG_LEVEL=INFO
 
   marketing-agent:
@@ -420,9 +420,9 @@ services:
     environment:
       - DB_HOST=${DB_HOST:-mysql}
       - DB_PORT=${DB_PORT:-3306}
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - KAFKA_HOST=${KAFKA_HOST:-kafka}
       - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-kafka}:9092
       - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://evolution-api:8080}
@@ -491,12 +491,12 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:?DB_DATABASE is required}
-      - DB_USERNAME=${DB_USERNAME:?DB_USERNAME is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cloud_master}}
+      - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-widowmaker}}
       - KAFKA_HOST=kafka
       - EVOLUTION_API_URL=http://evolution-api:8080
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:?EVOLUTION_API_KEY is required}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-cambia_esta_llave_para_n8n}
     networks:
       - app-net
       - kafka-net
