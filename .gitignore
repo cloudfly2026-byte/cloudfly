@@ -63,3 +63,6 @@ ia_scrum_team.zip
 # Environment
 .env
 .env.*
+
+# Chatwoot
+chatwoot/
