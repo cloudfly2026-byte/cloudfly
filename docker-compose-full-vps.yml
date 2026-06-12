@@ -560,7 +560,7 @@ services:
     container_name: web-team
     restart: always
     ports:
-      - "9000:8000"
+      - "9090:8000"
     env_file:
       - .env
     environment:
