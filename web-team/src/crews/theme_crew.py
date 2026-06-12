@@ -1,7 +1,7 @@
 import json
 from crewai import Agent, Task, Crew, Process, LLM
 from src.config import settings
-from src.tools import theme_catalog_tool
+from src.tools import theme_catalog_tool, logo_analyzer
 
 llm = LLM(
     model=settings.llm_config["model"],
@@ -26,8 +26,9 @@ def run_theme_builder(brand_profile: dict, logo_url: str) -> dict:
 
     ux_ui_expert_agent = Agent(
         role="Experto en Accesibilidad y Estética UX/UI",
-        goal="Diseñar una paleta de colores premium y combinaciones de tipografías legibles y de alto impacto emocional para {brand_profile}",
+        goal="Diseñar una paleta de colores premium y combinaciones de tipografías legibles y de alto impacto emocional para {brand_profile} basándose en su logo.",
         backstory="Un diseñador de interfaces galardonado, especializado en accesibilidad WCAG y paletas cromáticas armónicas que elevan la percepción de marca.",
+        tools=[logo_analyzer],
         llm=llm,
         verbose=True
     )
@@ -53,7 +54,8 @@ def run_theme_builder(brand_profile: dict, logo_url: str) -> dict:
     task_design_ux_ui = Task(
         description=(
             "A partir de la plantilla recomendada y el perfil de marca {brand_profile}, diseña la paleta cromática completa.\n"
-            "Define valores premium para: primary_color, secondary_color, accent_color, background_color (fondo base), surface_color (fondo de tarjetas/menús), surface_hover_color, y text_color.\n"
+            "Usa la herramienta 'Logo Analyzer Tool' pasando el logo_url para extraer los colores del logo de la empresa.\n"
+            "Define valores premium para: primary_color, secondary_color, accent_color, background_color (fondo base), surface_color (fondo de tarjetas/menús), surface_hover_color, y text_color, inspirados en los colores devueltos por la herramienta para el logo.\n"
             "Asegúrate de que haya excelente contraste entre el texto y el fondo para cumplir con los estándares WCAG."
         ),
         expected_output="Un reporte detallado con las especificaciones de colores hex y tipografías recomendadas.",
