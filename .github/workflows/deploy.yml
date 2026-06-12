@@ -173,7 +173,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: '109.205.182.94'
-          username: ${{ secrets.VPS_SSH_USER || 'deploy' }}
+          username: ${{ secrets.VPS_SSH_USER || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
