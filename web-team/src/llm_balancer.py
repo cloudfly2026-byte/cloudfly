@@ -96,7 +96,7 @@ def get_healthiest_model() -> str:
 
 def rotate_llm(llm_instance, current_key=None, mark_rate_limited=False):
     new_key = get_healthy_api_key(current_key=current_key, mark_rate_limited=mark_rate_limited)
-    new_model = get_healthiest_model()
+    new_model = get_healthiest_model() 
     
     if "/" in new_model:
         provider, model_name = new_model.split("/", 1)
