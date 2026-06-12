@@ -163,37 +163,47 @@ class KafkaHandler:
 
         try:
             # 5. Brand Discovery Crew
-            logger.info("Running Brand Discovery Crew...")
-            brand_profile_data = run_brand_discovery(
-                company_name=company.name,
-                company_description=company.company_description,
-                website_url=company.address, # Use address or crawler
-                logo_url=company.logo_url
-            )
-            
-            repo.save_brand_profile(
-                company_id=company_id,
-                industry=brand_profile_data.get("industry", "default"),
-                subindustry=brand_profile_data.get("subindustry", "general"),
-                tone=brand_profile_data.get("tone", "warm"),
-                style=brand_profile_data.get("style", "premium"),
-                brand_json=brand_profile_data
-            )
+            from src.models import BrandProfile, CompanyTheme
+            brand_profile_record = db.query(BrandProfile).filter(BrandProfile.company_id == company_id).first()
+            if brand_profile_record and brand_profile_record.brand_json:
+                logger.info("Found existing Brand Profile. Reusing it to resume build...")
+                brand_profile_data = brand_profile_record.brand_json
+            else:
+                logger.info("Running Brand Discovery Crew...")
+                brand_profile_data = run_brand_discovery(
+                    company_name=company.name,
+                    company_description=company.company_description,
+                    website_url=company.address, # Use address or crawler
+                    logo_url=company.logo_url
+                )
+                
+                repo.save_brand_profile(
+                    company_id=company_id,
+                    industry=brand_profile_data.get("industry", "default"),
+                    subindustry=brand_profile_data.get("subindustry", "general"),
+                    tone=brand_profile_data.get("tone", "warm"),
+                    style=brand_profile_data.get("style", "premium"),
+                    brand_json=brand_profile_data
+                )
 
             # 6. Theme Recommendation & Builder Crew
-            logger.info("Running Theme Recommendation & Builder Crew...")
-            theme_config = run_theme_builder(brand_profile_data, company.logo_url)
-            theme_record = repo.save_theme(
-                company_id=company_id,
-                template_name=theme_config.get("template_name", "default"),
-                primary_color=theme_config.get("primary_color", "#1A1A1A"),
-                secondary_color=theme_config.get("secondary_color", "#F5F5F7"),
-                accent_color=theme_config.get("accent_color", "#D2A26B"),
-                heading_font=theme_config.get("heading_font", "Inter"),
-                body_font=theme_config.get("body_font", "Inter"),
-                logo_url=company.logo_url,
-                config_json=theme_config
-            )
+            theme_record = db.query(CompanyTheme).filter(CompanyTheme.company_id == company_id).first()
+            if theme_record and theme_record.config_json and "background_color" in theme_record.config_json:
+                logger.info("Found existing Theme specification. Reusing it to resume build...")
+            else:
+                logger.info("Running Theme Recommendation & Builder Crew...")
+                theme_config = run_theme_builder(brand_profile_data, company.logo_url)
+                theme_record = repo.save_theme(
+                    company_id=company_id,
+                    template_name=theme_config.get("template_name", "default"),
+                    primary_color=theme_config.get("primary_color", "#1A1A1A"),
+                    secondary_color=theme_config.get("secondary_color", "#F5F5F7"),
+                    accent_color=theme_config.get("accent_color", "#D2A26B"),
+                    heading_font=theme_config.get("heading_font", "Inter"),
+                    body_font=theme_config.get("body_font", "Inter"),
+                    logo_url=company.logo_url,
+                    config_json=theme_config
+                )
 
             # 7. Layout Builder Crew
             logger.info("Running Layout Builder Crew...")
