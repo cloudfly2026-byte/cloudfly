@@ -56,6 +56,9 @@ callcenterIA/asterisk/data/*.sqlite3
 # IA Metadata
 brain/
 ai_scrum_team/
+ai_scrum_team.zip
+ia_scrum_team/
+ia_scrum_team.zip
 
 # Environment
 .env
