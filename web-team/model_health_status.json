@@ -1,19 +1,19 @@
 {
   "healthiest_model": "openrouter/owl-alpha",
-  "last_check": "2026-06-11T21:47:10.657358",
+  "last_check": "2026-06-11T21:57:22.547102",
   "models_status": {
     "nvidia/moonshotai/kimi-k2.6": {
       "status": "rate_limited",
-      "latency": 0.38,
+      "latency": 0.43,
       "error": "429 Rate Limit"
     },
     "openrouter/owl-alpha": {
       "status": "healthy",
-      "latency": 2.61
+      "latency": 7.95
     },
     "google/gemini-2.5-flash": {
       "status": "unhealthy",
-      "latency": 0.11,
+      "latency": 0.07,
       "error": "Status 402: {\"error\":{\"message\":\"Insufficient credits. This account never purchased credits. Make sure your key "
     },
     "anthropic/claude-3-haiku": {
