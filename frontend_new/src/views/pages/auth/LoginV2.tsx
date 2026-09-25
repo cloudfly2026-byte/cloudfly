@@ -2,6 +2,7 @@
 
 // React Imports
 import { useEffect, useState, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 
 // Next Imports
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,8 +13,6 @@ import { signIn, getSession } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
-import useMediaQuery from '@mui/material/useMediaQuery'
-import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -23,9 +22,6 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
 import CheckIcon from '@mui/icons-material/Check'
 import DangerousIcon from '@mui/icons-material/Dangerous'
-
-// Classnames and Utils
-import classnames from 'classnames'
 
 import { Alert } from '@mui/material'
 
@@ -37,24 +33,98 @@ import CustomTextField from '@core/components/mui/TextField'
 // Config Imports
 import themeConfig from '@configs/themeConfig'
 
-// Hook Imports
-import { useImageVariant } from '@core/hooks/useImageVariant'
-import { useSettings } from '@core/hooks/useSettings'
-import type { SystemMode } from '@/@core/types'
-
 // CLOUD-281/CLOUD-282: OAuth imports
 import { AuthManager } from '@/utils/authManager'
 import { triggerFacebookLogin } from '@/components/OAuthProvider'
 
-// Styled Custom Components
-const MaskImg = styled('img')({
-  blockSize: 'auto',
-  maxBlockSize: 355,
-  inlineSize: '100%',
-  position: 'absolute',
-  insetBlockEnd: 0,
-  zIndex: -1
-})
+// ============================================================
+// CloudFly landing palette (landing/styles.css)
+// Applied locally on this screen so the auth flow matches the
+// marketing site: Electric Blue + Neon Violet over Space Black.
+// ============================================================
+const landingPalette = {
+  // Tailwind aliases (resolved per element, not only on :root)
+  '--primary-color': '#00A3FF',
+  '--border-color': 'rgba(0, 163, 255, 0.2)',
+  '--background-color': '#03010A',
+  '--background-color-rgb': '3 1 10',
+  '--backdrop-color': 'rgba(3, 1, 10, 0.6)',
+
+  // MUI primary (brand electric blue instead of template violet)
+  '--mui-palette-primary-main': '#00A3FF',
+  '--mui-palette-primary-light': '#4CC9F0',
+  '--mui-palette-primary-dark': '#0082CC',
+  '--mui-palette-primary-contrastText': '#FFFFFF',
+  '--mui-palette-primary-mainChannel': '0 163 255',
+  '--mui-palette-primary-lightChannel': '76 201 240',
+  '--mui-palette-primary-darkChannel': '0 130 204',
+  '--mui-palette-primary-lighterOpacity': 'rgba(0, 163, 255, 0.08)',
+  '--mui-palette-primary-lightOpacity': 'rgba(0, 163, 255, 0.16)',
+  '--mui-palette-primary-mainOpacity': 'rgba(0, 163, 255, 0.24)',
+  '--mui-palette-primary-darkOpacity': 'rgba(0, 163, 255, 0.32)',
+  '--mui-palette-primary-darkerOpacity': 'rgba(0, 163, 255, 0.38)',
+
+  // Accent (landing neon violet)
+  '--mui-palette-secondary-main': '#7B2CBF',
+
+  // Text over space black
+  '--mui-palette-text-primary': '#F0F4FF',
+  '--mui-palette-text-secondary': '#8A9FC4',
+  '--mui-palette-text-disabled': 'rgba(240, 244, 255, 0.5)',
+  '--mui-palette-text-primaryChannel': '240 244 255',
+  '--mui-palette-text-secondaryChannel': '138 159 196',
+
+  // Neon blue borders & surfaces
+  '--mui-palette-divider': 'rgba(0, 163, 255, 0.2)',
+  '--mui-palette-background-default': '#03010A',
+  '--mui-palette-background-paper': '#0A0616',
+  '--mui-palette-background-paperChannel': '10 6 22',
+
+  // Actions
+  '--mui-palette-action-active': 'rgba(240, 244, 255, 0.65)',
+  '--mui-palette-action-hover': 'rgba(0, 163, 255, 0.08)',
+  '--mui-palette-action-selected': 'rgba(0, 163, 255, 0.12)',
+  '--mui-palette-action-focus': 'rgba(0, 163, 255, 0.16)',
+  '--mui-palette-action-disabled': 'rgba(240, 244, 255, 0.3)',
+  '--mui-palette-action-disabledBackground': 'rgba(240, 244, 255, 0.12)',
+
+  // Inputs & chrome
+  '--mui-palette-customColors-inputBorder': 'rgba(0, 163, 255, 0.35)',
+  '--mui-palette-customColors-bodyBg': '#03010A',
+  '--mui-palette-customColors-greyLightBg': '#0A0616',
+  '--mui-palette-customColors-tableHeaderBg': '#0A0616',
+
+  // Neon glow shadows
+  '--mui-customShadows-primary-sm': '0 4px 20px rgba(0, 163, 255, 0.4)',
+  '--mui-customShadows-primary-md': '0 6px 24px rgba(0, 163, 255, 0.5)',
+  '--mui-customShadows-primary-lg': '0 8px 30px rgba(0, 163, 255, 0.6)'
+} as CSSProperties
+
+const meshBackground: CSSProperties = {
+  backgroundColor: '#03010A',
+  backgroundImage:
+    'radial-gradient(circle at 20% 30%, rgba(0, 163, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(123, 44, 191, 0.18) 0%, transparent 50%)'
+}
+
+const glassSurface: CSSProperties = {
+  backgroundColor: 'rgba(10, 6, 22, 0.65)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid rgba(0, 163, 255, 0.2)',
+  borderRadius: 24
+}
+
+const heroStats = [
+  { icon: 'tabler-robot', value: '24/7', label: 'Atención automatizada', color: '#4CC9F0', tint: 'rgba(0, 163, 255, 0.12)' },
+  { icon: 'tabler-chart-line', value: '+300%', label: 'Más conversiones', color: '#9D4EED', tint: 'rgba(157, 78, 237, 0.14)' },
+  { icon: 'tabler-users', value: '10K+', label: 'Empresas activas', color: '#00A3FF', tint: 'rgba(0, 163, 255, 0.12)' }
+]
+
+const heroFeatures = [
+  'Ver tus métricas de ventas y conversión en tiempo real',
+  'Configurar tu chatbot IA en 5 minutos',
+  'Automatizar respuestas y seguimiento de clientes'
+]
 
 interface FormInputs {
   username: string
@@ -62,7 +132,7 @@ interface FormInputs {
   remember: boolean
 }
 
-const LoginV2 = ({ mode }: { mode: SystemMode }) => {
+const LoginV2 = () => {
   const {
     register,
     handleSubmit,
@@ -80,11 +150,6 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl')
-  const { settings } = useSettings()
-  const theme = useTheme()
-  const hidden = useMediaQuery(theme.breakpoints.down('md'))
-
-  const authBackground = useImageVariant(mode, '/images/pages/auth-mask-light.png', '/images/pages/auth-mask-dark.png')
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
@@ -96,6 +161,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
     setError(null)
 
     let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+
     if (!googleClientId || googleClientId.includes('your-google-client-id')) {
       googleClientId = await AuthManager.getGoogleClientId()
     }
@@ -106,10 +172,12 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.warn('⚠️ [GOOGLE-OAUTH] One Tap not displayed, using redirect flow')
+
           if (googleClientId) {
             const redirectUri = encodeURIComponent(window.location.origin + '/login')
             const scope = encodeURIComponent('openid email profile')
             const nonce = Math.random().toString(36).substring(2)
+
             window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}`
           } else {
             setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
@@ -119,10 +187,12 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
       })
     } else {
       console.warn('⚠️ [GOOGLE-OAUTH] Google Identity Services not loaded, using redirect flow')
+
       if (googleClientId) {
         const redirectUri = encodeURIComponent(window.location.origin + '/login')
         const scope = encodeURIComponent('openid email profile')
         const nonce = Math.random().toString(36).substring(2)
+
         window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=id_token&scope=${scope}&nonce=${nonce}`
       } else {
         setError('Google OAuth no está configurado. Por favor, contacta al administrador.')
@@ -146,6 +216,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
 
         // Redirect based on user state
         const user = response.user
+
         if (user && !user.onboardingCompleted) {
           router.push('/account-setup')
         } else if (callbackUrl) {
@@ -181,6 +252,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
 
             // Redirect based on user state
             const user = response.user
+
             if (user && !user.onboardingCompleted) {
               router.push('/account-setup')
             } else if (callbackUrl) {
@@ -215,9 +287,11 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
 
     // Check for OAuth redirect response (id_token in URL hash)
     const hash = window.location.hash
+
     if (hash && hash.includes('id_token')) {
       const params = new URLSearchParams(hash.substring(1))
       const idToken = params.get('id_token')
+
       if (idToken) {
         setOauthLoading('google')
         AuthManager.loginWithGoogle(idToken)
@@ -225,6 +299,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             if (response.status) {
               setSuccess(true)
               const user = response.user
+
               if (user && !user.onboardingCompleted) {
                 router.push('/account-setup')
               } else if (callbackUrl) {
@@ -355,123 +430,177 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   }
 
   return (
-    <div className='flex bs-full justify-center'>
-      <div
-        className={classnames(
-          'flex bs-full flex-1 min-bs-[100dvh] relative max-md:hidden',
-          { 'border-ie': settings.skin === 'bordered' }
-        )}
-      >
-        <div className='m-auto w-full max-w-4xl ps-10 pe-6 flex flex-col gap-8'>
-          {/* Hero Section */}
-          <div className='text-left'>
-            <div className='inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4'>
-              <i className='tabler-trending-up text-xl' />
-              <Typography variant='body2' className='font-semibold'>
-                💼 Accede a tu panel de control
-              </Typography>
-            </div>
+    <div
+      className='relative flex bs-full justify-center min-bs-[100dvh] is-full'
+      style={{ ...landingPalette, ...meshBackground }}
+    >
+      {/* Left: Landing-style hero panel */}
+      <div className='hidden md:flex bs-full flex-1 relative overflow-y-auto'>
+        {/* Ambient neon glows */}
+        <div
+          aria-hidden
+          className='absolute pointer-events-none'
+          style={{
+            top: '-10%',
+            left: '-5%',
+            width: '55%',
+            height: '55%',
+            background: 'linear-gradient(135deg, rgba(0, 163, 255, 0.28), rgba(123, 44, 191, 0.22))',
+            filter: 'blur(90px)',
+            opacity: 0.5
+          }}
+        />
+        <div
+          aria-hidden
+          className='absolute pointer-events-none'
+          style={{
+            bottom: '-15%',
+            right: '-10%',
+            width: '50%',
+            height: '50%',
+            background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.3), rgba(0, 163, 255, 0.18))',
+            filter: 'blur(100px)',
+            opacity: 0.45
+          }}
+        />
 
-            <Typography variant='h2' component='h1' className='mb-3 font-bold leading-tight'>
-              Bienvenido de vuelta a <span className='text-primary'>CloudFly</span>
-            </Typography>
-
-            <Typography variant='h6' className='text-textSecondary font-normal mb-6'>
-              Gestiona tu negocio con IA, automatiza procesos y toma decisiones basadas en datos en tiempo real.
-            </Typography>
+        <div className='m-auto w-full max-w-4xl ps-10 pe-6 flex flex-col gap-7 py-10 relative z-10'>
+          {/* Brand */}
+          <div className='w-full max-is-[260px] [&_img]:w-full [&_img]:h-auto'>
+            <Logo />
           </div>
 
-          {/* Stats Grid */}
-          <div className='grid gap-6 lg:grid-cols-3'>
-            <div className='bg-backgroundPaper rounded-2xl p-6 border border-divider'>
-              <div className='flex items-center gap-4 mb-3'>
-                <div className='w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center'>
-                  <i className='tabler-robot text-2xl text-success' />
-                </div>
-                <div>
-                  <Typography variant='h4' className='font-bold'>24/7</Typography>
-                  <Typography variant='caption' className='text-textSecondary'>Atención automatizada</Typography>
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-backgroundPaper rounded-2xl p-6 border border-divider'>
-              <div className='flex items-center gap-4 mb-3'>
-                <div className='w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center'>
-                  <i className='tabler-chart-line text-2xl text-warning' />
-                </div>
-                <div>
-                  <Typography variant='h4' className='font-bold'>+300%</Typography>
-                  <Typography variant='caption' className='text-textSecondary'>Más conversiones</Typography>
-                </div>
-              </div>
-            </div>
-
-            <div className='bg-backgroundPaper rounded-2xl p-6 border border-divider'>
-              <div className='flex items-center gap-4 mb-3'>
-                <div className='w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center'>
-                  <i className='tabler-users text-2xl text-info' />
-                </div>
-                <div>
-                  <Typography variant='h4' className='font-bold'>10K+</Typography>
-                  <Typography variant='caption' className='text-textSecondary'>Empresas activas</Typography>
-                </div>
-              </div>
-            </div>
+          {/* Landing badges */}
+          <div className='flex flex-wrap gap-3'>
+            <span
+              className='inline-block rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap'
+              style={{
+                background: 'rgba(0, 163, 255, 0.12)',
+                color: '#4CC9F0',
+                border: '1px solid rgba(0, 163, 255, 0.25)'
+              }}
+            >
+              🤖 Inteligencia Artificial Omnicanal
+            </span>
+            <span
+              className='inline-block rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap'
+              style={{
+                background: 'rgba(123, 44, 191, 0.15)',
+                color: '#9D4EED',
+                border: '1px solid rgba(157, 78, 237, 0.3)'
+              }}
+            >
+              🏢 SaaS Cloud de Gestión
+            </span>
           </div>
 
-          {/* Features List */}
-          <div className='bg-backgroundPaper rounded-2xl p-6 border border-divider'>
-            <Typography variant='h6' className='mb-4 font-semibold'>
+          {/* Gradient headline (landing hero style) */}
+          <Typography
+            variant='h2'
+            component='h1'
+            sx={{
+              fontWeight: 800,
+              fontSize: { xs: '2.25rem', md: '3rem' },
+              lineHeight: 1.2,
+              letterSpacing: '-0.02em'
+            }}
+          >
+            Bienvenido de vuelta a{' '}
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #4CC9F0, #9D4EED)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                color: 'transparent'
+              }}
+            >
+              CloudFly
+            </span>
+          </Typography>
+
+          <Typography variant='body1' sx={{ color: '#8A9FC4', fontSize: '1.1rem', maxWidth: 560 }}>
+            Gestiona tu negocio con IA, automatiza procesos y toma decisiones basadas en datos en tiempo real.
+          </Typography>
+
+          {/* Stats */}
+          <div className='grid gap-5 sm:grid-cols-3'>
+            {heroStats.map(stat => (
+              <div
+                key={stat.value}
+                className='flex items-center gap-4 p-5 transition-all duration-300'
+                style={glassSurface}
+              >
+                <div
+                  className='w-12 h-12 rounded-xl flex items-center justify-center shrink-0'
+                  style={{ background: stat.tint, border: `1px solid ${stat.color}44` }}
+                >
+                  <i className={stat.icon} style={{ color: stat.color, fontSize: '1.5rem' }} />
+                </div>
+                <div>
+                  <Typography variant='h5' sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant='caption' sx={{ color: '#8A9FC4' }}>
+                    {stat.label}
+                  </Typography>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature checklist */}
+          <div className='p-6' style={glassSurface}>
+            <Typography variant='subtitle1' sx={{ color: '#F0F4FF', fontWeight: 700, mb: 2 }}>
               ✨ Lo que puedes hacer hoy:
             </Typography>
-            <div className='grid gap-3'>
-              <div className='flex items-center gap-3'>
-                <i className='tabler-check text-success text-xl' />
-                <Typography variant='body2' className='text-textSecondary'>
-                  Ver tus métricas de ventas y conversión en tiempo real
-                </Typography>
-              </div>
-              <div className='flex items-center gap-3'>
-                <i className='tabler-check text-success text-xl' />
-                <Typography variant='body2' className='text-textSecondary'>
-                  Configurar tu chatbot IA en 5 minutos
-                </Typography>
-              </div>
-              <div className='flex items-center gap-3'>
-                <i className='tabler-check text-success text-xl' />
-                <Typography variant='body2' className='text-textSecondary'>
-                  Automatizar respuestas y seguimiento de clientes
-                </Typography>
-              </div>
+            <div className='flex flex-col gap-3'>
+              {heroFeatures.map(feature => (
+                <div key={feature} className='flex items-center gap-3'>
+                  <i className='tabler-check' style={{ color: '#4CC9F0', fontSize: '1.25rem' }} />
+                  <Typography variant='body2' sx={{ color: '#8A9FC4' }}>
+                    {feature}
+                  </Typography>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-
-        {!hidden && (
-          <MaskImg
-            alt='mask'
-            src={authBackground}
-            className={classnames({ 'scale-x-[-1]': theme.direction === 'rtl' })}
-          />
-        )}
       </div>
 
-      <div className='flex justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
-        <Link className='absolute block-start-5 sm:block-start-[33px] inline-start-6 sm:inline-start-[38px]'>
-          <Logo />
-        </Link>
+      {/* Right: Glass auth card */}
+      <div
+        className='flex justify-center items-center bs-full !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px] relative'
+        style={{ backgroundColor: 'rgba(5, 3, 12, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+      >
+        <div
+          aria-hidden
+          className='absolute hidden md:block'
+          style={{ top: 0, bottom: 0, left: 0, width: 1, background: 'rgba(0, 163, 255, 0.2)' }}
+        />
 
-        <div className='flex flex-col gap-6 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-11 sm:mbs-14 md:mbs-0'>
-          {/* Header mejorado */}
+        <div className='flex flex-col gap-6 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-6 md:mbs-0'>
+          {/* Logo (mobile only, desktop shows it on the hero panel) */}
+          <Link className='md:hidden block self-center max-is-[220px] [&_img]:w-full [&_img]:h-auto'>
+            <Logo />
+          </Link>
+
+          {/* Header */}
           <div className='flex flex-col gap-2 text-center'>
-            <div className='inline-flex items-center justify-center w-16 h-16 mx-auto mb-2 rounded-2xl bg-gradient-to-br from-primary/20 to-info/20'>
-              <i className='tabler-login text-4xl text-primary' />
+            <div
+              className='inline-flex items-center justify-center w-16 h-16 mx-auto mb-2 rounded-2xl'
+              style={{
+                background: 'linear-gradient(135deg, rgba(0, 163, 255, 0.2), rgba(123, 44, 191, 0.3))',
+                border: '1px solid rgba(0, 163, 255, 0.4)',
+                boxShadow: '0 0 30px rgba(0, 163, 255, 0.25)'
+              }}
+            >
+              <i className='tabler-login' style={{ color: '#4CC9F0', fontSize: '2rem' }} />
             </div>
             <Typography variant='h4' className='font-bold'>
               ¡Bienvenido de vuelta! 👋
             </Typography>
-            <Typography variant='body2' className='text-textSecondary'>
+            <Typography variant='body2'>
               Ingresa a tu cuenta y continúa automatizando tu negocio
             </Typography>
           </div>
@@ -507,7 +636,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <i className='tabler-user text-textSecondary' />
+                    <i className='tabler-user' style={{ color: '#8A9FC4' }} />
                   </InputAdornment>
                 )
               }}
@@ -523,7 +652,7 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <i className='tabler-lock text-textSecondary' />
+                    <i className='tabler-lock' style={{ color: '#8A9FC4' }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -544,7 +673,8 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               />
               <Typography
                 variant='body2'
-                className='text-primary font-semibold hover:underline'
+                className='font-semibold hover:underline'
+                sx={{ color: '#4CC9F0' }}
                 component={Link}
                 href='/recover-password'
               >
@@ -558,7 +688,26 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               type='submit'
               disabled={disabled}
               size='large'
-              className='py-3 font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all'
+              sx={{
+                py: 1.4,
+                fontWeight: 700,
+                fontSize: '1rem',
+                color: '#FFFFFF',
+                backgroundImage: 'linear-gradient(135deg, #00A3FF 0%, #7B2CBF 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 4px 20px rgba(0, 163, 255, 0.4)',
+                borderRadius: '99px',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                '&:hover': {
+                  backgroundImage: 'linear-gradient(135deg, #00A3FF 0%, #7B2CBF 100%)',
+                  boxShadow: '0 8px 30px rgba(0, 163, 255, 0.7)',
+                  transform: 'translateY(-2px)'
+                },
+                '&.Mui-disabled': {
+                  backgroundImage: 'linear-gradient(135deg, #00A3FF 0%, #7B2CBF 100%)',
+                  opacity: 0.6
+                }
+              }}
             >
               {disabled ? (
                 <>
@@ -574,20 +723,21 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             </Button>
 
             <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography variant='body2' className='text-textSecondary'>
+              <Typography variant='body2'>
                 ¿Nuevo en {themeConfig.templateName}?
               </Typography>
               <Typography
                 component={Link}
                 href='/register'
-                className='text-primary font-semibold hover:underline'
+                className='font-semibold hover:underline'
+                sx={{ color: '#4CC9F0' }}
               >
                 Prueba 14 días gratis
               </Typography>
             </div>
 
-            <Divider className='gap-2 text-textPrimary'>
-              <Typography variant='caption' className='text-textSecondary'>
+            <Divider className='gap-2'>
+              <Typography variant='caption' sx={{ color: 'rgba(240, 244, 255, 0.5)' }}>
                 O continúa con
               </Typography>
             </Divider>
@@ -596,7 +746,17 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             <div className='flex justify-center items-center gap-3'>
               <Button
                 variant='outlined'
-                className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
+                className='flex-1 py-2.5'
+                sx={{
+                  color: '#F0F4FF',
+                  borderColor: 'rgba(0, 163, 255, 0.35)',
+                  borderRadius: '99px',
+                  '&:hover': {
+                    borderColor: '#00A3FF',
+                    backgroundColor: 'rgba(0, 163, 255, 0.1)',
+                    boxShadow: '0 4px 20px rgba(0, 163, 255, 0.25)'
+                  }
+                }}
                 startIcon={<i className='tabler-brand-google' />}
                 onClick={handleGoogleOAuth}
                 disabled={oauthLoading !== null}
@@ -609,7 +769,17 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
               </Button>
               <Button
                 variant='outlined'
-                className='flex-1 py-2.5 rounded-lg hover:bg-backgroundPaper/50'
+                className='flex-1 py-2.5'
+                sx={{
+                  color: '#F0F4FF',
+                  borderColor: 'rgba(157, 78, 237, 0.45)',
+                  borderRadius: '99px',
+                  '&:hover': {
+                    borderColor: '#9D4EED',
+                    backgroundColor: 'rgba(157, 78, 237, 0.12)',
+                    boxShadow: '0 4px 20px rgba(157, 78, 237, 0.3)'
+                  }
+                }}
                 startIcon={<i className='tabler-brand-meta' />}
                 onClick={handleFacebookOAuth}
                 disabled={oauthLoading !== null}
@@ -623,11 +793,19 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             </div>
 
             {/* Seguridad footer */}
-            <div className='mt-2 p-4 bg-info/5 rounded-xl border border-info/20'>
+            <div
+              className='mt-2 p-4'
+              style={{
+                background: 'rgba(0, 163, 255, 0.06)',
+                borderRadius: 16,
+                border: '1px solid rgba(0, 163, 255, 0.2)'
+              }}
+            >
               <div className='flex items-center gap-2'>
-                <i className='tabler-shield-lock text-info text-xl' />
-                <Typography variant='caption' className='text-textSecondary'>
-                  <strong>Conexión segura.</strong> Tus datos están protegidos con encriptación SSL.
+                <i className='tabler-shield-lock' style={{ color: '#4CC9F0', fontSize: '1.25rem' }} />
+                <Typography variant='caption' sx={{ color: '#8A9FC4' }}>
+                  <strong style={{ color: '#F0F4FF' }}>Conexión segura.</strong> Tus datos están protegidos con
+                  encriptación SSL.
                 </Typography>
               </div>
             </div>
