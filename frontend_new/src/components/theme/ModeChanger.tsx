@@ -1,6 +1,9 @@
 // React Imports
 import { useEffect } from 'react'
 
+// Next Imports
+import { usePathname } from 'next/navigation'
+
 // MUI Imports
 import { useColorScheme } from '@mui/material/styles'
 
@@ -18,8 +21,16 @@ const ModeChanger = ({ systemMode }: { systemMode: SystemMode }) => {
   const { setMode } = useColorScheme()
   const { settings } = useSettings()
   const isDark = useMedia('(prefers-color-scheme: dark)', systemMode === 'dark')
+  const pathname = usePathname()
 
   useEffect(() => {
+    // CLOUD-281: login is always dark (stored light/system mode never wins here)
+    if (pathname === '/login') {
+      setMode('dark')
+
+      return
+    }
+
     if (settings.mode) {
       if (settings.mode === 'system') {
         setMode(isDark ? 'dark' : 'light')
@@ -28,7 +39,7 @@ const ModeChanger = ({ systemMode }: { systemMode: SystemMode }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.mode])
+  }, [settings.mode, pathname])
 
   return null
 }

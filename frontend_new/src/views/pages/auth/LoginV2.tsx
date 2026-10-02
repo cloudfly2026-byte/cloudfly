@@ -94,6 +94,9 @@ const landingPalette = {
   '--mui-palette-customColors-greyLightBg': '#0A0616',
   '--mui-palette-customColors-tableHeaderBg': '#0A0616',
 
+  // Native controls & scrollbars follow the dark scheme
+  colorScheme: 'dark',
+
   // Neon glow shadows
   '--mui-customShadows-primary-sm': '0 4px 20px rgba(0, 163, 255, 0.4)',
   '--mui-customShadows-primary-md': '0 6px 24px rgba(0, 163, 255, 0.5)',

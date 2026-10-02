@@ -3,6 +3,9 @@
 // React Imports
 import { useMemo, useState, useEffect } from 'react'
 
+// Next Imports
+import { usePathname } from 'next/navigation'
+
 // MUI Imports
 import { deepmerge } from '@mui/utils'
 import {
@@ -47,6 +50,11 @@ const ThemeProvider = (props: Props) => {
   // Hooks
   const { settings } = useSettings()
   const isDark = useMedia('(prefers-color-scheme: dark)', systemMode === 'dark')
+  const pathname = usePathname()
+
+  // CLOUD-281: the login screen is always dark, regardless of the user's
+  // stored mode/cookie or system preference (dashboard theme is untouched)
+  const forceDark = pathname === '/login'
 
   // Vars
   const isServer = typeof window === 'undefined'
@@ -60,7 +68,9 @@ const ThemeProvider = (props: Props) => {
 
   let currentMode: SystemMode
 
-  if (isServer || !mounted) {
+  if (forceDark) {
+    currentMode = 'dark'
+  } else if (isServer || !mounted) {
     currentMode = systemMode
   } else {
     if (settings.mode === 'system') {
@@ -114,7 +124,7 @@ const ThemeProvider = (props: Props) => {
     >
       <CssVarsProvider
         theme={theme}
-        defaultMode={systemMode}
+        defaultMode={forceDark ? 'dark' : systemMode}
         modeStorageKey={`${themeConfig.templateName.toLowerCase().split(' ').join('-')}-mui-template-mode`}
       >
         <>
