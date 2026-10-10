@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, ReactNode } from 'react'
+import type { ReactNode } from 'react';
+import { useEffect } from 'react'
+
 import { AuthManager } from '@/utils/authManager'
 
 declare global {
@@ -20,6 +22,9 @@ declare global {
       login: (callback: (response: any) => void, params: any) => void
       getLoginStatus: (callback: (response: any) => void) => void
     }
+
+    // CLOUD-281: page-level Google handler published by LoginV2/RegisterV2
+    handleGoogleCredentialResponse?: (credential: string) => void | Promise<void>
   }
 }
 
@@ -48,12 +53,14 @@ export default function OAuthProvider({
     const initOAuth = async () => {
       // 1. Resolve Google Client ID
       let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+
       if (!googleClientId || googleClientId.includes('your-google-client-id')) {
         googleClientId = await AuthManager.getGoogleClientId()
       }
 
       // 2. Resolve Facebook App ID
       let facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ''
+
       if (!facebookAppId || facebookAppId.includes('your-facebook-app-id')) {
         facebookAppId = await AuthManager.getFacebookAppId()
       }
@@ -66,8 +73,23 @@ export default function OAuthProvider({
               client_id: googleClientId,
               callback: (response: any) => {
                 console.log('✅ [GOOGLE-OAUTH] Credential received')
-                if (onGoogleSuccess && response.credential) {
+
+                if (!response?.credential) {
+                  console.error('❌ [GOOGLE-OAUTH] Google returned no credential')
+
+                  return
+                }
+
+                if (onGoogleSuccess) {
                   onGoogleSuccess(response.credential)
+                } else if (typeof window.handleGoogleCredentialResponse === 'function') {
+                  // CLOUD-281: no prop handler (Providers renders <OAuthProvider>
+                  // without props) → delegate to the page-level handler that
+                  // LoginV2/RegisterV2 publish on window, otherwise the credential
+                  // was silently dropped and the user never reached the backend.
+                  window.handleGoogleCredentialResponse(response.credential)
+                } else {
+                  console.error('❌ [GOOGLE-OAUTH] No credential handler registered on this page')
                 }
               },
               auto_select: false,
@@ -100,18 +122,22 @@ export default function OAuthProvider({
         // Load Facebook SDK script if not loaded
         if (!document.getElementById('facebook-jssdk')) {
           const script = document.createElement('script')
+
           script.id = 'facebook-jssdk'
           script.src = 'https://connect.facebook.net/en_US/sdk.js'
           script.async = true
           script.defer = true
           script.crossOrigin = 'anonymous'
+
           script.onload = () => {
             console.log('✅ [FACEBOOK-OAUTH] Facebook SDK script loaded')
           }
+
           script.onerror = (error) => {
             console.error('❌ [FACEBOOK-OAUTH] Failed to load Facebook SDK:', error)
             onFacebookError?.(error)
           }
+
           document.body.appendChild(script)
         }
       }
@@ -143,7 +169,8 @@ export function triggerFacebookLogin(
   if (!window.FB) {
     console.error('❌ [FACEBOOK-OAUTH] Facebook SDK not initialized')
     onError(new Error('Facebook SDK not initialized'))
-    return
+    
+return
   }
 
   window.FB.login((response: any) => {
