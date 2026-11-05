@@ -16,33 +16,6 @@ try:
 except Exception:
     redis_client = None
 
-@tool("MySQL Tool")
-def mysql_tool(query: str, action: str = "select") -> str:
-    """
-    Executes a SELECT, INSERT, or UPDATE query against the CloudFly database.
-    Use with caution. Only select is recommended unless writing themes/layouts.
-    """
-    from sqlalchemy import text
-    from src.database import engine
-    
-    action = action.lower()
-    if action not in ["select", "insert", "update"]:
-        return "ERROR: Action must be 'select', 'insert', or 'update'."
-        
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(text(query))
-            if action == "select":
-                rows = result.fetchall()
-                cols = result.keys()
-                res = [dict(zip(cols, row)) for row in rows]
-                return json.dumps(res, default=str, ensure_ascii=False)
-            else:
-                conn.commit()
-                return f"SUCCESS: Query executed. Affected rows: {result.rowcount}"
-    except Exception as e:
-        return f"ERROR: Query failed: {str(e)}"
-
 @tool("Redis Tool")
 def redis_tool(action: str, key: str, value: str = "") -> str:
     """

@@ -4,8 +4,8 @@ services:
     image: mysql:8.0
     container_name: mysql
     restart: always
-    ports:
-      - "3306:3306"
+    # ports:
+    #   - "3306:3306" # P0 Remediated: Closed to external traffic; access restricted to internal app-net
     environment:
       TZ: America/Bogota
       MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}

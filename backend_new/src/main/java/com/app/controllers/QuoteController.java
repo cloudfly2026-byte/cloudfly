@@ -30,24 +30,6 @@ public class QuoteController {
     }
 
     private Mono<UserContext> getCurrentUserContext(Map<String, String> headers) {
-        // --- AI Internal Secret Bypass (Redundancy) ---
-        String expected = "cloudfly_ai_secret_2026";
-        boolean isAI = headers.values().stream().anyMatch(v -> v != null && v.contains(expected));
-        
-        if (isAI) {
-            log.info("🤖 [QUOTE-AUTH] AI Internal Bypass active for Quote operations");
-            return ReactiveSecurityContextHolder.getContext()
-                    .map(SecurityContext::getAuthentication)
-                    .map(auth -> {
-                        if (auth == null || auth.getDetails() == null) return new UserContext(1L, null, java.util.Set.of("ROLE_ADMIN"));
-                        java.util.Map<String, Object> details = (java.util.Map<String, Object>) auth.getDetails();
-                        Long tid = details.get("customer_id") != null ? ((Number) details.get("customer_id")).longValue() : 1L;
-                        Long cid = details.get("company_id") != null ? ((Number) details.get("company_id")).longValue() : null;
-                        return new UserContext(tid, cid, java.util.Set.of("ROLE_ADMIN"));
-                    })
-                    .defaultIfEmpty(new UserContext(1L, null, java.util.Set.of("ROLE_ADMIN")));
-        }
-
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .map(auth -> {
@@ -56,24 +38,17 @@ public class QuoteController {
                     }
 
                     Map<String, Object> details = (Map<String, Object>) auth.getDetails();
-                    Long tokenTenantId = (Long) details.get("customer_id");
-                    Long tokenCompanyId = (Long) details.get("company_id");
+                    Long tokenTenantId = details.get("customer_id") != null ? ((Number) details.get("customer_id")).longValue() : 1L;
+                    Long tokenCompanyId = details.get("company_id") != null ? ((Number) details.get("company_id")).longValue() : null;
+                    
                     Set<String> roles = auth.getAuthorities().stream()
                             .map(a -> a.getAuthority())
                             .collect(Collectors.toSet());
 
                     boolean isAdminOrManager = roles.contains("ROLE_ADMIN") || roles.contains("ROLE_MANAGER");
 
-                    // Resolver Tenant
+                    // Resolver Tenant: Inmutable desde claims JWT
                     Long finalTenantId = tokenTenantId;
-                    if (isAdminOrManager && headers.containsKey("x-tenant-id")) {
-                        try {
-                            finalTenantId = Long.parseLong(headers.get("x-tenant-id"));
-                            log.info("🎯 [QUOTE-AUTH] Overriding Tenant from Header: {}", finalTenantId);
-                        } catch (Exception e) {
-                            log.warn("⚠️ [QUOTE-AUTH] Invalid x-tenant-id header");
-                        }
-                    }
 
                     // Resolver Company
                     Long finalCompanyId = tokenCompanyId;
@@ -86,7 +61,6 @@ public class QuoteController {
                                 log.warn("⚠️ [QUOTE-AUTH] Invalid x-company-id header");
                             }
                         } else {
-                            // Si es Manager/Admin y NO envía cabecera de compañía, ve TODO (nulo)
                             finalCompanyId = null;
                         }
                     }

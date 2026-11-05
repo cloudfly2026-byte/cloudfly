@@ -28,31 +28,6 @@ public class OrderController {
     }
 
     private Mono<UserContext> getCurrentUserContext(Map<String, String> headers) {
-        log.info("🔍 [ORDER-AUTH] Incoming Headers Keys: {}", headers.keySet());
-        // --- AI Internal Secret Bypass (Redundancy) ---
-        String expected = "cloudfly_ai_secret_2026";
-        
-        // Check headers (case-insensitive keys are already handled by Spring in the map)
-        boolean isAIInHeaders = headers.values().stream().anyMatch(v -> v != null && v.contains(expected));
-        
-        // We can't easily check query params here without exchange, 
-        // but the filter/firewall already checked them. 
-        // We'll trust the headers as primary here since they are always passed.
-        
-        if (isAIInHeaders) {
-            log.info("🤖 [ORDER-AUTH] AI Internal Bypass active for Order operations");
-            return ReactiveSecurityContextHolder.getContext()
-                    .map(SecurityContext::getAuthentication)
-                    .map(auth -> {
-                        if (auth == null || auth.getDetails() == null) return new UserContext(1L, null, java.util.Set.of("ROLE_ADMIN"));
-                        java.util.Map<String, Object> details = (java.util.Map<String, Object>) auth.getDetails();
-                        Long tid = details.get("customer_id") != null ? ((Number) details.get("customer_id")).longValue() : 1L;
-                        Long cid = details.get("company_id") != null ? ((Number) details.get("company_id")).longValue() : null;
-                        return new UserContext(tid, cid, java.util.Set.of("ROLE_ADMIN"));
-                    })
-                    .defaultIfEmpty(new UserContext(1L, null, java.util.Set.of("ROLE_ADMIN")));
-        }
-
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .map(auth -> {
@@ -61,8 +36,8 @@ public class OrderController {
                     }
 
                     Map<String, Object> details = (Map<String, Object>) auth.getDetails();
-                    Long tokenTenantId = (Long) details.get("customer_id") != null ? ((Number)details.get("customer_id")).longValue() : 1L;
-                    Long tokenCompanyId = (Long) details.get("company_id") != null ? ((Number)details.get("company_id")).longValue() : null;
+                    Long tokenTenantId = details.get("customer_id") != null ? ((Number) details.get("customer_id")).longValue() : 1L;
+                    Long tokenCompanyId = details.get("company_id") != null ? ((Number) details.get("company_id")).longValue() : null;
                     
                     Set<String> roles = auth.getAuthorities().stream()
                             .map(a -> a.getAuthority())
@@ -70,15 +45,8 @@ public class OrderController {
 
                     boolean isAdminOrManager = roles.contains("ROLE_ADMIN") || roles.contains("ROLE_MANAGER");
 
-                    // Resolver Tenant
+                    // Resolver Tenant: Derivado de forma inmutable del token autenticado
                     Long finalTenantId = tokenTenantId;
-                    if (isAdminOrManager && headers.containsKey("x-tenant-id")) {
-                        try {
-                            finalTenantId = Long.parseLong(headers.get("x-tenant-id"));
-                        } catch (Exception e) {
-                            log.warn("⚠️ [ORDER-AUTH] Invalid x-tenant-id header");
-                        }
-                    }
 
                     // Resolver Company
                     Long finalCompanyId = tokenCompanyId;
