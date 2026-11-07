@@ -198,8 +198,8 @@ class ApifyLeadRepository(LeadRepository):
         
         # Actor mappings
         self.actors = {
-            "auto": "apify/google-maps-scraper",
-            "google_maps": "apify/google-maps-scraper",
+            "auto": "johnvc/google-maps-places-api",
+            "google_maps": "johnvc/google-maps-places-api",
             "google_search": "apify/google-search-scraper"
         }
 
@@ -228,13 +228,13 @@ class ApifyLeadRepository(LeadRepository):
                 logger.warning(f"⚠️ [APIFY-SDK] Run failed. Falling back to free Local Google Scraper...")
                 return await LocalGoogleScraper.scrape(filters.keyword, filters.country, filters.city, filters.limit)
 
-            dataset_id = run.get("defaultDatasetId")
+            dataset_id = run.default_dataset_id
             logger.info(f"📥 [APIFY-SDK] Fetching results from dataset: {dataset_id}")
             
             dataset_items = await self.client.dataset(dataset_id).list_items()
             items = dataset_items.items
             
-            return self._transform_results(items, actor_id)
+            return self._transform_results(items, actor_id)[:filters.limit]
 
         except Exception as e:
             logger.error(f"❌ [APIFY-SDK] Error: {str(e)}. Falling back to free Local Google Scraper...")
@@ -250,8 +250,8 @@ class ApifyLeadRepository(LeadRepository):
             }
         else: # Default for google-places
             return {
-                "searchStringsArray": [query],
-                "maxItems": limit,
+                "searchTerms": [query],
+                "maxResultsPerSearch": max(limit, 20), # Actor minimum is 20
             }
 
     def _transform_results(self, items: List[dict], actor_id: str) -> List[Lead]:
@@ -272,19 +272,21 @@ class ApifyLeadRepository(LeadRepository):
                     ))
             else:
                 # Google Places structure
-                name = item.get("title") or item.get("name", "Unknown")
-                phone = item.get("phone") or item.get("phoneNumber")
+                if item.get("error_message"):
+                    continue
+                name = item.get("title") or "Unknown"
+                phone = item.get("phoneNumber")
                 
                 # Safe extraction of city
                 address = item.get("address") or ""
-                city = item.get("city") or (address.split(",")[-1].strip() if "," in address else "Unknown")
+                city = address.split(",")[-1].strip() if "," in address else "Unknown"
                 
-                category = item.get("categoryName") or "Business"
+                category = item.get("type") or "Business"
                 
                 score = "COLD"
                 if phone:
                     score = "HOT"
-                elif item.get("website") or item.get("email"):
+                elif item.get("website"):
                     score = "WARM"
 
                 leads.append(Lead(
